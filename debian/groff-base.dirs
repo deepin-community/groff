@@ -1,0 +1,5 @@
+#! /usr/bin/dh-exec
+
+etc
+usr/lib/groff/site-tmac
+usr/share/groff/${UPSTREAM_VERSION}
