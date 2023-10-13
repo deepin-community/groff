@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -19,9 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lib.h"
 
-#include <ctype.h>
 #include <assert.h>
+#include <ctype.h>
 #include <stdlib.h>
+
 #include "errarg.h"
 #include "error.h"
 #include "font.h"
@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 // Every glyphinfo is actually a charinfo.
 class charinfo : glyph {
 public:
-  const char *name;	// The glyph name, or NULL.
+  const char *name;	// The glyph name, or a null pointer.
   friend class character_indexer;
 };
 
@@ -104,7 +104,7 @@ inline glyph *character_indexer::named_char_glyph(const char *s)
       return ascii_char_glyph((unsigned char)n);
   }
   charinfo *ci = table.lookupassoc(&s);
-  if (ci == NULL) {
+  if (0 == ci) {
     ci = new charinfo[1];
     ci->index = next_index++;
     ci->number = -1;
@@ -120,17 +120,17 @@ inline glyph *character_indexer::numbered_char_glyph(int n)
       charinfo *ci = new charinfo;
       ci->index = next_index++;
       ci->number = n;
-      ci->name = NULL;
+      ci->name = 0;
       small_number_glyph[n] = ci;
     }
     return small_number_glyph[n];
   }
   charinfo *ci = ntable.lookup(n);
-  if (ci == NULL) {
+  if (0 == ci) {
     ci = new charinfo[1];
     ci->index = next_index++;
     ci->number = n;
-    ci->name = NULL;
+    ci->name = 0;
     ntable.define(n, ci);
   }
   return ci;
@@ -159,3 +159,9 @@ const char *glyph_to_name(glyph *g)
   charinfo *ci = (charinfo *)g; // Every glyph is actually a charinfo.
   return ci->name;
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

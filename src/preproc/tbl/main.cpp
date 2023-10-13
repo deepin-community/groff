@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -121,8 +120,10 @@ int table_input::get()
       // handle line continuation and uninterpreted leader character
       if ((c = getc(fp)) == '\\') {
 	c = getc(fp);
-	if (c == '\n')
-	  c = getc(fp);		// perhaps state ought to be START now
+	if (c == '\n') {
+	  current_lineno++;
+	  c = getc(fp);
+	}
 	else if (c == 'a' && compatible_flag) {
 	  state = LEADER_1;
 	  return '\\';
@@ -313,7 +314,7 @@ void process_input_file(FILE *fp)
       }
       break;
     default:
-      assert(0);
+      assert(0 == "invalid `state` in switch");
     }
   switch(state) {
   case START:
@@ -367,8 +368,8 @@ int strieq(const char *p, const char *q)
   return 0;
 }
 
-// return 0 if we should give up in this table
-
+// Handle region options.  Return a null pointer if we should give up on
+// this table.
 options *process_options(table_input &in)
 {
   options *opt = new options;
@@ -393,7 +394,7 @@ options *process_options(table_input &in)
       level++;
     else if (c == ')')
       level--;
-    else if (c == ';' && level == 0) {
+    else if (c == ';' && 0 == level) {
       line += '\0';
       break;
     }
@@ -421,39 +422,43 @@ options *process_options(table_input &in)
       while (*q != ')' && *q != '\0')
 	q++;
       if (*q == '\0')
-	error("missing ')'");
+	error("'%1' region option argument missing closing parenthesis",
+	      arg);
       else
 	*q++ = '\0';
     }
     if (*p == '\0') {
       if (arg)
-	error("argument without option");
+	error("'%1' region option argument cannot be empty", arg);
     }
     else if (strieq(p, "tab")) {
       if (!arg)
-	error("'tab' option requires argument in parentheses");
+	error("'tab' region option requires argument in parentheses");
       else {
 	if (arg[0] == '\0' || arg[1] != '\0')
-	  error("argument to 'tab' option must be a single character");
+	  error("'tab' region option argument must be a single"
+		" character");
 	else
 	  opt->tab_char = arg[0];
       }
     }
     else if (strieq(p, "linesize")) {
       if (!arg)
-	error("'linesize' option requires argument in parentheses");
+	error("'linesize' region option requires argument in"
+	      " parentheses");
       else {
 	if (sscanf(arg, "%d", &opt->linesize) != 1)
-	  error("bad linesize '%s'", arg);
+	  error("invalid argument to 'linesize' region option: '%1'",
+		arg);
 	else if (opt->linesize <= 0) {
-	  error("linesize must be positive");
+	  error("'linesize' region option argument must be positive");
 	  opt->linesize = 0;
 	}
       }
     }
     else if (strieq(p, "delim")) {
       if (!arg)
-	error("'delim' option requires argument in parentheses");
+	error("'delim' region option requires argument in parentheses");
       else if (arg[0] == '\0' || arg[1] == '\0' || arg[2] != '\0')
 	error("argument to 'delim' option must be two characters");
       else {
@@ -463,50 +468,53 @@ options *process_options(table_input &in)
     }
     else if (strieq(p, "center") || strieq(p, "centre")) {
       if (arg)
-	error("'center' option does not take an argument");
+	error("'center' region option does not take an argument");
       opt->flags |= table::CENTER;
     }
     else if (strieq(p, "expand")) {
       if (arg)
-	error("'expand' option does not take an argument");
+	error("'expand' region option does not take an argument");
       opt->flags |= table::EXPAND;
+      opt->flags |= table::GAP_EXPAND;
     }
     else if (strieq(p, "box") || strieq(p, "frame")) {
       if (arg)
-	error("'box' option does not take an argument");
+	error("'box' region option does not take an argument");
       opt->flags |= table::BOX;
     }
     else if (strieq(p, "doublebox") || strieq(p, "doubleframe")) {
       if (arg)
-	error("'doublebox' option does not take an argument");
+	error("'doublebox' region option does not take an argument");
       opt->flags |= table::DOUBLEBOX;
     }
     else if (strieq(p, "allbox")) {
       if (arg)
-	error("'allbox' option does not take an argument");
+	error("'allbox' region option does not take an argument");
       opt->flags |= table::ALLBOX;
     }
     else if (strieq(p, "nokeep")) {
       if (arg)
-	error("'nokeep' option does not take an argument");
+	error("'nokeep' region option does not take an argument");
       opt->flags |= table::NOKEEP;
     }
     else if (strieq(p, "nospaces")) {
       if (arg)
-	error("'nospaces' option does not take an argument");
+	error("'nospaces' region option does not take an argument");
       opt->flags |= table::NOSPACES;
     }
     else if (strieq(p, "nowarn")) {
       if (arg)
-	error("'nowarn' option does not take an argument");
+	error("'nowarn' region option does not take an argument");
       opt->flags |= table::NOWARN;
     }
     else if (strieq(p, "decimalpoint")) {
       if (!arg)
-	error("'decimalpoint' option requires argument in parentheses");
+	error("'decimalpoint' region option requires argument in"
+	      " parentheses");
       else {
 	if (arg[0] == '\0' || arg[1] != '\0')
-	  error("argument to 'decimalpoint' option must be a single character");
+	  error("'decimalpoint' region option argument must be a single"
+		" character");
 	else
 	  opt->decimal_point_char = arg[0];
       }
@@ -515,7 +523,7 @@ options *process_options(table_input &in)
       opt->flags |= table::EXPERIMENTAL;
     }
     else {
-      error("unrecognised global option '%1'", p);
+      error("unrecognized region option '%1'", p);
       // delete opt;
       // return 0;
     }
@@ -574,7 +582,7 @@ void entry_format::debug_print() const
     putc('=', stderr);
     break;
   default:
-    assert(0);
+    assert(0 == "invalid column classifier in switch");
     break;
   }
   if (point_size.val != 0) {
@@ -665,7 +673,7 @@ void format::add_rows(int n)
   vline = new char*[nrows + n];
   for (i = 0; i < nrows; i++)
     vline[i] = old_vline[i];
-  a_delete old_vline;
+  delete[] old_vline;
   for (i = 0; i < n; i++) {
     vline[nrows + i] = new char[ncolumns + 1];
     for (int j = 0; j < ncolumns + 1; j++)
@@ -675,7 +683,7 @@ void format::add_rows(int n)
   entry = new entry_format *[nrows + n];
   for (i = 0; i < nrows; i++)
     entry[i] = old_entry[i];
-  a_delete old_entry;
+  delete[] old_entry;
   for (i = 0; i < n; i++)
     entry[nrows + i] = new entry_format[ncolumns];
   nrows += n;
@@ -683,16 +691,16 @@ void format::add_rows(int n)
 
 format::~format()
 {
-  a_delete separation;
-  ad_delete(ncolumns) width;
-  a_delete equal;
-  a_delete expand;
+  delete[] separation;
+  delete[] width;
+  delete[] equal;
+  delete[] expand;
   for (int i = 0; i < nrows; i++) {
-    a_delete vline[i];
-    ad_delete(ncolumns) entry[i];
+    delete[] vline[i];
+    delete[] entry[i];
   }
-  a_delete vline;
-  a_delete entry;
+  delete[] vline;
+  delete[] entry;
 }
 
 struct input_entry_format : public entry_format {
@@ -700,9 +708,9 @@ struct input_entry_format : public entry_format {
   string width;
   int separation;
   int vline;
-  int pre_vline;
-  int last_column;
-  int equal;
+  int vline_count;
+  bool is_last_column;
+  bool is_equal_width;
   int expand;
   input_entry_format(format_type, input_entry_format * = 0);
   ~input_entry_format();
@@ -713,10 +721,10 @@ input_entry_format::input_entry_format(format_type t, input_entry_format *p)
 : entry_format(t), next(p)
 {
   separation = -1;
-  last_column = 0;
+  is_last_column = false;
   vline = 0;
-  pre_vline = 0;
-  equal = 0;
+  vline_count = 0;
+  is_equal_width = false;
   expand = 0;
 }
 
@@ -736,7 +744,7 @@ void free_input_entry_format_list(input_entry_format *list)
 void input_entry_format::debug_print()
 {
   int i;
-  for (i = 0; i < pre_vline; i++)
+  for (i = 0; i < vline_count; i++)
     putc('|', stderr);
   entry_format::debug_print();
   if (!width.empty()) {
@@ -745,7 +753,7 @@ void input_entry_format::debug_print()
     put_string(width, stderr);
     putc(')', stderr);
   }
-  if (equal)
+  if (is_equal_width)
     putc('e', stderr);
   if (expand)
     putc('x', stderr);
@@ -753,80 +761,88 @@ void input_entry_format::debug_print()
     fprintf(stderr, "%d", separation); 
   for (i = 0; i < vline; i++)
     putc('|', stderr);
-  if (last_column)
+  if (is_last_column)
     putc(',', stderr);
 }
 
-// Return zero if we should give up on this table.
-// If this is a continuation format line, current_format will be the current
-// format line.
-
+// Interpret a table format specification, like "CC,LR.".  Return null
+// pointer if we should give up on this table.  If this is a
+// continuation format line, `current_format` will be the current format
+// line.
 format *process_format(table_input &in, options *opt,
 		       format *current_format = 0)
 {
-  input_entry_format *list = 0;
-  int have_expand = 0;
+  input_entry_format *list = 0 /* nullptr */;
+  bool have_expand = false;
+  bool is_first_row = true;
   int c = in.get();
   for (;;) {
-    int pre_vline = 0;
-    int got_format = 0;
-    int got_period = 0;
+    int vline_count = 0;
+    bool got_format = false;
+    bool got_period = false;
     format_type t = FORMAT_LEFT;
     for (;;) {
       if (c == EOF) {
-	error("end of input while processing format");
+	error("end of input while processing table format"
+	      " specification");
 	free_input_entry_format_list(list);
-	return 0;
+	list = 0 /* nullptr */;
+	return 0 /* nullptr */;
       }
       switch (c) {
       case 'n':
       case 'N':
 	t = FORMAT_NUMERIC;
-	got_format = 1;
+	got_format = true;
 	break;
       case 'a':
       case 'A':
-	got_format = 1;
+	got_format = true;
 	t = FORMAT_ALPHABETIC;
 	break;
       case 'c':
       case 'C':
-	got_format = 1;
+	got_format = true;
 	t = FORMAT_CENTER;
 	break;
       case 'l':
       case 'L':
-	got_format = 1;
+	got_format = true;
 	t = FORMAT_LEFT;
 	break;
       case 'r':
       case 'R':
-	got_format = 1;
+	got_format = true;
 	t = FORMAT_RIGHT;
 	break;
       case 's':
       case 'S':
-	got_format = 1;
+	got_format = true;
 	t = FORMAT_SPAN;
 	break;
       case '^':
-	got_format = 1;
+	got_format = true;
 	t = FORMAT_VSPAN;
 	break;
       case '_':
       case '-':			// tbl also accepts this
-	got_format = 1;
+	got_format = true;
 	t = FORMAT_HLINE;
+	if (is_first_row)
+	  opt->flags |= table::HAS_TOP_HLINE;
 	break;
       case '=':
-	got_format = 1;
+	got_format = true;
 	t = FORMAT_DOUBLE_HLINE;
 	break;
       case '.':
-	got_period = 1;
+	got_period = true;
 	break;
       case '|':
-	pre_vline++;
+	// leading vertical line in row
+	opt->flags |= table::HAS_TOP_VLINE;
+	vline_count++;
+	// list->vline_count is updated later
 	break;
       case ' ':
       case '\t':
@@ -835,9 +851,10 @@ format *process_format(table_input &in, options *opt,
       default:
 	if (c == opt->tab_char)
 	  break;
-	error("unrecognised format '%1'", char(c));
+	error("invalid column classifier '%1'", char(c));
 	free_input_entry_format_list(list);
-	return 0;
+	list = 0 /* nullptr */;
+	return 0 /* nullptr */;
       }
       if (got_period)
 	break;
@@ -848,9 +865,14 @@ format *process_format(table_input &in, options *opt,
     if (got_period)
       break;
     list = new input_entry_format(t, list);
-    if (pre_vline)
-      list->pre_vline = pre_vline;
-    int success = 1;
+    if (vline_count > 2) {
+      vline_count = 2;
+      error("more than 2 vertical lines at beginning of row description");
+    }
+    list->vline_count = vline_count;
+    // Now handle modifiers.
+    vline_count = 0;
+    bool is_valid_modifier_sequence = true;
     do {
       switch (c) {
       case '0':
@@ -885,7 +907,7 @@ format *process_format(table_input &in, options *opt,
       case 'e':
       case 'E':
 	c = in.get();
-	list->equal = 1;
+	list->is_equal_width = true;
 	// 'e' and 'x' are mutually exclusive
 	list->expand = 0;
 	break;
@@ -895,14 +917,15 @@ format *process_format(table_input &in, options *opt,
 	  c = in.get();
 	} while (c == ' ' || c == '\t');
 	if (c == EOF) {
-	  error("missing font name");
+	  error("'f' column modifier missing font name or mounting"
+		" position");
 	  break;
 	}
 	if (c == '(') {
 	  for (;;) {
 	    c = in.get();
 	    if (c == EOF || c == ' ' || c == '\t') {
-	      error("missing ')'");
+	      error("'f' column modifier missing closing parenthesis");
 	      break;
 	    }
 	    if (c == ')') {
@@ -934,14 +957,14 @@ format *process_format(table_input &in, options *opt,
 	  c = in.get();
 	} while (c == ' ' || c == '\t');
 	if (c == EOF) {
-	  error("missing macro name");
+	  error("'m' column modifier missing macro name");
 	  break;
 	}
 	if (c == '(') {
 	  for (;;) {
 	    c = in.get();
 	    if (c == EOF || c == ' ' || c == '\t') {
-	      error("missing ')'");
+	      error("'m' column modifier missing closing parenthesis");
 	      break;
 	    }
 	    if (c == ')') {
@@ -964,31 +987,36 @@ format *process_format(table_input &in, options *opt,
 	break;
       case 'p':
       case 'P':
-	c = in.get();
-	list->point_size.val = 0;
-	list->point_size.inc = 0;
-	if (c == '+' || c == '-') {
-	  list->point_size.inc = (c == '+' ? 1 : -1);
+	{
+	  inc_number &ps = list->point_size;
+	  ps.val = 0;
+	  ps.inc = 0;
 	  c = in.get();
-	}
-	if (c == EOF || !csdigit(c)) {
-	  error("'p' modifier must be followed by number");
-	  list->point_size.inc = 0;
-	}
-	else {
-	  do {
-	    list->point_size.val *= 10;
-	    list->point_size.val += c - '0';
+	  if (c == '+' || c == '-') {
+	    ps.inc = (c == '+' ? 1 : -1);
 	    c = in.get();
-	  } while (c != EOF && csdigit(c));
+	  }
+	  if (c == EOF || !csdigit(c)) {
+	    warning("'p' column modifier must be followed by"
+		    " (optionally signed) integer; ignoring");
+	    ps.inc = 0;
+	  }
+	  else {
+	    do {
+	      ps.val *= 10;
+	      ps.val += c - '0';
+	      c = in.get();
+	    } while (c != EOF && csdigit(c));
+	  }
+	  if (ps.val > MAX_POINT_SIZE || ps.val < -MAX_POINT_SIZE) {
+	    warning("'p' column modifier argument magnitude of %1"
+		    " points out of range (> %2); ignoring", ps.val,
+		    MAX_POINT_SIZE);
+	    ps.val = 0;
+	    ps.inc = 0;
+	  }
+	  break;
 	}
-	if (list->point_size.val > MAX_POINT_SIZE
-	    || list->point_size.val < -MAX_POINT_SIZE) {
-	  error("unreasonable point size");
-	  list->point_size.val = 0;
-	  list->point_size.inc = 0;
-	}
-	break;
       case 't':
       case 'T':
 	c = in.get();
@@ -1001,31 +1029,37 @@ format *process_format(table_input &in, options *opt,
 	break;
       case 'v':
       case 'V':
-	c = in.get();
-	list->vertical_spacing.val = 0;
-	list->vertical_spacing.inc = 0;
-	if (c == '+' || c == '-') {
-	  list->vertical_spacing.inc = (c == '+' ? 1 : -1);
+	{
+	  inc_number &vs = list->vertical_spacing;
+	  vs.val = 0;
+	  vs.inc = 0;
 	  c = in.get();
-	}
-	if (c == EOF || !csdigit(c)) {
-	  error("'v' modifier must be followed by number");
-	  list->vertical_spacing.inc = 0;
-	}
-	else {
-	  do {
-	    list->vertical_spacing.val *= 10;
-	    list->vertical_spacing.val += c - '0';
+	  if (c == '+' || c == '-') {
+	    vs.inc = (c == '+' ? 1 : -1);
 	    c = in.get();
-	  } while (c != EOF && csdigit(c));
+	  }
+	  if (c == EOF || !csdigit(c)) {
+	    warning("'v' column modifier must be followed by"
+		    " (optionally signed) integer; ignoring");
+	    vs.inc = 0;
+	  }
+	  else {
+	    do {
+	      vs.val *= 10;
+	      vs.val += c - '0';
+	      c = in.get();
+	    } while (c != EOF && csdigit(c));
+	  }
+	  if (vs.val > MAX_VERTICAL_SPACING
+	      || vs.val < -MAX_VERTICAL_SPACING) {
+	    warning("'v' column modifier argument magnitude of %1"
+		    " points out of range (> %2); ignoring", vs.val,
+		    MAX_VERTICAL_SPACING);
+	    vs.val = 0;
+	    vs.inc = 0;
+	  }
+	  break;
 	}
-	if (list->vertical_spacing.val > MAX_VERTICAL_SPACING
-	    || list->vertical_spacing.val < -MAX_VERTICAL_SPACING) {
-	  error("unreasonable vertical spacing");
-	  list->vertical_spacing.val = 0;
-	  list->vertical_spacing.inc = 0;
-	}
-	break;
       case 'w':
       case 'W':
 	c = in.get();
@@ -1036,9 +1070,10 @@ format *process_format(table_input &in, options *opt,
 	  c = in.get();
 	  while (c != ')') {
 	    if (c == EOF || c == '\n') {
-	      error("missing ')'");
+	      error("'w' column modifier missing closing parenthesis");
 	      free_input_entry_format_list(list);
-	      return 0;
+	      list = 0 /* nullptr */;
+	      return 0 /* nullptr */;
 	    }
 	    list->width += c;
 	    c = in.get();
@@ -1053,7 +1088,7 @@ format *process_format(table_input &in, options *opt,
 	  else
 	    list->width = "";
 	  if (c == EOF || !csdigit(c))
-	    error("bad argument for 'w' modifier");
+	    error("invalid argument to 'w' modifier");
 	  else {
 	    do {
 	      list->width += char(c);
@@ -1069,7 +1104,7 @@ format *process_format(table_input &in, options *opt,
 	c = in.get();
 	list->expand = 1;
 	// 'x' and 'e' are mutually exclusive
-	list->equal = 0;
+	list->is_equal_width = false;
 	// 'x' and 'w' are mutually exclusive
 	list->width = "";
 	break;
@@ -1079,8 +1114,10 @@ format *process_format(table_input &in, options *opt,
 	list->zero_width = 1;
 	break;
       case '|':
+	if (is_first_row)
+	  opt->flags |= table::HAS_TOP_VLINE;
 	c = in.get();
-	list->vline++;
+	vline_count++;
 	break;
       case ' ':
       case '\t':
@@ -1090,17 +1127,20 @@ format *process_format(table_input &in, options *opt,
 	if (c == opt->tab_char)
 	  c = in.get();
 	else
-	  success = 0;
+	  is_valid_modifier_sequence = false;
 	break;
       }
-    } while (success);
-    if (list->vline > 2) {
-      list->vline = 2;
-      error("more than 2 vertical bars between key letters");
+    } while (is_valid_modifier_sequence);
+    if (vline_count > 2) {
+      vline_count = 2;
+      error("more than 2 vertical lines after column descriptor");
     }
+    list->vline += vline_count;
     if (c == '\n' || c == ',') {
+      vline_count = 0;
+      is_first_row = false;
       c = in.get();
-      list->last_column = 1;
+      list->is_last_column = true;
     }
   }
   if (c == '.') {
@@ -1108,17 +1148,19 @@ format *process_format(table_input &in, options *opt,
       c = in.get();
     } while (c == ' ' || c == '\t');
     if (c != '\n') {
-      error("'.' not last character on line");
+      error("'.' is not the last character of the table format");
       free_input_entry_format_list(list);
-      return 0;
+      list = 0 /* nullptr */;
+      return 0 /* nullptr */;
     }
   }
   if (!list) {
-    error("no format");
+    error("table format specification is empty");
     free_input_entry_format_list(list);
-    return 0;
+    list = 0 /* nullptr */;
+    return 0 /* nullptr */;
   }
-  list->last_column = 1;
+  list->is_last_column = true;
   // now reverse the list so that the first row is at the beginning
   input_entry_format *rev = 0;
   while (list != 0) {
@@ -1140,7 +1182,7 @@ format *process_format(table_input &in, options *opt,
   int nrows = 0;
   int col = 0;
   for (tem = list; tem; tem = tem->next) {
-    if (tem->last_column) {
+    if (tem->is_last_column) {
       if (col >= ncolumns)
 	ncolumns = col + 1;
       col = 0;
@@ -1155,7 +1197,8 @@ format *process_format(table_input &in, options *opt,
     if (ncolumns > current_format->ncolumns) {
       error("cannot increase the number of columns in a continued format");
       free_input_entry_format_list(list);
-      return 0;
+      list = 0 /* nullptr */;
+      return 0 /* nullptr */;
     }
     f = current_format;
     row = f->nrows;
@@ -1179,7 +1222,7 @@ format *process_format(table_input &in, options *opt,
     }
     else if (tem->separation >= 0)
       error("column separation specified for last column");
-    if (tem->equal && !f->equal[col]) {
+    if (tem->is_equal_width && !f->equal[col]) {
       if (current_format)
 	error("cannot change which columns are equal in continued format");
       else
@@ -1190,7 +1233,7 @@ format *process_format(table_input &in, options *opt,
 	error("cannot change which columns are expanded in continued format");
       else {
 	f->expand[col] = 1;
-	have_expand = 1;
+	have_expand = true;
       }
     }
     if (!tem->width.empty()) {
@@ -1199,12 +1242,10 @@ format *process_format(table_input &in, options *opt,
 	error("multiple widths for column %1", col + 1);
       f->width[col] = tem->width;
     }
-    if (tem->pre_vline) {
-      assert(col == 0);
-      f->vline[row][col] = tem->pre_vline;
-    }
+    if (tem->vline_count)
+      f->vline[row][col] = tem->vline_count;
     f->vline[row][col + 1] = tem->vline;
-    if (tem->last_column) {
+    if (tem->is_last_column) {
       row++;
       col = 0;
     }
@@ -1212,6 +1253,7 @@ format *process_format(table_input &in, options *opt,
       col++;
   }
   free_input_entry_format_list(list);
+  list = 0 /* nullptr */;
   for (col = 0; col < ncolumns; col++) {
     entry_format *e = f->entry[f->nrows - 1] + col;
     if (e->type != FORMAT_HLINE
@@ -1222,10 +1264,11 @@ format *process_format(table_input &in, options *opt,
   if (col >= ncolumns) {
     error("last row of format is all lines");
     delete f;
-    return 0;
+    return 0 /* nullptr */;
   }
   if (have_expand && (opt->flags & table::EXPAND)) {
-    error("ignoring global 'expand' option because of 'x' specifiers");
+    error("'x' column modifier encountered; ignoring region option"
+	  " 'expand'");
     opt->flags &= ~table::EXPAND;
   }
   return f;
@@ -1237,7 +1280,7 @@ table *process_data(table_input &in, format *f, options *opt)
   int ncolumns = f->ncolumns;
   int current_row = 0;
   int format_index = 0;
-  int give_up = 0;
+  bool give_up = false;
   enum { DATA_INPUT_LINE, TROFF_INPUT_LINE, SINGLE_HLINE, DOUBLE_HLINE } type;
   table *tbl = new table(ncolumns, opt->flags, opt->linesize,
 			 opt->decimal_point_char);
@@ -1266,6 +1309,8 @@ table *process_data(table_input &in, format *f, options *opt)
 	  type = SINGLE_HLINE;
 	else
 	  type = DOUBLE_HLINE;
+	if (0 == current_row)
+	  tbl->flags |= table::HAS_TOP_HLINE;
       }
       else {
 	in.unget(d);
@@ -1305,7 +1350,7 @@ table *process_data(table_input &in, format *f, options *opt)
 	}
 	entry_format *line_format = f->entry[format_index];
 	int col = 0;
-	int row_comment = 0;
+	bool seen_row_comment = false;
 	for (;;) {
 	  if (c == tab_char || c == '\n') {
 	    int ln = current_lineno;
@@ -1416,12 +1461,12 @@ table *process_data(table_input &in, format *f, options *opt)
 		  break;
 		case END:
 		default:
-		  assert(0);
+		  assert(0 == "invalid `state` in switch");
 		}
 	      }
 	      if (c == EOF) {
 		error("end of data in middle of text block");
-		give_up = 1;
+		give_up = true;
 		break;
 	      }
 	    }
@@ -1430,12 +1475,12 @@ table *process_data(table_input &in, format *f, options *opt)
 		if (input_entry.length() >= 2
 		    && input_entry[0] == '\\'
 		    && input_entry[1] == '"')
-		  row_comment = 1;
-		else if (!row_comment) {
+		  seen_row_comment = true;
+		else if (!seen_row_comment) {
 		  if (c == '\n')
 		    in.unget(c);
 		  input_entry += '\0';
-		  error("excess data entry '%1' discarded",
+		  error("excess table entry '%1' discarded",
 			input_entry.contents());
 		  if (c == '\n')
 		    (void)in.get();
@@ -1485,7 +1530,7 @@ table *process_data(table_input &in, format *f, options *opt)
 	    && line[0] == '.' && line[1] == 'T' && line[2] == '&') {
 	  format *newf = process_format(in, opt, f);
 	  if (newf == 0)
-	    give_up = 1;
+	    give_up = true;
 	  else
 	    f = newf;
 	}
@@ -1503,14 +1548,14 @@ table *process_data(table_input &in, format *f, options *opt)
       tbl->add_double_hline(current_row);
       break;
     default:
-      assert(0);
+      assert(0 == "invalid `type` in switch");
     }
     if (give_up)
       break;
   }
   if (!give_up && current_row == 0) {
     error("no real data");
-    give_up = 1;
+    give_up = true;
   }
   if (give_up) {
     delete tbl;
@@ -1536,29 +1581,33 @@ table *process_data(table_input &in, format *f, options *opt)
 
 void process_table(table_input &in)
 {
-  options *opt = 0;
-  format *form = 0;
-  table *tbl = 0;
-  if ((opt = process_options(in)) != 0 
-      && (form = process_format(in, opt)) != 0
-      && (tbl = process_data(in, form, opt)) != 0) {
+  options *opt = 0 /* nullptr */;
+  format *fmt = 0 /* nullptr */;
+  table *tbl = 0 /* nullptr */;
+  if ((opt = process_options(in)) != 0 /* nullptr */
+      && (fmt = process_format(in, opt)) != 0 /* nullptr */
+      && (tbl = process_data(in, fmt, opt)) != 0 /* nullptr */) {
     tbl->print();
     delete tbl;
   }
   else {
-    error("giving up on this table");
+    error("giving up on this table region");
     while (in.get() != EOF)
       ;
   }
   delete opt;
-  delete form;
+  delete fmt;
   if (!in.ended())
     error("premature end of file");
 }
 
 static void usage(FILE *stream)
 {
-  fprintf(stream, "usage: %s [ -vC ] [ files... ]\n", program_name);
+  fprintf(stream,
+"usage: %s [-C] [file ...]\n"
+"usage: %s {-v | --version}\n"
+"usage: %s --help\n",
+	 program_name, program_name, program_name);
 }
 
 int main(int argc, char **argv)
@@ -1572,7 +1621,8 @@ int main(int argc, char **argv)
     { "version", no_argument, 0, 'v' },
     { NULL, 0, 0, 0 }
   };
-  while ((opt = getopt_long(argc, argv, "vCT:", long_options, NULL)) != EOF)
+  while ((opt = getopt_long(argc, argv, "vC", long_options, NULL))
+         != EOF)
     switch (opt) {
     case 'C':
       compatible_flag = 1;
@@ -1580,26 +1630,24 @@ int main(int argc, char **argv)
     case 'v':
       {
 	printf("GNU tbl (groff) version %s\n", Version_string);
-	exit(0);
+	exit(EXIT_SUCCESS);
 	break;
       }
-    case 'T':
-      // I'm sick of getting bug reports from IRIX users
-      break;
     case CHAR_MAX + 1: // --help
       usage(stdout);
-      exit(0);
+      exit(EXIT_SUCCESS);
       break;
     case '?':
       usage(stderr);
-      exit(1);
+      exit(EXIT_FAILURE);
       break;
     default:
-      assert(0);
+      assert(0 == "unhandled getopt_long return value");
     }
-  printf(".if !\\n(.g .ab GNU tbl requires GNU troff.\n"
-	 ".if !dTS .ds TS\n"
-	 ".if !dTE .ds TE\n");
+  printf(".if !\\n(.g .ab GNU tbl requires groff extensions; aborting\n"
+	 ".do if !dTS .ds TS\n"
+	 ".do if !dT& .ds T&\n"
+	 ".do if !dTE .ds TE\n");
   if (argc > optind) {
     for (int i = optind; i < argc; i++) 
       if (argv[i][0] == '-' && argv[i][1] == '\0') {
@@ -1611,8 +1659,10 @@ int main(int argc, char **argv)
       else {
 	errno = 0;
 	FILE *fp = fopen(argv[i], "r");
-	if (fp == 0)
+	if (fp == 0) {
+	  current_filename = 0 /* nullptr */;
 	  fatal("can't open '%1': %2", argv[i], strerror(errno));
+	}
 	else {
 	  current_lineno = 1;
 	  string fn(argv[i]);
@@ -1635,3 +1685,8 @@ int main(int argc, char **argv)
   return 0;
 }
 
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

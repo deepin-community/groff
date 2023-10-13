@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
 This file is part of groff.
 
@@ -21,6 +21,8 @@ internet at <http://www.gnu.org/licenses/gpl-2.0.txt>. */
  * Map DVI (ditroff output) character names to
  * font indexes and back
  */
+
+#include <config.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -184,7 +186,7 @@ static DviCharNameMap ISO8859_1_map = {
 {	"$", "Do",		/* 36 */},
 {	"%",			/* 37 */},
 {	"&",			/* 38 */},
-{	"'", "cq",		/* 39 */},
+{	"'", "aq", "cq", "oq",	/* 39 */},
 {	"(",			/* 40 */},
 {	")",			/* 41 */},
 {	"*",			/* 42 */},
@@ -241,7 +243,7 @@ static DviCharNameMap ISO8859_1_map = {
 {	"]", "rB",		/* 93 */},
 {	"^", "a^", "ha",	/* 94 */},
 {	"_",			/* 95 */},
-{	"`", "oq",		/* 96 */},
+{	"`", "ga",		/* 96 */},
 {	"a",			/* 97 */},
 {	"b",			/* 98 */},
 {	"c",			/* 99 */},

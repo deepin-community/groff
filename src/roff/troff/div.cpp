@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -34,12 +33,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "nonposix.h"
 
-int exit_started = 0;		// the exit process has started
-int done_end_macro = 0;		// the end macro (if any) has finished
-int seen_last_page_ejector = 0;	// seen the LAST_PAGE_EJECTOR cookie
+bool is_exit_underway = false;
+bool is_eoi_macro_finished = false;
+bool seen_last_page_ejector = false;
+static bool began_page_in_eoi_macro = false;
 int last_page_number = 0;	// if > 0, the number of the last page
 				// specified with -o
-static int began_page_in_end_macro = 0;	// a new page was begun during the end macro
 
 static int last_post_line_extra_space = 0; // needed for \n(.a
 static int nl_reg_contents = -1;
@@ -49,7 +48,7 @@ static int vertical_position_traps_flag = 1;
 static vunits truncated_space;
 static vunits needed_space;
 
-diversion::diversion(symbol s) 
+diversion::diversion(symbol s)
 : prev(0), nm(s), vertical_position(V0), high_water_mark(V0),
   any_chars_added(0), no_space_mode(0), needs_push(0), saved_seen_break(0),
   saved_seen_space(0), saved_seen_eol(0), saved_suppress_next_eol(0),
@@ -152,7 +151,7 @@ void divert_append()
 {
   do_divert(1, 0);
 }
-  
+
 void box()
 {
   do_divert(0, 1);
@@ -247,7 +246,7 @@ vunits macro_diversion::distance_to_next_trap()
   if (!diversion_trap.is_null() && diversion_trap_pos > vertical_position)
     return diversion_trap_pos - vertical_position;
   else
-    // Substract vresolution so that vunits::vunits does not overflow.
+    // Subtract vresolution so that vunits::vunits does not overflow.
     return vunits(INT_MAX - vresolution);
 }
 
@@ -343,7 +342,7 @@ trap *top_level_diversion::find_next_trap(vunits *next_trap_pos)
   for (trap *pt = page_trap_list; pt != 0; pt = pt->next)
     if (!pt->nm.is_null()) {
       if (pt->position >= V0) {
-	if (pt->position > vertical_position 
+	if (pt->position > vertical_position
 	    && pt->position < page_length
 	    && (next_trap == 0 || pt->position < *next_trap_pos)) {
 	  next_trap = pt;
@@ -379,7 +378,7 @@ void top_level_diversion::output(node *nd, int retain_size,
   no_space_mode = 0;
   vunits next_trap_pos;
   trap *next_trap = find_next_trap(&next_trap_pos);
-  if (before_first_page && begin_page()) 
+  if (before_first_page && begin_page())
     fatal("sorry, I didn't manage to begin the first page in time: use an explicit .br request");
   vertical_size v(vs, post_vs);
   for (node *tem = nd; tem != 0; tem = tem->next)
@@ -434,7 +433,8 @@ void top_level_diversion::transparent_output(unsigned char c)
 
 void top_level_diversion::transparent_output(node * /*n*/)
 {
-  error("can't transparently output node at top level");
+  if (getenv("GROFF_ENABLE_TRANSPARENCY_WARNINGS") != 0 /* nullptr */)
+    error("can't transparently output node at top level");
 }
 
 void top_level_diversion::copy_file(const char *filename)
@@ -505,7 +505,7 @@ void top_level_diversion::add_trap(symbol nam, vunits pos)
   }
   else
     *p = new trap(nam, pos, 0);
-}  
+}
 
 void top_level_diversion::remove_trap(symbol nam)
 {
@@ -524,7 +524,7 @@ void top_level_diversion::remove_trap_at(vunits pos)
       return;
     }
 }
-      
+
 void top_level_diversion::change_trap(symbol nam, vunits pos)
 {
   for (trap *p = page_trap_list; p; p = p->next)
@@ -532,6 +532,8 @@ void top_level_diversion::change_trap(symbol nam, vunits pos)
       p->position = pos;
       return;
     }
+  warning(WARN_MAC, "cannot move unplanted trap macro '%1'",
+	  nam.contents());
 }
 
 void top_level_diversion::print_traps()
@@ -559,7 +561,10 @@ void cleanup_and_exit(int exit_code)
 {
   if (the_output) {
     the_output->trailer(topdiv->get_page_length());
-    delete the_output;
+    // If we're already dying, don't call the_output's destructor.  See
+    // node.cpp:real_output_file::~real_output_file().
+    if (!the_output->is_dying)
+      delete the_output;
   }
   FLUSH_INPUT_PIPE(STDIN_FILENO);
   exit(exit_code);
@@ -569,16 +574,17 @@ void cleanup_and_exit(int exit_code)
 // The optional parameter is for the .trunc register.
 int top_level_diversion::begin_page(vunits n)
 {
-  if (exit_started) {
+  if (is_exit_underway) {
     if (page_count == last_page_count
 	? curenv->is_empty()
-	: (done_end_macro && (seen_last_page_ejector || began_page_in_end_macro)))
-      cleanup_and_exit(0);
-    if (!done_end_macro)
-      began_page_in_end_macro = 1;
+	: (is_eoi_macro_finished && (seen_last_page_ejector
+				      || began_page_in_eoi_macro)))
+      cleanup_and_exit(EXIT_SUCCESS);
+    if (!is_eoi_macro_finished)
+      began_page_in_eoi_macro = true;
   }
   if (last_page_number > 0 && page_number == last_page_number)
-    cleanup_and_exit(0);
+    cleanup_and_exit(EXIT_SUCCESS);
   if (!the_output)
     init_output();
   ++page_count;
@@ -689,7 +695,7 @@ void begin_page()
   int n = 0;		/* pacify compiler */
   if (has_arg() && get_integer(&n, topdiv->get_page_number()))
     got_arg = 1;
-  while (!tok.newline() && !tok.eof())
+  while (!tok.is_newline() && !tok.is_eof())
     tok.next();
   if (curdiv == topdiv) {
     if (topdiv->before_first_page) {
@@ -768,14 +774,14 @@ void space_request()
   vunits n;
   if (!has_arg() || !get_vunits(&n, 'v'))
     n = curenv->get_vertical_spacing();
-  while (!tok.newline() && !tok.eof())
+  while (!tok.is_newline() && !tok.is_eof())
     tok.next();
   if (!unpostpone_traps() && !curdiv->no_space_mode)
     curdiv->space(n);
   else
     // The line might have had line spacing that was truncated.
     truncated_space += n;
-  
+
   tok.next();
 }
 
@@ -796,7 +802,7 @@ void need_space()
   vunits n;
   if (!has_arg() || !get_vunits(&n, 'v'))
     n = curenv->get_vertical_spacing();
-  while (!tok.newline() && !tok.eof())
+  while (!tok.is_newline() && !tok.is_eof())
     tok.next();
   curdiv->need(n);
   tok.next();
@@ -808,7 +814,9 @@ void page_number()
 
   // the ps4html register is set if we are using -Tps
   // to generate images for html
-  reg *r = (reg *)number_reg_dictionary.lookup("ps4html");
+  // XXX: Yuck!  Get rid of this; macro packages already test the
+  // register before invoking .pn.
+  reg *r = (reg *)register_dictionary.lookup("ps4html");
   if (r == NULL)
     if (has_arg() && get_integer(&n, topdiv->get_page_number()))
       topdiv->set_next_page_number(n);
@@ -831,7 +839,7 @@ void save_vertical_space()
 
 void output_saved_vertical_space()
 {
-  while (!tok.newline() && !tok.eof())
+  while (!tok.is_newline() && !tok.is_eof())
     tok.next();
   if (saved_space > V0)
     curdiv->space(saved_space, 1);
@@ -841,7 +849,7 @@ void output_saved_vertical_space()
 
 void flush_output()
 {
-  while (!tok.newline() && !tok.eof())
+  while (!tok.is_newline() && !tok.is_eof())
     tok.next();
   if (break_flag)
     curenv->do_break();
@@ -868,7 +876,7 @@ void top_level_diversion::set_diversion_trap(symbol, vunits)
 
 void top_level_diversion::clear_diversion_trap()
 {
-  error("can't set diversion trap when no current diversion");
+  error("can't clear diversion trap when no current diversion");
 }
 
 void diversion_trap()
@@ -888,7 +896,7 @@ void diversion_trap()
 
 void change_trap()
 {
-  symbol s = get_name(1);
+  symbol s = get_name(true /* required */);
   if (!s.is_null()) {
     vunits x;
     if (has_arg() && get_vunits(&x, 'v'))
@@ -952,14 +960,14 @@ void vertical_position_traps()
 
 class page_offset_reg : public reg {
 public:
-  int get_value(units *);
+  bool get_value(units *);
   const char *get_string();
 };
-  
-int page_offset_reg::get_value(units *res)
+
+bool page_offset_reg::get_value(units *res)
 {
   *res = topdiv->get_page_offset().to_units();
-  return 1;
+  return true;
 }
 
 const char *page_offset_reg::get_string()
@@ -969,14 +977,14 @@ const char *page_offset_reg::get_string()
 
 class page_length_reg : public reg {
 public:
-  int get_value(units *);
+  bool get_value(units *);
   const char *get_string();
 };
-  
-int page_length_reg::get_value(units *res)
+
+bool page_length_reg::get_value(units *res)
 {
   *res = topdiv->get_page_length().to_units();
-  return 1;
+  return true;
 }
 
 const char *page_length_reg::get_string()
@@ -986,17 +994,17 @@ const char *page_length_reg::get_string()
 
 class vertical_position_reg : public reg {
 public:
-  int get_value(units *);
+  bool get_value(units *);
   const char *get_string();
 };
-  
-int vertical_position_reg::get_value(units *res)
+
+bool vertical_position_reg::get_value(units *res)
 {
   if (curdiv == topdiv && topdiv->before_first_page)
     *res = -1;
   else
     *res = curdiv->get_vertical_position().to_units();
-  return 1;
+  return true;
 }
 
 const char *vertical_position_reg::get_string()
@@ -1009,14 +1017,14 @@ const char *vertical_position_reg::get_string()
 
 class high_water_mark_reg : public reg {
 public:
-  int get_value(units *);
+  bool get_value(units *);
   const char *get_string();
 };
-  
-int high_water_mark_reg::get_value(units *res)
+
+bool high_water_mark_reg::get_value(units *res)
 {
   *res = curdiv->get_high_water_mark().to_units();
-  return 1;
+  return true;
 }
 
 const char *high_water_mark_reg::get_string()
@@ -1026,14 +1034,14 @@ const char *high_water_mark_reg::get_string()
 
 class distance_to_next_trap_reg : public reg {
 public:
-  int get_value(units *);
+  bool get_value(units *);
   const char *get_string();
 };
-  
-int distance_to_next_trap_reg::get_value(units *res)
+
+bool distance_to_next_trap_reg::get_value(units *res)
 {
   *res = curdiv->distance_to_next_trap().to_units();
-  return 1;
+  return true;
 }
 
 const char *distance_to_next_trap_reg::get_string()
@@ -1054,7 +1062,7 @@ const char *diversion_name_reg::get_string()
 class page_number_reg : public general_reg {
 public:
   page_number_reg();
-  int get_value(units *);
+  bool get_value(units *);
   void set_value(units);
 };
 
@@ -1067,10 +1075,10 @@ void page_number_reg::set_value(units n)
   topdiv->set_page_number(n);
 }
 
-int page_number_reg::get_value(units *res)
+bool page_number_reg::get_value(units *res)
 {
   *res = topdiv->get_page_number();
-  return 1;
+  return true;
 }
 
 class next_page_number_reg : public reg {
@@ -1135,14 +1143,14 @@ void nl_reg::set_value(units n)
 
 class no_space_mode_reg : public reg {
 public:
-  int get_value(units *);
+  bool get_value(units *);
   const char *get_string();
 };
 
-int no_space_mode_reg::get_value(units *val)
+bool no_space_mode_reg::get_value(units *val)
 {
   *val = curdiv->no_space_mode;
-  return 1;
+  return true;
 }
 
 const char *no_space_mode_reg::get_string()
@@ -1174,25 +1182,31 @@ void init_div_requests()
   init_request("sv", save_vertical_space);
   init_request("vpt", vertical_position_traps);
   init_request("wh", when_request);
-  number_reg_dictionary.define(".a",
-		       new constant_int_reg(&last_post_line_extra_space));
-  number_reg_dictionary.define(".d", new vertical_position_reg);
-  number_reg_dictionary.define(".h", new high_water_mark_reg);
-  number_reg_dictionary.define(".ne",
+  register_dictionary.define(".a",
+		       new readonly_register(&last_post_line_extra_space));
+  register_dictionary.define(".d", new vertical_position_reg);
+  register_dictionary.define(".h", new high_water_mark_reg);
+  register_dictionary.define(".ne",
 			       new constant_vunits_reg(&needed_space));
-  number_reg_dictionary.define(".ns", new no_space_mode_reg);
-  number_reg_dictionary.define(".o", new page_offset_reg);
-  number_reg_dictionary.define(".p", new page_length_reg);
-  number_reg_dictionary.define(".pe", new page_ejecting_reg);
-  number_reg_dictionary.define(".pn", new next_page_number_reg);
-  number_reg_dictionary.define(".t", new distance_to_next_trap_reg);
-  number_reg_dictionary.define(".trunc",
+  register_dictionary.define(".ns", new no_space_mode_reg);
+  register_dictionary.define(".o", new page_offset_reg);
+  register_dictionary.define(".p", new page_length_reg);
+  register_dictionary.define(".pe", new page_ejecting_reg);
+  register_dictionary.define(".pn", new next_page_number_reg);
+  register_dictionary.define(".t", new distance_to_next_trap_reg);
+  register_dictionary.define(".trunc",
 			       new constant_vunits_reg(&truncated_space));
-  number_reg_dictionary.define(".vpt", 
-		       new constant_int_reg(&vertical_position_traps_flag));
-  number_reg_dictionary.define(".z", new diversion_name_reg);
-  number_reg_dictionary.define("dl", new variable_reg(&dl_reg_contents));
-  number_reg_dictionary.define("dn", new variable_reg(&dn_reg_contents));
-  number_reg_dictionary.define("nl", new nl_reg);
-  number_reg_dictionary.define("%", new page_number_reg);
+  register_dictionary.define(".vpt",
+		       new readonly_register(&vertical_position_traps_flag));
+  register_dictionary.define(".z", new diversion_name_reg);
+  register_dictionary.define("dl", new variable_reg(&dl_reg_contents));
+  register_dictionary.define("dn", new variable_reg(&dn_reg_contents));
+  register_dictionary.define("nl", new nl_reg);
+  register_dictionary.define("%", new page_number_reg);
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

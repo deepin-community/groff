@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -36,7 +35,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 symbol default_family("T");
 
-enum { ADJUST_LEFT = 0, ADJUST_BOTH = 1, ADJUST_CENTER = 3, ADJUST_RIGHT = 5 };
+enum { ADJUST_LEFT = 0,
+  ADJUST_BOTH = 1,
+  ADJUST_CENTER = 3,
+  ADJUST_RIGHT = 5,
+  ADJUST_MAX = 5
+};
 
 enum {
   // Not all combinations are valid; see hyphenate_request() below.
@@ -47,18 +51,16 @@ enum {
   HYPHEN_NOT_FIRST_CHARS = 8,
   HYPHEN_LAST_CHAR = 16,
   HYPHEN_FIRST_CHAR = 32,
-  HYPHEN_MAX = 63,
+  HYPHEN_MAX = 63
 };
 
-struct env_list {
+struct env_list_node {
   environment *env;
-  env_list *next;
-  env_list(environment *e, env_list *p) : env(e), next(p) {}
+  env_list_node *next;
+  env_list_node(environment *e, env_list_node *p) : env(e), next(p) {}
 };
 
-env_list *env_stack;
-const int NENVIRONMENTS = 10;
-environment *env_table[NENVIRONMENTS];
+env_list_node *env_stack;
 dictionary env_dictionary(10);
 environment *curenv;
 static int next_line_number = 0;
@@ -263,9 +265,12 @@ int font_size::to_units()
 // we can't do this in a static constructor because various dictionaries
 // have to get initialized first
 
+static symbol default_environment_name("0");
+
 void init_environments()
 {
-  curenv = env_table[0] = new environment("0");
+  curenv = new environment(default_environment_name);
+  (void)env_dictionary.lookup(default_environment_name, curenv);
 }
 
 void tab_character()
@@ -412,6 +417,11 @@ int environment::get_right_justify_lines()
   return right_justify_lines;
 }
 
+int environment::get_no_number_count()
+{
+  return no_number_count;
+}
+
 void environment::add_italic_correction()
 {
   if (current_tab) {
@@ -483,15 +493,23 @@ void environment::space(hunits space_width, hunits sentence_space_width)
   spread_flag = 0;
 }
 
-node *do_underline_special(int);
-
-void environment::set_font(symbol nm)
+static node *do_underline_special(bool do_underline_spaces)
 {
-  if (interrupted)
-    return;
+  macro m;
+  m.append_str("x u ");
+  m.append(do_underline_spaces ? '1' : '0');
+  return new special_node(m, 1);
+}
+
+bool environment::set_font(symbol nm)
+{
+  if (interrupted) {
+    warning(WARN_FONT, "ignoring font selection on interrupted line");
+    return true; // "no operation" is successful
+  }
   if (nm == symbol("P") || nm.is_empty()) {
     if (family->make_definite(prev_fontno) < 0)
-      return;
+      return false;
     int tem = fontno;
     fontno = prev_fontno;
     prev_fontno = tem;
@@ -502,30 +520,34 @@ void environment::set_font(symbol nm)
     if (n < 0) {
       n = next_available_font_position();
       if (!mount_font(n, nm))
-	return;
+	return false;
     }
     if (family->make_definite(n) < 0)
-      return;
+      return false;
     fontno = n;
   }
   if (underline_spaces && fontno != prev_fontno) {
     if (fontno == get_underline_fontno())
-      add_node(do_underline_special(1));
+      add_node(do_underline_special(true));
     if (prev_fontno == get_underline_fontno())
-      add_node(do_underline_special(0));
+      add_node(do_underline_special(false));
   }
+  return true;
 }
 
-void environment::set_font(int n)
+bool environment::set_font(int n)
 {
   if (interrupted)
-    return;
+    return false;
   if (is_good_fontno(n)) {
     prev_fontno = fontno;
     fontno = n;
   }
-  else
-    warning(WARN_FONT, "bad font number");
+  else {
+    warning(WARN_FONT, "no font mounted at position %1", n);
+    return false;
+  }
+  return true;
 }
 
 void environment::set_family(symbol fam)
@@ -533,7 +555,9 @@ void environment::set_family(symbol fam)
   if (interrupted)
     return;
   if (fam.is_null() || fam.is_empty()) {
-    if (prev_family->make_definite(fontno) < 0)
+    int previous_mounting_position = prev_family->make_definite(fontno);
+    assert(previous_mounting_position >= 0);
+    if (previous_mounting_position < 0)
       return;
     font_family *tem = family;
     family = prev_family;
@@ -541,8 +565,17 @@ void environment::set_family(symbol fam)
   }
   else {
     font_family *f = lookup_family(fam);
-    if (f->make_definite(fontno) < 0)
+    // If the family isn't already in the dictionary, looking it up will
+    // create an entry for it.  That doesn't mean that it will be
+    // resolvable to a real font when combined with a style name.
+    assert((f != 0 /* nullptr */) &&
+	   (0 != "font family dictionary lookup"));
+    if (0 /* nullptr */ == f)
       return;
+    if (f->make_definite(fontno) < 0) {
+      error("no font family named '%1' exists", fam.contents());
+      return;
+    }
     prev_family = family;
     family = f;
   }
@@ -703,9 +736,10 @@ environment::environment(symbol nm)
   prev_family = family = lookup_family(default_family);
   prev_fontno = fontno = 1;
   if (!is_good_fontno(1))
-    fatal("font number 1 not a valid font");
+    fatal("font mounted at position 1 is not valid");
   if (family->make_definite(1) < 0)
-    fatal("invalid default family '%1'", default_family.contents());
+    fatal("invalid default font family '%1'",
+	  default_family.contents());
   prev_fontno = fontno;
 }
 
@@ -945,7 +979,7 @@ int environment::get_bold()
 hunits environment::get_digit_width()
 {
   return env_digit_width(this);
-} 
+}
 
 int environment::get_adjust_mode()
 {
@@ -1096,60 +1130,35 @@ node *environment::extract_output_line()
 
 void environment_switch()
 {
-  int pop = 0;	// 1 means pop, 2 means pop but no error message on underflow
-  if (curenv->is_dummy())
-    error("can't switch environments when current environment is dummy");
-  else if (!has_arg())
-    pop = 1;
+  if (curenv->is_dummy()) {
+    error("cannot switch out of dummy environment");
+  }
   else {
-    symbol nm;
-    if (!tok.delimiter()) {
-      // It looks like a number.
-      int n;
-      if (get_integer(&n)) {
-	if (n >= 0 && n < NENVIRONMENTS) {
-	  env_stack = new env_list(curenv, env_stack);
-	  if (env_table[n] == 0)
-	    env_table[n] = new environment(i_to_a(n));
-	  curenv = env_table[n];
-	}
-	else
-	  nm = i_to_a(n);
+    symbol nm = get_long_name();
+    if (nm.is_null()) {
+      if (env_stack == 0)
+	error("environment stack underflow");
+      else {
+	int seen_space = curenv->seen_space;
+	int seen_eol   = curenv->seen_eol;
+	int suppress_next_eol = curenv->suppress_next_eol;
+	curenv = env_stack->env;
+	curenv->seen_space = seen_space;
+	curenv->seen_eol   = seen_eol;
+	curenv->suppress_next_eol = suppress_next_eol;
+	env_list_node *tem = env_stack;
+	env_stack = env_stack->next;
+	delete tem;
       }
-      else
-	pop = 2;
     }
     else {
-      nm = get_long_name(1);
-      if (nm.is_null())
-	pop = 2;
-    }
-    if (!nm.is_null()) {
       environment *e = (environment *)env_dictionary.lookup(nm);
       if (!e) {
 	e = new environment(nm);
 	(void)env_dictionary.lookup(nm, e);
       }
-      env_stack = new env_list(curenv, env_stack);
+      env_stack = new env_list_node(curenv, env_stack);
       curenv = e;
-    }
-  }
-  if (pop) {
-    if (env_stack == 0) {
-      if (pop == 1)
-	error("environment stack underflow");
-    }
-    else {
-      int seen_space = curenv->seen_space;
-      int seen_eol   = curenv->seen_eol;
-      int suppress_next_eol = curenv->suppress_next_eol;
-      curenv = env_stack->env;
-      curenv->seen_space = seen_space;
-      curenv->seen_eol   = seen_eol;
-      curenv->suppress_next_eol = suppress_next_eol;
-      env_list *tem = env_stack;
-      env_stack = env_stack->next;
-      delete tem;
     }
   }
   skip_line();
@@ -1157,29 +1166,20 @@ void environment_switch()
 
 void environment_copy()
 {
-  symbol nm;
   environment *e=0;
   tok.skip();
-  if (!tok.delimiter()) {
-    // It looks like a number.
-    int n;
-    if (get_integer(&n)) {
-      if (n >= 0 && n < NENVIRONMENTS)
-	e = env_table[n];
-      else
-	nm = i_to_a(n);
-    }
+  symbol nm = get_long_name();
+  if (nm.is_null()) {
+    error("no environment specified to copy from");
   }
-  else
-    nm = get_long_name(1);
-  if (!e && !nm.is_null())
+  else {
     e = (environment *)env_dictionary.lookup(nm);
-  if (e == 0) {
-    error("No environment to copy from");
-    return;
-  }
-  else
+  if (e)
     curenv->copy(e);
+  else
+    error("cannot copy from nonexistent environment '%1'",
+	  nm.contents());
+  }
   skip_line();
 }
 
@@ -1208,22 +1208,25 @@ static symbol P_symbol("P");
 void font_change()
 {
   symbol s = get_name();
-  int is_number = 1;
+  bool is_number = true;
   if (s.is_null() || s == P_symbol) {
     s = P_symbol;
-    is_number = 0;
+    is_number = false;
   }
   else {
     for (const char *p = s.contents(); p != 0 && *p != 0; p++)
       if (!csdigit(*p)) {
-	is_number = 0;
+	is_number = false;
 	break;
       }
   }
+  // environment::set_font warns if a bogus mounting position is
+  // requested.  We must warn here if a bogus font name is selected.
   if (is_number)
-    curenv->set_font(atoi(s.contents()));
+    (void) curenv->set_font(atoi(s.contents()));
   else
-    curenv->set_font(s);
+    if (!curenv->set_font(s))
+      warning(WARN_FONT, "cannot select font '%1'", s.contents());
   skip_line();
 }
 
@@ -1277,7 +1280,7 @@ void override_sizes()
       sizes = new int[n*2];
       memcpy(sizes, old_sizes, n*sizeof(int));
       n *= 2;
-      a_delete old_sizes;
+      delete[] old_sizes;
     }
     sizes[i++] = lower;
     if (lower == 0)
@@ -1292,9 +1295,16 @@ void space_size()
 {
   int n;
   if (get_integer(&n)) {
-    curenv->space_size = n;
+    if (n < 0)
+      warning(WARN_RANGE, "negative word space size ignored: '%1'", n);
+    else
+      curenv->space_size = n;
     if (has_arg() && get_integer(&n))
-      curenv->sentence_space_size = n;
+      if (n < 0)
+	warning(WARN_RANGE, "negative sentence space size ignored: "
+		"'%1'", n);
+      else
+	curenv->sentence_space_size = n;
     else
       curenv->sentence_space_size = curenv->space_size;
   }
@@ -1303,7 +1313,7 @@ void space_size()
 
 void fill()
 {
-  while (!tok.newline() && !tok.eof())
+  while (!tok.is_newline() && !tok.is_eof())
     tok.next();
   if (break_flag)
     curenv->do_break();
@@ -1313,7 +1323,7 @@ void fill()
 
 void no_fill()
 {
-  while (!tok.newline() && !tok.eof())
+  while (!tok.is_newline() && !tok.is_eof())
     tok.next();
   if (break_flag)
     curenv->do_break();
@@ -1329,7 +1339,7 @@ void center()
     n = 1;
   else if (n < 0)
     n = 0;
-  while (!tok.newline() && !tok.eof())
+  while (!tok.is_newline() && !tok.is_eof())
     tok.next();
   if (break_flag)
     curenv->do_break();
@@ -1346,7 +1356,7 @@ void right_justify()
     n = 1;
   else if (n < 0)
     n = 0;
-  while (!tok.newline() && !tok.eof())
+  while (!tok.is_newline() && !tok.is_eof())
     tok.next();
   if (break_flag)
     curenv->do_break();
@@ -1359,10 +1369,12 @@ void right_justify()
 void line_length()
 {
   hunits temp;
+  hunits minimum_length = font::hor;
   if (has_arg() && get_hunits(&temp, 'm', curenv->line_length)) {
-    if (temp < H0) {
-      warning(WARN_RANGE, "bad line length %1u", temp.to_units());
-      temp = H0;
+    if (temp < minimum_length) {
+      warning(WARN_RANGE, "invalid line length %1u rounded to device"
+			  " horizontal motion quantum", temp.to_units());
+      temp = minimum_length;
     }
   }
   else
@@ -1376,10 +1388,12 @@ void line_length()
 void title_length()
 {
   hunits temp;
+  hunits minimum_length = font::hor;
   if (has_arg() && get_hunits(&temp, 'm', curenv->title_length)) {
-    if (temp < H0) {
-      warning(WARN_RANGE, "bad title length %1u", temp.to_units());
-      temp = H0;
+    if (temp < minimum_length) {
+      warning(WARN_RANGE, "invalid title length %1u rounded to device"
+			  " horizontal motion quantum", temp.to_units());
+      temp = minimum_length;
     }
   }
   else
@@ -1449,7 +1463,7 @@ void indent()
   }
   else
     temp = curenv->prev_indent;
-  while (!tok.newline() && !tok.eof())
+  while (!tok.is_newline() && !tok.is_eof())
     tok.next();
   if (break_flag)
     curenv->do_break();
@@ -1466,7 +1480,7 @@ void temporary_indent()
   hunits temp;
   if (!get_hunits(&temp, 'm', curenv->get_indent()))
     err = 1;
-  while (!tok.newline() && !tok.eof())
+  while (!tok.is_newline() && !tok.is_eof())
     tok.next();
   if (break_flag)
     curenv->do_break();
@@ -1482,14 +1496,6 @@ void temporary_indent()
   tok.next();
 }
 
-node *do_underline_special(int underline_spaces)
-{
-  macro m;
-  m.append_str("x u ");
-  m.append(underline_spaces + '0');
-  return new special_node(m, 1);
-}
-
 void do_underline(int underline_spaces)
 {
   int n;
@@ -1501,7 +1507,7 @@ void do_underline(int underline_spaces)
       curenv->fontno = curenv->pre_underline_fontno;
       if (underline_spaces) {
 	curenv->underline_spaces = 0;
-	curenv->add_node(do_underline_special(0));
+	curenv->add_node(do_underline_special(false));
       }
     }
     curenv->underline_lines = 0;
@@ -1512,7 +1518,7 @@ void do_underline(int underline_spaces)
     curenv->fontno = get_underline_fontno();
     if (underline_spaces) {
       curenv->underline_spaces = 1;
-      curenv->add_node(do_underline_special(1));
+      curenv->add_node(do_underline_special(true));
     }
   }
   skip_line();
@@ -1554,7 +1560,7 @@ void no_break_control_char()
 
 void margin_character()
 {
-  while (tok.space())
+  while (tok.is_space())
     tok.next();
   charinfo *ci = tok.get_char();
   if (ci) {
@@ -1601,7 +1607,7 @@ void number_lines()
     curenv->numbering_nodes = nd;
     curenv->line_number_digit_width = env_digit_width(curenv);
     int n;
-    if (!tok.delimiter()) {
+    if (!tok.usable_as_delimiter()) {
       if (get_integer(&n, next_line_number)) {
 	next_line_number = n;
 	if (next_line_number < 0) {
@@ -1611,10 +1617,10 @@ void number_lines()
       }
     }
     else
-      while (!tok.space() && !tok.newline() && !tok.eof())
+      while (!tok.is_space() && !tok.is_newline() && !tok.is_eof())
 	tok.next();
     if (has_arg()) {
-      if (!tok.delimiter()) {
+      if (!tok.usable_as_delimiter()) {
 	if (get_integer(&n)) {
 	  if (n <= 0) {
 	    warning(WARN_RANGE, "negative or zero line number multiple");
@@ -1624,17 +1630,17 @@ void number_lines()
 	}
       }
       else
-	while (!tok.space() && !tok.newline() && !tok.eof())
+	while (!tok.is_space() && !tok.is_newline() && !tok.is_eof())
 	  tok.next();
       if (has_arg()) {
-	if (!tok.delimiter()) {
+	if (!tok.usable_as_delimiter()) {
 	  if (get_integer(&n))
 	    curenv->number_text_separation = n;
 	}
 	else
-	  while (!tok.space() && !tok.newline() && !tok.eof())
+	  while (!tok.is_space() && !tok.is_newline() && !tok.is_eof())
 	    tok.next();
-	if (has_arg() && !tok.delimiter() && get_integer(&n))
+	if (has_arg() && !tok.usable_as_delimiter() && get_integer(&n))
 	  curenv->line_number_indent = n;
       }
     }
@@ -1713,7 +1719,7 @@ void environment::newline()
       fontno = pre_underline_fontno;
       if (underline_spaces) {
 	underline_spaces = 0;
-	add_node(do_underline_special(0));
+	add_node(do_underline_special(false));
       }
     }
   }
@@ -1737,7 +1743,7 @@ void environment::newline()
   else if (interrupted) {
     interrupted = 0;
     // see environment::final_break
-    prev_line_interrupted = exit_started ? 2 : 1;
+    prev_line_interrupted = is_exit_underway ? 2 : 1;
   }
   else if (center_lines > 0) {
     --center_lines;
@@ -1990,7 +1996,7 @@ breakpoint *environment::choose_breakpoint()
   }
   if (best_bp) {
     if (!best_bp_fits)
-      output_warning(WARN_BREAK, "can't break line");
+      output_warning(WARN_BREAK, "cannot break line");
     return best_bp;
   }
   return 0;
@@ -2073,12 +2079,26 @@ static node *node_list_reverse(node *n)
 }
 
 static void distribute_space(node *n, int nspaces, hunits desired_space,
-			     int force_reverse = 0)
+			     bool force_reverse_node_list = false)
 {
-  static int reverse = 0;
-  if (force_reverse || reverse)
+  if (desired_space.is_zero() || nspaces == 0)
+    return;
+  // Positive desired space is the typical case.  Negative desired space
+  // is possible if we have overrun an unbreakable line.  But we should
+  // not get here if there are no adjustable space nodes to adjust.
+  assert(nspaces > 0);
+  // Space cannot always be distributed evenly among all of the space
+  // nodes in the node list: there are limits to device resolution.  We
+  // add space until we run out, which might happen before the end of
+  // the line.  To achieve uniform typographical grayness and avoid
+  // rivers, we switch the end from which space is initially distributed
+  // with each line requiring it, unless compelled to reverse it.  The
+  // node list's natural ordering is in the direction of text flow, so
+  // we distribute space initially from the left, unlike AT&T troff.
+  static bool do_reverse_node_list = false;
+  if (force_reverse_node_list || do_reverse_node_list)
     n = node_list_reverse(n);
-  if (!force_reverse && nspaces > 0 && spread_limit >= 0
+  if (!force_reverse_node_list && spread_limit >= 0
       && desired_space.to_units() > 0) {
     hunits em = curenv->get_size();
     double Ems = (double)desired_space.to_units() / nspaces
@@ -2088,11 +2108,10 @@ static void distribute_space(node *n, int nspaces, hunits desired_space,
   }
   for (node *tem = n; tem; tem = tem->next)
     tem->spread_space(&nspaces, &desired_space);
-  if (force_reverse || reverse)
+  if (force_reverse_node_list || do_reverse_node_list)
     (void)node_list_reverse(n);
-  if (!force_reverse)
-    reverse = !reverse;
-  assert(desired_space.is_zero() && nspaces == 0);
+  if (!force_reverse_node_list)
+    do_reverse_node_list = !do_reverse_node_list;
 }
 
 void environment::possibly_break_line(int start_here, int forced)
@@ -2135,6 +2154,14 @@ void environment::possibly_break_line(int start_here, int forced)
     }
     distribute_space(pre, bp->nspaces, extra_space_width);
     hunits output_width = bp->width + extra_space_width;
+    // This should become an assert() when we can get reliable width
+    // data from CJK glyphs.  See Savannah #44018.
+    if (output_width <= 0) {
+      double output_width_in_ems = output_width.to_units();
+      output_warning(WARN_BREAK, "line has non-positive width %1m",
+		     output_width_in_ems);
+      return;
+    }
     input_line_start -= output_width;
     if (bp->hyphenated)
       hyphen_line_count++;
@@ -2241,7 +2268,7 @@ node *environment::make_tag(const char *nm, int i)
     macro m;
     m.append_str("devtag:");
     for (const char *p = nm; *p; p++)
-      if (!invalid_input_char((unsigned char)*p))
+      if (!is_invalid_input_char((unsigned char)*p))
 	m.append(*p);
     m.append(' ');
     m.append_int(i);
@@ -2410,7 +2437,7 @@ int environment::is_empty()
 
 void do_break_request(int spread)
 {
-  while (!tok.newline() && !tok.eof())
+  while (!tok.is_newline() && !tok.is_eof())
     tok.next();
   if (break_flag)
     curenv->do_break(spread);
@@ -2484,7 +2511,7 @@ void title()
 		       curenv->total_post_vertical_spacing(), length_title);
   curenv->hyphen_line_count = 0;
   tok.next();
-}  
+}
 
 void adjust()
 {
@@ -2509,10 +2536,9 @@ void adjust()
       if (get_integer(&n)) {
 	if (n < 0)
 	  warning(WARN_RANGE, "negative adjustment mode");
-	else if (n > 5) {
-	  curenv->adjust_mode = 5;
-	  warning(WARN_RANGE, "adjustment mode '%1' out of range", n);
-	}
+	else if (n > ADJUST_MAX)
+	  warning(WARN_RANGE, "out-of-range adjustment mode ignored: "
+		  "%1", n);
 	else
 	  curenv->adjust_mode = n;
       }
@@ -2540,7 +2566,7 @@ void do_input_trap(int continued)
       warning(WARN_RANGE,
 	      "number of lines for input trap must be greater than zero");
     else {
-      symbol s = get_name(1);
+      symbol s = get_name(true /* required */);
       if (!s.is_null()) {
 	curenv->input_trap_count = n;
 	curenv->input_trap = s;
@@ -2577,7 +2603,7 @@ tab::tab(hunits x, tab_type t) : next(0), pos(x), type(t)
 {
 }
 
-tab_stops::tab_stops(hunits distance, tab_type type) 
+tab_stops::tab_stops(hunits distance, tab_type type)
 : initial_list(0)
 {
   repeated_list = new tab(distance, type);
@@ -2595,7 +2621,8 @@ tab_type tab_stops::distance_to_next_tab(hunits curpos, hunits *distance)
   return distance_to_next_tab(curpos, distance, &nextpos);
 }
 
-tab_type tab_stops::distance_to_next_tab(hunits curpos, hunits *distance,
+tab_type tab_stops::distance_to_next_tab(hunits curpos,
+					 hunits *distance,
 					 hunits *nextpos)
 {
   hunits lastpos = 0;
@@ -2611,14 +2638,16 @@ tab_type tab_stops::distance_to_next_tab(hunits curpos, hunits *distance,
     return TAB_NONE;
   hunits base = lastpos;
   for (;;) {
-    for (tem = repeated_list; tem && tem->pos + base <= curpos; tem = tem->next)
+    for (tem = repeated_list; tem && tem->pos + base <= curpos;
+	 tem = tem->next)
       lastpos = tem->pos;
     if (tem) {
       *distance = tem->pos + base - curpos;
       *nextpos  = tem->pos + base;
       return tem->type;
     }
-    assert(lastpos > 0);
+    if (lastpos < 0)
+      lastpos = 0;
     base += lastpos;
   }
   return TAB_NONE;
@@ -2639,7 +2668,7 @@ const char *tab_stops::to_string()
   int need = count*12 + 3;
   if (buf == 0 || need > buf_size) {
     if (buf)
-      a_delete buf;
+      delete[] buf;
     buf_size = need;
     buf = new char[buf_size];
   }
@@ -2692,7 +2721,7 @@ tab_stops::tab_stops() : initial_list(0), repeated_list(0)
 {
 }
 
-tab_stops::tab_stops(const tab_stops &ts) 
+tab_stops::tab_stops(const tab_stops &ts)
 : initial_list(0), repeated_list(0)
 {
   tab **p = &initial_list;
@@ -2752,18 +2781,18 @@ void tab_stops::operator=(const tab_stops &ts)
     p = &(*p)->next;
   }
 }
-    
+
 void set_tabs()
 {
   hunits pos;
   hunits prev_pos = 0;
-  int first = 1;
-  int repeated = 0;
+  bool is_first_stop = true;
+  bool is_repeating_stop = false;
   tab_stops tabs;
   while (has_arg()) {
     if (tok.ch() == TAB_REPEAT_CHAR) {
       tok.next();
-      repeated = 1;
+      is_repeating_stop = true;
       prev_pos = 0;
     }
     if (!get_hunits(&pos, 'm', prev_pos))
@@ -2780,13 +2809,13 @@ void set_tabs()
     else if (tok.ch() == 'L') {
       tok.next();
     }
-    if (pos <= prev_pos && !first)
+    if (pos <= prev_pos && ((!is_first_stop) || is_repeating_stop))
       warning(WARN_RANGE,
 	      "positions of tab stops must be strictly increasing");
     else {
-      tabs.add_tab(pos, type, repeated);
+      tabs.add_tab(pos, type, is_repeating_stop);
       prev_pos = pos;
-      first = 0;
+      is_first_stop = false;
     }
   }
   curenv->tabs = tabs;
@@ -2958,16 +2987,18 @@ void environment::wrap_up_field()
     add_padding();
   hunits padding = field_distance - (get_text_length() - pre_field_width);
   if (current_tab && tab_field_spaces != 0) {
-    hunits tab_padding = scale(padding, 
-			       tab_field_spaces, 
+    hunits tab_padding = scale(padding,
+			       tab_field_spaces,
 			       field_spaces + tab_field_spaces);
     padding -= tab_padding;
-    distribute_space(tab_contents, tab_field_spaces, tab_padding, 1);
+    distribute_space(tab_contents, tab_field_spaces, tab_padding,
+		     true /* force reversal of node list */);
     tab_field_spaces = 0;
     tab_width += tab_padding;
   }
   if (field_spaces != 0) {
-    distribute_space(line, field_spaces, padding, 1);
+    distribute_space(line, field_spaces, padding,
+		     true /* force reversal of node list */);
     width_total += padding;
     if (current_tab) {
       // the start of the tab has been moved to the right by padding, so
@@ -3025,7 +3056,7 @@ class int_env_reg : public reg {
  public:
   int_env_reg(INT_FUNCP);
   const char *get_string();
-  int get_value(units *val);
+  bool get_value(units *val);
 };
 
 class vunits_env_reg : public reg {
@@ -3033,7 +3064,7 @@ class vunits_env_reg : public reg {
  public:
   vunits_env_reg(VUNITS_FUNCP f);
   const char *get_string();
-  int get_value(units *val);
+  bool get_value(units *val);
 };
 
 
@@ -3042,7 +3073,7 @@ class hunits_env_reg : public reg {
  public:
   hunits_env_reg(HUNITS_FUNCP f);
   const char *get_string();
-  int get_value(units *val);
+  bool get_value(units *val);
 };
 
 class string_env_reg : public reg {
@@ -3056,25 +3087,25 @@ int_env_reg::int_env_reg(INT_FUNCP f) : func(f)
 {
 }
 
-int int_env_reg::get_value(units *val)
+bool int_env_reg::get_value(units *val)
 {
   *val = (curenv->*func)();
-  return 1;
+  return true;
 }
 
 const char *int_env_reg::get_string()
 {
   return i_to_a((curenv->*func)());
 }
- 
+
 vunits_env_reg::vunits_env_reg(VUNITS_FUNCP f) : func(f)
 {
 }
 
-int vunits_env_reg::get_value(units *val)
+bool vunits_env_reg::get_value(units *val)
 {
   *val = (curenv->*func)().to_units();
-  return 1;
+  return true;
 }
 
 const char *vunits_env_reg::get_string()
@@ -3086,10 +3117,10 @@ hunits_env_reg::hunits_env_reg(HUNITS_FUNCP f) : func(f)
 {
 }
 
-int hunits_env_reg::get_value(units *val)
+bool hunits_env_reg::get_value(units *val)
 {
   *val = (curenv->*func)().to_units();
-  return 1;
+  return true;
 }
 
 const char *hunits_env_reg::get_string()
@@ -3109,7 +3140,7 @@ const char *string_env_reg::get_string()
 class horizontal_place_reg : public general_reg {
 public:
   horizontal_place_reg();
-  int get_value(units *);
+  bool get_value(units *);
   void set_value(units);
 };
 
@@ -3117,10 +3148,10 @@ horizontal_place_reg::horizontal_place_reg()
 {
 }
 
-int horizontal_place_reg::get_value(units *res)
+bool horizontal_place_reg::get_value(units *res)
 {
   *res = curenv->get_input_line_position().to_units();
-  return 1;
+  return true;
 }
 
 void horizontal_place_reg::set_value(units n)
@@ -3131,6 +3162,11 @@ void horizontal_place_reg::set_value(units n)
 int environment::get_zoom()
 {
   return env_get_zoom(this);
+}
+
+int environment::get_numbering_nodes()
+{
+  return (curenv->numbering_nodes ? 1 : 0);
 }
 
 const char *environment::get_font_family_string()
@@ -3355,15 +3391,6 @@ void print_env()
 {
   errprint("Current Environment:\n");
   curenv->print_env();
-  for (int i = 0; i < NENVIRONMENTS; i++) {
-    if (env_table[i]) {
-      errprint("Environment %1:\n", i);
-      if (env_table[i] != curenv)
-	env_table[i]->print_env();
-      else
-	errprint("  current\n");
-    }
-  }
   dictionary_iterator iter(env_dictionary);
   symbol s;
   environment *e;
@@ -3380,16 +3407,16 @@ void print_env()
 }
 
 #define init_int_env_reg(name, func) \
-  number_reg_dictionary.define(name, new int_env_reg(&environment::func))
+  register_dictionary.define(name, new int_env_reg(&environment::func))
 
 #define init_vunits_env_reg(name, func) \
-  number_reg_dictionary.define(name, new vunits_env_reg(&environment::func))
+  register_dictionary.define(name, new vunits_env_reg(&environment::func))
 
 #define init_hunits_env_reg(name, func) \
-  number_reg_dictionary.define(name, new hunits_env_reg(&environment::func))
+  register_dictionary.define(name, new hunits_env_reg(&environment::func))
 
 #define init_string_env_reg(name, func) \
-  number_reg_dictionary.define(name, new string_env_reg(&environment::func))
+  register_dictionary.define(name, new string_env_reg(&environment::func))
 
 void init_env_requests()
 {
@@ -3470,6 +3497,8 @@ void init_env_requests()
   init_string_env_reg(".M", get_fill_color_string);
   init_string_env_reg(".m", get_glyph_color_string);
   init_hunits_env_reg(".n", get_prev_text_length);
+  init_int_env_reg(".nm", get_numbering_nodes);
+  init_int_env_reg(".nn", get_no_number_count);
   init_int_env_reg(".ps", get_point_size);
   init_int_env_reg(".psr", get_requested_point_size);
   init_vunits_env_reg(".pvs", get_post_vertical_spacing);
@@ -3485,15 +3514,15 @@ void init_env_requests()
   init_vunits_env_reg(".v", get_vertical_spacing);
   init_hunits_env_reg(".w", get_prev_char_width);
   init_int_env_reg(".zoom", get_zoom);
-  number_reg_dictionary.define("ct", new variable_reg(&ct_reg_contents));
-  number_reg_dictionary.define("hp", new horizontal_place_reg);
-  number_reg_dictionary.define("ln", new variable_reg(&next_line_number));
-  number_reg_dictionary.define("rsb", new variable_reg(&rsb_reg_contents));
-  number_reg_dictionary.define("rst", new variable_reg(&rst_reg_contents));
-  number_reg_dictionary.define("sb", new variable_reg(&sb_reg_contents));
-  number_reg_dictionary.define("skw", new variable_reg(&skw_reg_contents));
-  number_reg_dictionary.define("ssc", new variable_reg(&ssc_reg_contents));
-  number_reg_dictionary.define("st", new variable_reg(&st_reg_contents));
+  register_dictionary.define("ct", new variable_reg(&ct_reg_contents));
+  register_dictionary.define("hp", new horizontal_place_reg);
+  register_dictionary.define("ln", new variable_reg(&next_line_number));
+  register_dictionary.define("rsb", new variable_reg(&rsb_reg_contents));
+  register_dictionary.define("rst", new variable_reg(&rst_reg_contents));
+  register_dictionary.define("sb", new variable_reg(&sb_reg_contents));
+  register_dictionary.define("skw", new variable_reg(&skw_reg_contents));
+  register_dictionary.define("ssc", new variable_reg(&ssc_reg_contents));
+  register_dictionary.define("st", new variable_reg(&st_reg_contents));
 }
 
 // Hyphenation - TeX's hyphenation algorithm with a less fancy implementation.
@@ -3541,7 +3570,7 @@ hyphenation_language *current_language = 0;
 
 static void set_hyphenation_language()
 {
-  symbol nm = get_name(1);
+  symbol nm = get_name(true /* required */);
   if (!nm.is_null()) {
     current_language = (hyphenation_language *)language_dictionary.lookup(nm);
     if (!current_language) {
@@ -3566,12 +3595,13 @@ static void hyphen_word()
   unsigned char pos[WORD_MAX + 2];
   for (;;) {
     tok.skip();
-    if (tok.newline() || tok.eof())
+    if (tok.is_newline() || tok.is_eof())
       break;
     int i = 0;
     int npos = 0;
-    while (i < WORD_MAX && !tok.space() && !tok.newline() && !tok.eof()) {
-      charinfo *ci = tok.get_char(1);
+    while (i < WORD_MAX && !tok.is_space() && !tok.is_newline()
+	   && !tok.is_eof()) {
+      charinfo *ci = tok.get_char(true /* required */);
       if (ci == 0) {
 	skip_line();
 	return;
@@ -3596,7 +3626,7 @@ static void hyphen_word()
       tem = (unsigned char *)current_language->exceptions.lookup(symbol(buf),
 								 tem);
       if (tem)
-	a_delete tem;
+	delete[] tem;
     }
   }
   skip_line();
@@ -3610,7 +3640,7 @@ struct trie_node {
   trie_node(char, trie_node *);
 };
 
-trie_node::trie_node(char ch, trie_node *p) 
+trie_node::trie_node(char ch, trie_node *p)
 : c(ch), down(0), right(p), val(0)
 {
 }
@@ -3718,7 +3748,7 @@ void hyphen_trie::insert_hyphenation(dictionary *ex, const char *pat,
     memcpy(tem, pos, npos + 1);
     tem = (unsigned char *)ex->lookup(symbol(buf), tem);
     if (tem)
-      a_delete tem;
+      delete[] tem;
   }
 }
 
@@ -3887,7 +3917,7 @@ void hyphen_trie::read_patterns_file(const char *name, int append,
 	  c = hpf_getc(fp);
 	if (c == '{') {
 	  if (have_patterns || have_hyphenation)
-	    error("\\patterns not allowed inside of %1 group",
+	    error("\\patterns is not allowed inside of %1 group",
 		  have_patterns ? "\\patterns" : "\\hyphenation");
 	  else {
 	    have_patterns = 1;
@@ -3902,7 +3932,7 @@ void hyphen_trie::read_patterns_file(const char *name, int append,
 	  c = hpf_getc(fp);
 	if (c == '{') {
 	  if (have_patterns || have_hyphenation)
-	    error("\\hyphenation not allowed inside of %1 group",
+	    error("\\hyphenation is not allowed inside of %1 group",
 		  have_patterns ? "\\patterns" : "\\hyphenation");
 	  else {
 	    have_hyphenation = 1;
@@ -3933,7 +3963,7 @@ void hyphen_trie::read_patterns_file(const char *name, int append,
       }
       else if (c == '{') {
 	if (have_patterns || have_hyphenation)
-	  error("'{' not allowed within %1 group",
+	  error("'{' is not allowed within %1 group",
 		have_patterns ? "\\patterns" : "\\hyphenation");
 	c = hpf_getc(fp);		// skipped if not starting \patterns
 					// or \hyphenation
@@ -4058,9 +4088,9 @@ void hyphenate(hyphen_list *h, unsigned flags)
   }
 }
 
-static void do_hyphenation_patterns_file(int append)
+static void do_hyphenation_patterns_file(bool append)
 {
-  symbol name = get_long_name(1);
+  symbol name = get_long_name(true /* required */);
   if (!name.is_null()) {
     if (!current_language)
       error("no current hyphenation language");
@@ -4074,12 +4104,12 @@ static void do_hyphenation_patterns_file(int append)
 
 static void hyphenation_patterns_file()
 {
-  do_hyphenation_patterns_file(0);
+  do_hyphenation_patterns_file(false /* append */);
 }
 
 static void hyphenation_patterns_file_append()
 {
-  do_hyphenation_patterns_file(1);
+  do_hyphenation_patterns_file(true /* append */);
 }
 
 class hyphenation_language_reg : public reg {
@@ -4098,5 +4128,11 @@ void init_hyphen_requests()
   init_request("hla", set_hyphenation_language);
   init_request("hpf", hyphenation_patterns_file);
   init_request("hpfa", hyphenation_patterns_file_append);
-  number_reg_dictionary.define(".hla", new hyphenation_language_reg);
+  register_dictionary.define(".hla", new hyphenation_language_reg);
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

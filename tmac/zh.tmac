@@ -1,6 +1,6 @@
 .\" Chinese localization for groff
 .\"
-.\" Copyright (C) 2015-2018 Free Software Foundation, Inc.
+.\" Copyright (C) 2015-2020 Free Software Foundation, Inc.
 .\"   Written by Darcy SHEN <sadhen1992@gmail.com>
 .\"   using 'ja.tmac' as a template
 .\"
@@ -22,10 +22,11 @@
 .\"
 .\" Please send comments to groff@gnu.org.
 .
+.do nr *groff_zh_tmac_C \n[.cp]
+.cp 0
+.
 .
 .\" The following rules work for both zh_CN and zh_TW.
-.
-.\" Locale string
 .
 .ds locale chinese\"
 .
@@ -46,9 +47,12 @@
 .cflags 266 \C'[CJKpostpunct]'
 .cflags 512 \C'[CJKnormal]'
 .
-.\" ====================================================================
-.\" Editor settings
-.\" ====================================================================
+.\" Chinese hyphenation (disabled)
+.nr \*[locale]*hyphenation-mode-base 0
+.nr \*[locale]*hyphenation-mode-trap 0
+.
+.cp \n[*groff_zh_tmac_C]
+.do rr *groff_zh_tmac_C
 .
 .\" Local Variables:
 .\" mode: nroff

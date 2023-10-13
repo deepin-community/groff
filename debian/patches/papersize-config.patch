@@ -1,24 +1,25 @@
-From cc8a5b9cfff26272fc9cc11a3d094589a1b01b23 Mon Sep 17 00:00:00 2001
+From 89007e004d78582fd83651d0421045229ff2e838 Mon Sep 17 00:00:00 2001
 From: Colin Watson <cjwatson@debian.org>
 Date: Thu, 2 Jan 2014 13:13:21 +0000
 Subject: Use /etc/papersize in preference to configure-time selection
 
 Forwarded: not-needed
-Last-Update: 2018-03-29
+Last-Update: 2023-07-09
 
 Patch-Name: papersize-config.patch
 ---
  font/devdvi/devdvi.am | 4 ++--
  font/devlbp/devlbp.am | 4 ++--
  font/devlj4/devlj4.am | 4 ++--
+ font/devpdf/devpdf.am | 5 +++--
  font/devps/devps.am   | 4 ++--
- 4 files changed, 8 insertions(+), 8 deletions(-)
+ 5 files changed, 11 insertions(+), 10 deletions(-)
 
 diff --git a/font/devdvi/devdvi.am b/font/devdvi/devdvi.am
-index a5b5f114..af111d2f 100644
+index e7f5768d7..4d479de2b 100644
 --- a/font/devdvi/devdvi.am
 +++ b/font/devdvi/devdvi.am
-@@ -83,9 +83,9 @@ font/devdvi/DESC: $(devdvi_srcdir)/DESC.in
+@@ -81,9 +81,9 @@ font/devdvi/DESC: $(devdvi_srcdir)/DESC.in
  	$(AM_V_GEN)$(MKDIR_P) `dirname $@` \
  	&& cat $(devdvi_srcdir)/DESC.in >$@ \
  	&& if test "$(PAGE)" = A4; then \
@@ -31,10 +32,10 @@ index a5b5f114..af111d2f 100644
  	&& (test -z '$(DVIPRINT)' \
  	    || echo print '$(DVIPRINT)' >>$@)
 diff --git a/font/devlbp/devlbp.am b/font/devlbp/devlbp.am
-index 30002f89..1a4e5135 100644
+index 0702a2088..b60450caa 100644
 --- a/font/devlbp/devlbp.am
 +++ b/font/devlbp/devlbp.am
-@@ -47,9 +47,9 @@ font/devlbp/DESC: $(devlbp_srcdir)/DESC.in
+@@ -45,9 +45,9 @@ font/devlbp/DESC: $(devlbp_srcdir)/DESC.in
  	$(AM_V_GEN)$(MKDIR_P) `dirname $@` \
  	&& cat $(devlbp_srcdir)/DESC.in >$@ \
  	&& if test "$(PAGE)" = A4; then \
@@ -47,10 +48,10 @@ index 30002f89..1a4e5135 100644
  	&& (test -z '$(LBPPRINT)' \
  	    || echo print '$(LBPPRINT)' >>$@)
 diff --git a/font/devlj4/devlj4.am b/font/devlj4/devlj4.am
-index f9aaa369..3ff64402 100644
+index 9f17c4d72..d5cfe9b6d 100644
 --- a/font/devlj4/devlj4.am
 +++ b/font/devlj4/devlj4.am
-@@ -92,9 +92,9 @@ font/devlj4/DESC: $(devlj4_srcdir)/DESC.in
+@@ -90,9 +90,9 @@ font/devlj4/DESC: $(devlj4_srcdir)/DESC.in
  	&& echo "unitwidth `expr 7620000 / $(LJ4RES)`" >>$@ \
  	&& cat $(devlj4_srcdir)/DESC.in >>$@ \
  	&& if test "$(PAGE)" = A4; then \
@@ -62,19 +63,36 @@ index f9aaa369..3ff64402 100644
  	   fi \
  	&& (test -z '$(LJ4PRINT)' \
  	    || echo print '$(LJ4PRINT)' >>$@)
+diff --git a/font/devpdf/devpdf.am b/font/devpdf/devpdf.am
+index edce36575..5ba6f93f7 100644
+--- a/font/devpdf/devpdf.am
++++ b/font/devpdf/devpdf.am
+@@ -92,9 +92,10 @@ font/devpdf/DESC: $(devpdf_srcdir)/DESC.in
+ 	&& cat $(devpdf_srcdir)/DESC.in \
+ 	  >$(top_builddir)/font/devpdf/DESC \
+ 	&& if test "$(PAGE)" = A4; then \
+-	     echo "papersize a4" >>$(top_builddir)/font/devpdf/DESC; \
++	     echo "papersize /etc/papersize a4" \
++	       >>$(top_builddir)/font/devpdf/DESC; \
+ 	   else \
+-	     echo "papersize letter" \
++	     echo "papersize /etc/papersize letter" \
+ 	       >>$(top_builddir)/font/devpdf/DESC; \
+ 	   fi
+ 
 diff --git a/font/devps/devps.am b/font/devps/devps.am
-index 3205e3ba..3913f2bf 100644
+index 2664f3c91..656c603be 100644
 --- a/font/devps/devps.am
 +++ b/font/devps/devps.am
-@@ -143,9 +143,9 @@ font/devps/DESC: $(devps_srcdir)/DESC.in
- 	&& cat $(devps_srcdir)/DESC.in >$@ \
- 	&& echo broken $(BROKEN_SPOOLER_FLAGS) >>$@ \
+@@ -144,9 +144,9 @@ font/devps/DESC: $(devps_srcdir)/DESC.in
+ 	&& cat $(devps_srcdir)/DESC.in >$@.tmp \
+ 	&& echo broken $(BROKEN_SPOOLER_FLAGS) >>$@.tmp \
  	&& if test "$(PAGE)" = A4; then \
--	     echo "papersize a4" >>$@; \
-+	     echo "papersize /etc/papersize a4" >>$@; \
+-	     echo "papersize a4" >>$@.tmp; \
++	     echo "papersize /etc/papersize a4" >>$@.tmp; \
  	   else \
--	     echo "papersize letter" >>$@; \
-+	     echo "papersize /etc/papersize letter" >>$@; \
+-	     echo "papersize letter" >>$@.tmp; \
++	     echo "papersize /etc/papersize letter" >>$@.tmp; \
  	   fi \
  	&& (test -z '$(PSPRINT)' \
- 	    || echo print '$(PSPRINT)' >>$@)
+ 	    || echo print '$(PSPRINT)' >>$@.tmp)

@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -16,7 +15,10 @@ for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+
 // piles and matrices
+
+#include <assert.h>
 
 #include "eqn.h"
 #include "pbox.h"
@@ -38,7 +40,7 @@ int pile_box::compute_metrics(int style)
   for (i = 1; i < col.len; i++)
     printf(">?(\\n[" DEPTH_FORMAT "]+\\n[" HEIGHT_FORMAT "]+%dM)",
 	   col.p[i-1]->uid, col.p[i]->uid, default_rule_thickness*5);
-  // round it so that it's a multiple of the vertical resolution
+  // round it so that it's a multiple of the vertical motion quantum
   printf("+(\\n(.V/2)/\\n(.V*\\n(.V\n");
 
   printf(".nr " SUP_RAISE_FORMAT " \\n[" BASELINE_SEP_FORMAT "]*%d/2"
@@ -165,7 +167,7 @@ int matrix_box::compute_metrics(int style)
     for (j = 1; j < p[i]->len; j++)
       printf(">?(\\n[" DEPTH_FORMAT "]+\\n[" HEIGHT_FORMAT "]+%dM)",
 	   p[i]->p[j-1]->uid, p[i]->p[j]->uid, default_rule_thickness*5);
-  // round it so that it's a multiple of the vertical resolution
+  // round it so that it's a multiple of the vertical motion quantum
   printf("+(\\n(.V/2)/\\n(.V*\\n(.V\n");
   printf(".nr " SUP_RAISE_FORMAT " \\n[" BASELINE_SEP_FORMAT "]*%d/2"
 	 "+%dM\n",
@@ -278,7 +280,7 @@ matrix_box::~matrix_box()
 {
   for (int i = 0; i < len; i++)
     delete p[i];
-  a_delete p;
+  delete[] p;
 }
 
 void matrix_box::append(column *pp)
@@ -288,7 +290,7 @@ void matrix_box::append(column *pp)
     maxlen *= 2;
     p = new column*[maxlen];
     memcpy(p, oldp, sizeof(column*)*len);
-    a_delete oldp;
+    delete[] oldp;
   }
   p[len++] = pp;
 }
@@ -345,3 +347,8 @@ void column::debug_print(const char *s)
   fprintf(stderr, " }");
 }
 
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

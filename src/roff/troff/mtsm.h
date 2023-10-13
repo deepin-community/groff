@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* Copyright (C) 2003-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2020 Free Software Foundation, Inc.
  *
  *  mtsm.h
  *
@@ -87,7 +87,9 @@ enum string_value_state {
 };
 
 struct statem {
+#if defined(DEBUGGING)
   int issue_no;
+#endif
   bool_value bool_values[LAST_BOOL];
   int_value int_values[LAST_INT];
   units_value units_values[LAST_UNITS];

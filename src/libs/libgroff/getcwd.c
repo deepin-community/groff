@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Partial emulation of getcwd in terms of getwd. */
 
+#include <config.h>
 #include <sys/param.h>
 #include <string.h>
 #include <errno.h>

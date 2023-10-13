@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -19,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lib.h"
 
-#include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "posix.h"
 #include "errarg.h"
@@ -142,11 +141,17 @@ int main(int argc, char **argv)
       foption = optarg;
       break;
     case 'h':
-      check_integer_arg('h', optarg, 1, &hash_table_size);
-      if (!is_prime(hash_table_size)) {
-	while (!is_prime(++hash_table_size))
-	  ;
-	warning("%1 not prime: using %2 instead", optarg, hash_table_size);
+      {
+	int requested_hash_table_size;
+	check_integer_arg('h', optarg, 1, &requested_hash_table_size);
+	hash_table_size = requested_hash_table_size;
+	if ((hash_table_size > 2) && (hash_table_size % 2) == 0)
+		hash_table_size++;
+	while (!is_prime(hash_table_size))
+	  hash_table_size += 2;
+	if (hash_table_size != requested_hash_table_size)
+	  warning("requested hash table size %1 is not prime: using %2"
+		  " instead", optarg, hash_table_size);
       }
       break;
     case 'i':
@@ -191,7 +196,7 @@ int main(int argc, char **argv)
   if (!directory) {
     char *path = get_cwd();
     store_filename(path);
-    a_delete path;
+    delete[] path;
   }
   else
     store_filename(directory);
@@ -215,7 +220,7 @@ int main(int argc, char **argv)
     char *dir = strsave(base_name);
     dir[p - base_name] = '\0';
     name_max = file_name_max(dir);
-    a_delete dir;
+    delete[] dir;
   }
   else
     name_max = file_name_max(".");
@@ -289,7 +294,7 @@ int main(int argc, char **argv)
 #endif /* __EMX__ */
   if (rename(temp_index_file, index_file) < 0) {
 #ifdef __MSDOS__
-    // RENAME could fail on plain MSDOS filesystems because
+    // RENAME could fail on plain MS-DOS filesystems because
     // INDEX_FILE is an invalid filename, e.g. it has multiple dots.
     char *fname = p ? index_file + (p - base_name) : 0;
     char *dot = 0;
@@ -321,9 +326,13 @@ int main(int argc, char **argv)
 static void usage(FILE *stream)
 {
   fprintf(stream,
-"usage: %s [-vw] [-c file] [-d dir] [-f file] [-h n] [-i XYZ] [-k n]\n"
-"       [-l n] [-n n] [-o base] [-t n] [files...]\n",
-	  program_name);
+"usage: %s [-w] [-c common-words-file] [-d dir] [-f list-file]"
+" [-h min-hash-table-size] [-i excluded-fields]"
+" [-k max-keys-per-record] [-l min-key-length]"
+" [-n threshold] [-o file] [-t max-key-length] [file ...]\n"
+"usage: %s {-v | --version}\n"
+"usage: %s --help\n",
+	  program_name, program_name, program_name);
 }
 
 static void check_integer_arg(char opt, const char *arg, int min, int *res)
@@ -354,7 +363,7 @@ static char *get_cwd()
       break;
     if (errno != ERANGE)
       fatal("cannot get current working directory: %1", strerror(errno));
-    a_delete buf;
+    delete[] buf;
     if (size == INT_MAX)
       fatal("current working directory longer than INT_MAX");
     if (size > INT_MAX/2)
@@ -786,3 +795,9 @@ void cleanup()
 }
 
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

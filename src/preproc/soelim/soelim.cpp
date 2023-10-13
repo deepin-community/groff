@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -19,10 +18,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lib.h"
 
-#include <ctype.h>
 #include <assert.h>
-#include <stdlib.h>
+#include <ctype.h>
 #include <errno.h>
+#include <stdlib.h>
+
 #include "errarg.h"
 #include "error.h"
 #include "stringclass.h"
@@ -44,7 +44,10 @@ int do_file(const char *);
 
 void usage(FILE *stream)
 {
-  fprintf(stream, "usage: %s [ -Crtv ] [ -I dir ] [ files ]\n", program_name);
+  fprintf(stream, "usage: %s [-Crt] [-I dir] [file ...]\n"
+	  "usage: %s {-v | --version}\n"
+	  "usage: %s --help\n",
+	  program_name, program_name, program_name);
 }
 
 int main(int argc, char **argv)
@@ -304,3 +307,9 @@ int do_file(const char *filename)
   current_filename = 0;
   return 1;
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

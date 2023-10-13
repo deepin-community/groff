@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -64,7 +64,7 @@ special_box::special_box(char *s, box *pp) : pointer_box(pp), macro_name(s)
 
 special_box::~special_box()
 {
-  a_delete macro_name;
+  delete[] macro_name;
 }
 
 int special_box::compute_metrics(int style)

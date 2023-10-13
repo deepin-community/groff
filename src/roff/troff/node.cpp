@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -108,6 +107,18 @@ public:
   int operator!=(const track_kerning_function &);
   hunits compute(int point_size);
 };
+
+struct font_lookup_info {
+  int position;
+  int requested_position;
+  char *requested_name;
+  font_lookup_info();
+};
+
+font_lookup_info::font_lookup_info() : position(-1),
+  requested_position(-1), requested_name(0)
+{
+}
 
 // embolden fontno when this is the current font
 
@@ -714,7 +725,7 @@ class real_output_file : public output_file {
   int piped;
 #endif
   int printing;		// decision via optional page list
-  int output_on;	// \O[0] or \O[1] escape calls
+  int output_on;	// \O[0] or \O[1] escape sequences
   virtual void really_transparent_char(unsigned char) = 0;
   virtual void really_print_line(hunits x, vunits y, node *n,
 				 vunits before, vunits after, hunits width) = 0;
@@ -1078,7 +1089,7 @@ void troff_output_file::put_char_width(charinfo *ci, tfont *tf,
     put('\n');
     hpos += w.to_units() + kk;
   }
-  else if (tcommand_flag) {
+  else if (device_has_tcommand) {
     if (tbuf_len > 0 && hpos == output_hpos && vpos == output_vpos
 	&& (!gcol || gcol == current_glyph_color)
 	&& (!fcol || fcol == current_fill_color)
@@ -1201,7 +1212,7 @@ void troff_output_file::set_font(tfont *tf)
       font_position = new symbol[nfont_positions];
       memcpy(font_position, old_font_position,
 	     old_nfont_positions*sizeof(symbol));
-      a_delete old_font_position;
+      delete[] old_font_position;
     }
     font_position[n] = nm;
   }
@@ -1574,7 +1585,7 @@ void troff_output_file::really_transparent_char(unsigned char c)
 
 troff_output_file::~troff_output_file()
 {
-  a_delete font_position;
+  delete[] font_position;
 }
 
 void troff_output_file::trailer(vunits page_length)
@@ -1614,6 +1625,7 @@ output_file *the_output = 0;
 
 output_file::output_file()
 {
+	is_dying = false;
 }
 
 output_file::~output_file()
@@ -1656,17 +1668,23 @@ real_output_file::~real_output_file()
 {
   if (!fp)
     return;
+  // Prevent destructor from recursing; see div.cpp:cleanup_and_exit().
+  is_dying = true;
   // To avoid looping, set fp to 0 before calling fatal().
-  if (ferror(fp) || fflush(fp) < 0) {
+  if (ferror(fp)) {
     fp = 0;
-    fatal("error writing output file");
+    fatal("error on output file stream");
+  }
+  else if (fflush(fp) < 0) {
+    fp = 0;
+    fatal("unable to flush output file: %1", strerror(errno));
   }
 #ifndef POPEN_MISSING
   if (piped) {
     int result = pclose(fp);
     fp = 0;
     if (result < 0)
-      fatal("pclose failed");
+      fatal("unable to close pipe: %1", strerror(errno));
     if (!WIFEXITED(result))
       error("output process '%1' got fatal signal %2",
 	    pipe_command,
@@ -1682,14 +1700,17 @@ real_output_file::~real_output_file()
 #endif /* not POPEN MISSING */
   if (fclose(fp) < 0) {
     fp = 0;
-    fatal("error closing output file");
+    fatal("unable to close output file: %1", strerror(errno));
   }
 }
 
 void real_output_file::flush()
 {
-  if (fflush(fp) < 0)
-    fatal("error writing output file");
+  // To avoid looping, set fp to 0 before calling fatal().
+  if (fflush(fp) < 0) {
+    fp = 0;
+    fatal("unable to flush output file: %1", strerror(errno));
+  }
 }
 
 int real_output_file::is_printing()
@@ -4009,25 +4030,26 @@ int tag_node::ends_sentence()
   return 2;
 }
 
-int get_reg_int(const char *p)
+// Get contents of register `p` as integer.
+// Used only by suppress_node::tprint().
+static int get_register(const char *p)
 {
-  reg *r = (reg *)number_reg_dictionary.lookup(p);
-  units prev_value;
-  if (r && (r->get_value(&prev_value)))
-    return (int)prev_value;
-  else
-    warning(WARN_REG, "number register '%1' not defined", p);
-  return 0;
+  assert(p != 0 /* nullptr */);
+  reg *r = (reg *)register_dictionary.lookup(p);
+  assert(r != 0 /* nullptr */);
+  units value;
+  assert(r->get_value(&value));
+  return int(value);
 }
 
-const char *get_reg_str(const char *p)
+// Get contents of register `p` as string.
+// Used only by suppress_node::tprint().
+static const char *get_string(const char *p)
 {
-  reg *r = (reg *)number_reg_dictionary.lookup(p);
-  if (r)
-    return r->get_string();
-  else
-    warning(WARN_REG, "register '%1' not defined", p);
-  return 0;
+  assert(p != 0 /* nullptr */);
+  reg *r = (reg *)register_dictionary.lookup(p);
+  assert(r != 0 /* nullptr */);
+  return r->get_string();
 }
 
 void suppress_node::put(troff_output_file *out, const char *s)
@@ -4040,17 +4062,15 @@ void suppress_node::put(troff_output_file *out, const char *s)
 }
 
 /*
- *  We need to remember the start of the image and its name.
+ *  We need to remember the start of the image and its name (\O5).  But
+ *  we won't always need this information; for instance, \O2 is used to
+ *  produce a bounding box with no associated image or position thereof.
  */
 
 static char last_position = 0;
-static const char *last_image_filename = 0;
-static int last_image_id = 0;
-
-inline int min(int a, int b)
-{
-  return a < b ? a : b;
-}
+static const char *image_filename = "";
+static size_t image_filename_len = 0;
+static int subimage_counter = 0;
 
 /*
  *  tprint - if (is_on == 2)
@@ -4072,28 +4092,66 @@ inline int min(int a, int b)
 void suppress_node::tprint(troff_output_file *out)
 {
   int current_page = topdiv->get_page_number();
-  // firstly check to see whether this suppress node contains
-  // an image filename & position.
+  // Does the node have an associated position and file name?
   if (is_on == 2) {
-    // remember position and filename
+    // Save them for future bounding box limits.
     last_position = position;
-    char *tem = (char *)last_image_filename;
-    last_image_filename = strsave(filename.contents());
-    if (tem)
-      free(tem);
-    last_image_id = image_id;
-    // printf("start of image and page = %d\n", current_page);
+    image_filename = strsave(filename.contents());
+    image_filename_len = strlen(image_filename);
   }
-  else {
-    // now check whether the suppress node requires us to issue limits.
+  else { // is_on = 0 or 1
+    // Now check whether the suppress node requires us to issue limits.
     if (emit_limits) {
-      char name[8192];
-      // remember that the filename will contain a %d in which the
-      // last_image_id is placed
-      if (last_image_filename == (char *) 0)
-	*name = '\0';
-      else
-	sprintf(name, last_image_filename, last_image_id);
+      const size_t namebuflen = 8192;
+      char name[namebuflen] = { '\0' };
+      // Jump through a flaming hoop to avoid a "format nonliteral"
+      // warning from blindly using sprintf...and avoid trouble from
+      // mischievous image stems.
+      //
+      // Keep this format string synced with pre-html:makeFileName().
+      const char format[] = "%d";
+      const size_t format_len = strlen(format);
+      const char *percent_position = strstr(image_filename, format);
+      if (percent_position) {
+	subimage_counter++;
+	assert(sizeof subimage_counter <= 8);
+	// A 64-bit signed int produces up to 19 decimal digits.
+	char *subimage_number = (char *)malloc(20); // 19 digits + \0
+	if (0 == subimage_number)
+	  fatal("memory allocation failure");
+	// Replace the %d in the filename with this number.
+	size_t enough = image_filename_len + 19 - format_len;
+	char *new_name = (char *)malloc(enough);
+	if (0 == new_name)
+	  fatal("memory allocation failure");
+	ptrdiff_t prefix_length = percent_position - image_filename;
+	strncpy(new_name, image_filename, prefix_length);
+	sprintf(subimage_number, "%d", subimage_counter);
+	size_t number_length = strlen(subimage_number);
+	strcpy(new_name + prefix_length, subimage_number);
+	// Skip over the format in the source string.
+	const char *suffix_src = image_filename + prefix_length
+	  + format_len;
+	char *suffix_dst = new_name + prefix_length + number_length;
+	strcpy(suffix_dst, suffix_src);
+	// Ensure the new string fits with room for a terminal '\0'.
+	const size_t len = strlen(new_name);
+	if (len > (namebuflen - 1))
+	  error("constructed file name in suppressed output escape"
+		" sequence is too long (>= %1 bytes); skipping image",
+		(int)namebuflen);
+	else
+	  strncpy(name, new_name, (namebuflen - 1));
+	free(new_name);
+	free(subimage_number);
+      }
+      else {
+	if (image_filename_len > (namebuflen - 1))
+	  error("file name in suppressed output escape sequence is too"
+		" long (>= %1 bytes); skipping image", (int)namebuflen);
+	else
+	  strcpy(name, image_filename);
+      }
       if (is_html) {
 	switch (last_position) {
 	case 'c':
@@ -4121,37 +4179,39 @@ void suppress_node::tprint(troff_output_file *out)
       }
       else {
 	// postscript (or other device)
-	if (suppress_start_page > 0 && current_page != suppress_start_page)
-	  error("suppression limit registers span more than one page;\n"
-		"image description %1 will be wrong", image_no);
+	if (suppress_start_page > 0
+	    && (current_page != suppress_start_page))
+	  error("suppression limit registers span more than a page;"
+		" grohtml-info for image %1 will be wrong", image_no);
 	// if (topdiv->get_page_number() != suppress_start_page)
-	//  fprintf(stderr, "end of image and topdiv page = %d   and  suppress_start_page = %d\n",
+	//  fprintf(stderr, "end of image and topdiv page = %d   and"
+	//		      " suppress_start_page = %d\n",
 	//	  topdiv->get_page_number(), suppress_start_page);
 
-	// remember that the filename will contain a %d in which the
-	// image_no is placed
+	// `name` will contain a "%d" in which the image_no is placed.
 	fprintf(stderr,
-		"grohtml-info:page %d  %d  %d  %d  %d  %d  %s  %d  %d  %s\n",
+		"grohtml-info:page %d  %d  %d  %d  %d  %d  %s  %d  %d"
+		"  %s:%s\n",
 		topdiv->get_page_number(),
-		get_reg_int("opminx"), get_reg_int("opminy"),
-		get_reg_int("opmaxx"), get_reg_int("opmaxy"),
+		get_register("opminx"), get_register("opminy"),
+		get_register("opmaxx"), get_register("opmaxy"),
 		// page offset + line length
-		get_reg_int(".o") + get_reg_int(".l"),
-		name, hresolution, vresolution, get_reg_str(".F"));
+		get_register(".o") + get_register(".l"),
+		name, hresolution, vresolution, get_string(".F"),
+		get_string(".c"));
 	fflush(stderr);
       }
     }
-    else {
+    else { // We are not emitting limits.
       if (is_on) {
 	out->on();
-	// lastly we reset the output registers
 	reset_output_registers();
       }
       else
 	out->off();
       suppress_start_page = current_page;
     }
-  }
+  } // is_on
 }
 
 int suppress_node::force_tprint()
@@ -4380,7 +4440,7 @@ int word_space_node::merge_space(hunits h, hunits sw, hunits ssw)
 {
   n += h;
   assert(orig_width != 0);
-  width_list *w = orig_width; 
+  width_list *w = orig_width;
   for (; w->next; w = w->next)
     ;
   w->next = new width_list(sw, ssw);
@@ -4487,7 +4547,7 @@ int draw_node::is_tag()
 draw_node::~draw_node()
 {
   if (point)
-    a_delete point;
+    delete[] point;
 }
 
 hunits draw_node::width()
@@ -4831,11 +4891,11 @@ void composite_node::tprint(troff_output_file *out)
     out->right(track_kern);
 }
 
-node *make_composite_node(charinfo *s, environment *env)
+static node *make_composite_node(charinfo *s, environment *env)
 {
   int fontno = env_definite_font(env);
   if (fontno < 0) {
-    error("no current font");
+    error("cannot format composite glyph: no current font");
     return 0;
   }
   assert(fontno < font_table_size && font_table[fontno] != 0);
@@ -4850,11 +4910,12 @@ node *make_composite_node(charinfo *s, environment *env)
   return new composite_node(n, s, tf, 0, 0, 0);
 }
 
-node *make_glyph_node(charinfo *s, environment *env, int no_error_message = 0)
+static node *make_glyph_node(charinfo *s, environment *env,
+			     bool want_warnings = true)
 {
   int fontno = env_definite_font(env);
   if (fontno < 0) {
-    error("no current font");
+    error("cannot format glyph: no current font");
     return 0;
   }
   assert(fontno < font_table_size && font_table[fontno] != 0);
@@ -4865,9 +4926,9 @@ node *make_glyph_node(charinfo *s, environment *env, int no_error_message = 0)
     if (mac && s->is_fallback())
       return make_composite_node(s, env);
     if (s->numbered()) {
-      if (!no_error_message)
-	warning(WARN_CHAR, "can't find numbered character %1",
-		s->get_number());
+      if (want_warnings)
+	warning(WARN_CHAR, "character code %1 not defined in current"
+		" font", s->get_number());
       return 0;
     }
     special_font_list *sf = font_table[fontno]->sf;
@@ -4909,19 +4970,20 @@ node *make_glyph_node(charinfo *s, environment *env, int no_error_message = 0)
 	}
     }
     if (!found) {
-      if (!no_error_message && s->first_time_not_found()) {
+      if (want_warnings && s->first_time_not_found()) {
 	unsigned char input_code = s->get_ascii_code();
 	if (input_code != 0) {
 	  if (csgraph(input_code))
-	    warning(WARN_CHAR, "can't find character '%1'", input_code);
+	    warning(WARN_CHAR, "character '%1' not defined",
+		    input_code);
 	  else
-	    warning(WARN_CHAR, "can't find character with input code %1",
-		    int(input_code));
+	    warning(WARN_CHAR, "character with input code %1 not"
+		    " defined", int(input_code));
 	}
 	else if (s->nm.contents()) {
 	  const char *nm = s->nm.contents();
 	  const char *backslash = (nm[1] == 0) ? "\\" : "";
-	  warning(WARN_CHAR, "can't find special character '%1%2'",
+	  warning(WARN_CHAR, "special character '%1%2' not defined",
 		  backslash, nm);
 	}
       }
@@ -4964,21 +5026,21 @@ node *make_node(charinfo *ci, environment *env)
     return make_glyph_node(ci, env);
 }
 
-int character_exists(charinfo *ci, environment *env)
+bool character_exists(charinfo *ci, environment *env)
 {
   if (ci->get_special_translation() != charinfo::TRANSLATE_NONE)
-    return 1;
+    return true;
   charinfo *tem = ci->get_translation();
   if (tem)
     ci = tem;
   if (ci->get_macro())
-    return 1;
-  node *nd = make_glyph_node(ci, env, 1);
+    return true;
+  node *nd = make_glyph_node(ci, env, false /* don't want warnings */);
   if (nd) {
     delete nd;
-    return 1;
+    return true;
   }
-  return 0;
+  return false;
 }
 
 node *node::add_char(charinfo *ci, environment *env,
@@ -5868,7 +5930,7 @@ static void grow_font_table(int n)
   if (old_font_table_size)
     memcpy(font_table, old_font_table,
 	   old_font_table_size*sizeof(font_info *));
-  a_delete old_font_table;
+  delete[] old_font_table;
   for (int i = old_font_table_size; i < font_table_size; i++)
     font_table[i] = 0;
 }
@@ -5883,53 +5945,48 @@ static symbol get_font_translation(symbol nm)
 
 dictionary font_dictionary(50);
 
-static int mount_font_no_translate(int n, symbol name, symbol external_name,
-				   int check_only = 0)
+static bool mount_font_no_translate(int n, symbol name,
+				    symbol external_name,
+				    bool check_only = false)
 {
   assert(n >= 0);
-  // We store the address of this char in font_dictionary to indicate
+  // We store the address of this char in `font_dictionary` to indicate
   // that we've previously tried to mount the font and failed.
   static char a_char;
-  font *fm = 0;
+  font *fm = 0 /* nullptr */;
   void *p = font_dictionary.lookup(external_name);
-  if (p == 0) {
-    int not_found;
-    fm = font::load_font(external_name.contents(), &not_found, check_only);
+  if (0 /* nullptr */ == p) {
+    fm = font::load_font(external_name.contents(), check_only);
     if (check_only)
-      return fm != 0;
-    if (!fm) {
-      if (not_found)
-	warning(WARN_FONT, "can't find font '%1'", external_name.contents());
+      return fm != 0 /* nullptr */;
+    if (0 /* nullptr */ == fm) {
       (void)font_dictionary.lookup(external_name, &a_char);
-      return 0;
+      return false;
     }
     (void)font_dictionary.lookup(name, fm);
   }
   else if (p == &a_char) {
-#if 0
-    error("invalid font '%1'", external_name.contents());
-#endif
-    return 0;
+    return false;
   }
   else
     fm = (font*)p;
   if (check_only)
-    return 1;
+    return true;
   if (n >= font_table_size) {
     if (n - font_table_size > 1000) {
       error("font position too much larger than first unused position");
-      return 0;
+      return false;
     }
     grow_font_table(n);
   }
-  else if (font_table[n] != 0)
+  else if (font_table[n] != 0 /* nullptr */)
     delete font_table[n];
   font_table[n] = new font_info(name, n, external_name, fm);
   font_family::invalidate_fontno(n);
-  return 1;
+  return true;
 }
 
-int mount_font(int n, symbol name, symbol external_name)
+bool mount_font(int n, symbol name, symbol external_name)
 {
   assert(n >= 0);
   name = get_font_translation(name);
@@ -5944,7 +6001,7 @@ int check_font(symbol fam, symbol name)
 {
   if (check_style(name))
     name = concat(fam, name);
-  return mount_font_no_translate(0, name, name, 1);
+  return mount_font_no_translate(0, name, name, true /* check only */);
 }
 
 int check_style(symbol s)
@@ -5953,27 +6010,29 @@ int check_style(symbol s)
   return i < 0 ? 0 : font_table[i]->is_style();
 }
 
-void mount_style(int n, symbol name)
+bool mount_style(int n, symbol name)
 {
   assert(n >= 0);
   if (n >= font_table_size) {
     if (n - font_table_size > 1000) {
       error("font position too much larger than first unused position");
-      return;
+      return false;
     }
     grow_font_table(n);
   }
   else if (font_table[n] != 0)
     delete font_table[n];
-  font_table[n] = new font_info(get_font_translation(name), n, NULL_SYMBOL, 0);
+  font_table[n] = new font_info(get_font_translation(name), n,
+				NULL_SYMBOL, 0);
   font_family::invalidate_fontno(n);
+  return true;
 }
 
 /* global functions */
 
 void font_translate()
 {
-  symbol from = get_name(1);
+  symbol from = get_name(true /* required */);
   if (!from.is_null()) {
     symbol to = get_name();
     if (to.is_null() || from == to)
@@ -5991,10 +6050,18 @@ void font_position()
     if (n < 0)
       error("negative font position");
     else {
-      symbol internal_name = get_name(1);
+      symbol internal_name = get_name(true /* required */);
       if (!internal_name.is_null()) {
 	symbol external_name = get_long_name();
-	mount_font(n, internal_name, external_name); // ignore error
+	if (!mount_font(n, internal_name, external_name)) {
+	  string msg;
+	  if (external_name != 0 /* nullptr */)
+	    msg += string(" from file '") + external_name.contents()
+	      + string("'");
+	  msg += '\0';
+	  error("cannot load font '%1'%2 for mounting",
+		internal_name.contents(), msg.contents());
+	}
       }
     }
   }
@@ -6011,55 +6078,53 @@ font_family::font_family(symbol s)
 
 font_family::~font_family()
 {
-  a_delete map;
+  delete[] map;
 }
 
-int font_family::make_definite(int i)
+// Resolve a requested font mounting position to a mounting position
+// usable by the output driver.  (Positions 1 through 4 are typically
+// allocated to styles, and are not usable thus.)  A return value of
+// `-1` indicates failure.
+int font_family::make_definite(int mounting_position)
 {
-  if (i >= 0) {
-    if (i < map_size && map[i] >= 0)
-      return map[i];
-    else {
-      if (i < font_table_size && font_table[i] != 0) {
-	if (i >= map_size) {
-	  int old_map_size = map_size;
-	  int *old_map = map;
-	  map_size *= 3;
-	  map_size /= 2;
-	  if (i >= map_size)
-	    map_size = i + 10;
-	  map = new int[map_size];
-	  memcpy(map, old_map, old_map_size*sizeof(int));
-	  a_delete old_map;
-	  for (int j = old_map_size; j < map_size; j++)
-	    map[j] = -1;
-	}
-	if (font_table[i]->is_style()) {
-	  symbol sty = font_table[i]->get_name();
-	  symbol f = concat(nm, sty);
-	  int n;
-	  // don't use symbol_fontno, because that might return a style
-	  // and because we don't want to translate the name
-	  for (n = 0; n < font_table_size; n++)
-	    if (font_table[n] != 0 && font_table[n]->is_named(f)
-		&& !font_table[n]->is_style())
-	      break;
-	  if (n >= font_table_size) {
-	    n = next_available_font_position();
-	    if (!mount_font_no_translate(n, f, f))
-	      return -1;
-	  }
-	  return map[i] = n;
-	}
-	else
-	  return map[i] = i;
-      }
-      else
-	return -1;
-    }
-  }
-  else
+  assert(mounting_position >= 0);
+  int pos = mounting_position;
+  if (pos < 0)
     return -1;
+  if (pos < map_size && map[pos] >= 0)
+    return map[pos];
+  if (!(pos < font_table_size && font_table[pos] != 0))
+    return -1;
+  if (pos >= map_size) {
+    int old_map_size = map_size;
+    int *old_map = map;
+    map_size *= 3;
+    map_size /= 2;
+    if (pos >= map_size)
+      map_size = pos + 10;
+    map = new int[map_size];
+    memcpy(map, old_map, old_map_size * sizeof (int));
+    delete[] old_map;
+    for (int j = old_map_size; j < map_size; j++)
+      map[j] = -1;
+  }
+  if (!(font_table[pos]->is_style()))
+    return map[pos] = pos;
+  symbol sty = font_table[pos]->get_name();
+  symbol f = concat(nm, sty);
+  int n;
+  // Don't use symbol_fontno, because that might return a style and
+  // because we don't want to translate the name.
+  for (n = 0; n < font_table_size; n++)
+    if (font_table[n] != 0 && font_table[n]->is_named(f)
+	&& !font_table[n]->is_style())
+      break;
+  if (n >= font_table_size) {
+    n = next_available_font_position();
+    if (!mount_font_no_translate(n, f, f))
+      return -1;
+  }
+  return map[pos] = n;
 }
 
 dictionary family_dictionary(5);
@@ -6097,46 +6162,62 @@ void style()
     if (n < 0)
       error("negative font position");
     else {
-      symbol internal_name = get_name(1);
+      symbol internal_name = get_name(true /* required */);
       if (!internal_name.is_null())
-	mount_style(n, internal_name);
+	(void) mount_style(n, internal_name);
     }
   }
   skip_line();
 }
 
-static int get_fontno()
+static void font_lookup_error(font_lookup_info& finfo,
+			      const char *msg)
+{
+  if (finfo.requested_name)
+    error("cannot load font '%1' %2", finfo.requested_name, msg);
+  else
+    error("cannot load font at position %1 %2",
+	  finfo.requested_position, msg);
+}
+
+// Read the next token and look it up as a font name or position number.
+// Return lookup success.  Store, in the supplied struct argument, the
+// requested name or position, and the position actually resolved; -1
+// means not found (see `font_lookup_info` constructor).
+static bool has_font(font_lookup_info *finfo)
 {
   int n;
   tok.skip();
-  if (tok.delimiter()) {
-    symbol s = get_name(1);
+  if (tok.usable_as_delimiter()) {
+    symbol s = get_name(true /* required */);
+    finfo->requested_name = (char *)s.contents();
     if (!s.is_null()) {
       n = symbol_fontno(s);
       if (n < 0) {
 	n = next_available_font_position();
-	if (!mount_font(n, s))
-	  return -1;
+	if (mount_font(n, s))
+	  finfo->position = n;
       }
-      return curenv->get_family()->make_definite(n);
+      finfo->position = curenv->get_family()->make_definite(n);
     }
   }
   else if (get_integer(&n)) {
-    if (n < 0 || n >= font_table_size || font_table[n] == 0)
-      error("bad font number");
-    else
-      return curenv->get_family()->make_definite(n);
+    finfo->requested_position = n;
+    if (!(n < 0 || n >= font_table_size || font_table[n] == 0))
+      finfo->position = curenv->get_family()->make_definite(n);
   }
-  return -1;
+  return (finfo->position != -1);
 }
 
 static int underline_fontno = 2;
 
 void underline_font()
 {
-  int n = get_fontno();
-  if (n >= 0)
-    underline_fontno = n;
+  font_lookup_info finfo;
+  if (!has_font(&finfo))
+    font_lookup_error(finfo, "to make it the underline font");
+  else
+    underline_fontno = finfo.position;
   skip_line();
 }
 
@@ -6147,38 +6228,43 @@ int get_underline_fontno()
 
 void define_font_special_character()
 {
-  int n = get_fontno();
-  if (n < 0) {
+  font_lookup_info finfo;
+  if (!has_font(&finfo)) {
+    font_lookup_error(finfo, "to define font-specific fallback glyph");
+    // Normally we skip the remainder of the line unconditionally at the
+    // end of a request-implementing function, but do_define_character()
+    // will eat the rest of it for us.
     skip_line();
-    return;
   }
-  symbol f = font_table[n]->get_name();
-  do_define_character(CHAR_FONT_SPECIAL, f.contents());
+  else {
+    symbol f = font_table[finfo.position]->get_name();
+    do_define_character(CHAR_FONT_SPECIAL, f.contents());
+  }
 }
 
 void remove_font_special_character()
 {
-  int n = get_fontno();
-  if (n < 0) {
-    skip_line();
-    return;
-  }
-  symbol f = font_table[n]->get_name();
-  while (!tok.newline() && !tok.eof()) {
-    if (!tok.space() && !tok.tab()) {
-      charinfo *s = tok.get_char(1);
-      string gl(f.contents());
-      gl += ' ';
-      gl += s->nm.contents();
-      gl += '\0';
-      charinfo *ci = get_charinfo(symbol(gl.contents()));
-      if (!ci)
-	break;
-      macro *m = ci->set_macro(0);
-      if (m)
-	delete m;
+  font_lookup_info finfo;
+  if (!has_font(&finfo))
+    font_lookup_error(finfo, "to remove font-specific fallback glyph");
+  else {
+    symbol f = font_table[finfo.position]->get_name();
+    while (!tok.is_newline() && !tok.is_eof()) {
+      if (!tok.is_space() && !tok.is_tab()) {
+	charinfo *s = tok.get_char(true /* required */);
+	string gl(f.contents());
+	gl += ' ';
+	gl += s->nm.contents();
+	gl += '\0';
+	charinfo *ci = get_charinfo(symbol(gl.contents()));
+	if (!ci)
+	  break;
+	macro *m = ci->set_macro(0);
+	if (m)
+	  delete m;
+      }
+      tok.next();
     }
-    tok.next();
   }
   skip_line();
 }
@@ -6194,10 +6280,12 @@ static void read_special_fonts(special_font_list **sp)
   }
   special_font_list **p = sp;
   while (has_arg()) {
-    int i = get_fontno();
-    if (i >= 0) {
+    font_lookup_info finfo;
+    if (!has_font(&finfo))
+      font_lookup_error(finfo, "to mark it as special");
+    else {
       special_font_list *tem = new special_font_list;
-      tem->n = i;
+      tem->n = finfo.position;
       tem->next = 0;
       *p = tem;
       p = &(tem->next);
@@ -6207,9 +6295,12 @@ static void read_special_fonts(special_font_list **sp)
 
 void font_special_request()
 {
-  int n = get_fontno();
-  if (n >= 0)
-    read_special_fonts(&font_table[n]->sf);
+  font_lookup_info finfo;
+  if (!has_font(&finfo))
+    font_lookup_error(finfo, "to mark other fonts as special"
+			     " contingently upon it"); // a mouthful :-/
+  else
+    read_special_fonts(&font_table[finfo.position]->sf);
   skip_line();
 }
 
@@ -6221,8 +6312,11 @@ void special_request()
 
 void font_zoom_request()
 {
-  int n = get_fontno();
-  if (n >= 0) {
+  font_lookup_info finfo;
+  if (!has_font(&finfo))
+    font_lookup_error(finfo, "to set a zoom factor for it");
+  else {
+    int n = finfo.position;
     if (font_table[n]->is_style())
       warning(WARN_FONT, "can't set zoom factor for a style");
     else {
@@ -6329,12 +6423,23 @@ hunits env_narrow_space_width(environment *env)
 
 void bold_font()
 {
-  int n = get_fontno();
-  if (n >= 0) {
+  font_lookup_info finfo;
+  if (!has_font(&finfo))
+    font_lookup_error(finfo, "for emboldening");
+  else {
+    int n = finfo.position;
     if (has_arg()) {
-      if (tok.delimiter()) {
-	int f = get_fontno();
-	if (f >= 0) {
+      // This is a bit non-orthogonal, but faithful to CSTR #54.  We can
+      // only conditionally embolden a font specified by name, not
+      // position, so ".bd S B 4" works but ".bd 5 3 4" does not.  The
+      // latter bolds the font at position 5 unconditionally, and
+      // ignores the third argument.
+      if (tok.usable_as_delimiter()) {
+      font_lookup_info finfo2;
+	if (!has_font(&finfo2))
+	  font_lookup_error(finfo2, "for conditional emboldening");
+	else {
+	  int f = finfo2.position;
 	  units offset;
 	  if (has_arg() && get_number(&offset, 'u') && offset >= 1)
 	    font_table[f]->set_conditional_bold(n, hunits(offset - 1));
@@ -6343,6 +6448,9 @@ void bold_font()
 	}
       }
       else {
+	font_lookup_info finfo2;
+	  if (!has_font(&finfo2))
+	    font_lookup_error(finfo2, "for conditional emboldening");
 	units offset;
 	if (get_number(&offset, 'u') && offset >= 1)
 	  font_table[n]->set_bold(hunits(offset - 1));
@@ -6410,9 +6518,11 @@ hunits track_kerning_function::compute(int size)
 
 void track_kern()
 {
-  int n = get_fontno();
-  if (n >= 0) {
-    int min_s, max_s;
+  font_lookup_info finfo;
+  if (!has_font(&finfo))
+    font_lookup_error(finfo, "for track kerning");
+  else {
+    int n = finfo.position, min_s, max_s;
     hunits min_a, max_a;
     if (has_arg()
 	&& get_number(&min_s, 'z')
@@ -6432,9 +6542,11 @@ void track_kern()
 
 void constant_space()
 {
-  int n = get_fontno();
-  if (n >= 0) {
-    int x, y;
+  font_lookup_info finfo;
+  if (!has_font(&finfo))
+    font_lookup_error(finfo, "for constant spacing");
+  else {
+    int n = finfo.position, x, y;
     if (!has_arg() || !get_integer(&x))
       font_table[n]->set_constant_space(CONSTANT_SPACE_NONE);
     else {
@@ -6528,11 +6640,17 @@ void init_node_requests()
   init_request("sty", style);
   init_request("tkf", track_kern);
   init_request("uf", underline_font);
-  number_reg_dictionary.define(".fp", new next_available_font_position_reg);
-  number_reg_dictionary.define(".kern",
-			       new constant_int_reg(&global_kern_mode));
-  number_reg_dictionary.define(".lg",
-			       new constant_int_reg(&global_ligature_mode));
-  number_reg_dictionary.define(".P", new printing_reg);
+  register_dictionary.define(".fp", new next_available_font_position_reg);
+  register_dictionary.define(".kern",
+			       new readonly_register(&global_kern_mode));
+  register_dictionary.define(".lg",
+			       new readonly_register(&global_ligature_mode));
+  register_dictionary.define(".P", new printing_reg);
   soft_hyphen_char = get_charinfo(HYPHEN_SYMBOL);
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

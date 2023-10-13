@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -254,6 +253,7 @@ troff_output::troff_output()
 
 troff_output::~troff_output()
 {
+  free((char *)last_filename);
 }
 
 inline position troff_output::transform(const position &pos)
@@ -298,14 +298,19 @@ void troff_output::finish_picture()
   line_thickness(BAD_THICKNESS);
   last_fill = -1.0;		// force it to be reset for each picture
   reset_color();
-  if (!flyback_flag)
+  if (!(want_flyback || want_alternate_flyback))
     printf(".sp %.3fi+1\n", height);
   printf(".if \\n(" FILL_REG " .fi\n");
   printf(".br\n");
   printf(".nr " EQN_NO_EXTRA_SPACE_REG " 0\n");
   // this is a little gross
   set_location(current_filename, current_lineno);
-  fputs(flyback_flag ? ".PF\n" : ".PE\n", stdout);
+  if (want_flyback)
+    fputs(".PF\n", stdout);
+  else if (want_alternate_flyback)
+    fputs(".PY\n", stdout);
+  else
+    fputs(".PE\n", stdout);
 }
 
 void troff_output::command(const char *s,
@@ -560,6 +565,15 @@ void troff_output::set_location(const char *s, int n)
     printf(".lf %d\n", n);
   else {
     printf(".lf %d %s\n", n, s);
-    last_filename = s;
+    char *lfn = strdup(s);
+    if (0 == lfn)
+      fatal("memory allocation failure while copying file name");
+    last_filename = lfn;
   }
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

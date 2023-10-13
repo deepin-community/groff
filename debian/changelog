@@ -1,3 +1,107 @@
+groff (1.23.0-2deepin1) unstable; urgency=medium
+
+  * Set doc-default-operating-system to "deepin"
+
+ -- Tianyu Chen <sweetyfish@deepin.org>  Fri, 13 Oct 2023 12:22:02 +0800
+
+groff (1.23.0-2) unstable; urgency=medium
+
+  * Map CW to R for nroff (closes: #1040975).
+
+ -- Colin Watson <cjwatson@debian.org>  Fri, 14 Jul 2023 17:44:41 +0100
+
+groff (1.23.0-1) unstable; urgency=medium
+
+  * New upstream release (closes: #1040440):
+    - [libdriver]: Fix SEGV in printer::set_ascii_char (closes: #421437).
+    - [docs]: groff(7): Replace many uses of \[cq] with \[aq] when the
+      latter is what is meant (closes: #551111).
+    - [docs]: groff(7): Fix missing escape synonyms for '.ft' (closes:
+      #1021961).
+    - [tbl]: Regularize diagnostics (closes: #710178).
+    - [troff]: Avoid infinite loop (closes: #892423).
+    - [docs]: roff(7): Revise language referring to Emacs as the "best"
+      program for editing roff documents (closes: #248529).
+    - [mdoc]: Fix infinite loop (closes: #411227).
+    - [mdoc]: Fix bad page number placement (closes: #919890).
+    - [mdoc]: Improve output of .At 32v (closes: #991633).
+    - [libbib]: Validate input to avoid heap overread (closes: #716109).
+    - [fonts]: Fix \[oq] and \[cq] in X11 text fonts (closes: #243238).
+    - [gropdf]: Recognize "com10" paper format (closes: #1009248).
+    - [docs]: Document grotty pager requirements more prominently (closes:
+      #257413).
+    - [docs]: pic(1): Fix content nits, including no longer referring to
+      pic.ms (closes: #1032227).
+    - [tmac]: Define fallbacks for chars in Latin-[259] (closes: #782903).
+    - [mdoc]: Drop thin and hair space escape sequences from several string
+      definitions (closes: #1021795).
+    - [mdoc]: Indent entire subsection heading by 3 ens, even if it breaks
+      across output lines (closes: #1022179).
+  * Build-depend on m4, texlive-base, and texlive-latex-base (closes:
+    #1011666).
+  * Override Lintian source-is-missing misfire (see #1019980).
+  * Drop mapping of \(oq to ' on devices other than utf8; upstream does this
+    now for latin1, which is probably good enough.
+  * Adopt upstream's use of SGR escape sequences for man/mdoc (LP: #610609).
+    I turned these off for Debian in 2002 because pagers didn't cope well at
+    the time, but it's now 21 years later and things have changed; SGR
+    escape sequences resolve some ambiguity (see #963490) and are required
+    for new features such as clickable hyperlinks.
+  * Honour /etc/papersize in PDF output, now that gropdf has the necessary
+    support upstream (closes: #1030097).
+  * Set doc-default-operating-system to "Debian" (closes: #284002).
+  * Map "^" to "\[ha]" and "~" to "\[ti]" for man/mdoc on the utf8 device,
+    to mitigate an upstream change likely to expose many glyph usage errors
+    in manual pages (although those errors were already visible in PDF
+    output).
+  * Arrange to rebuild documentation from the original source.
+  * Install groff.pdf (the PDF form of groff's Texinfo manual).
+  * Only force time display to UTC when the time came from SOURCE_DATE_EPOCH
+    (LP: #1908333).
+  * Enable OSC 8 hyperlinks for man pages.
+
+ -- Colin Watson <cjwatson@debian.org>  Thu, 13 Jul 2023 05:30:17 +0100
+
+groff (1.22.4-10) unstable; urgency=medium
+
+  [ Colin Watson ]
+  * Set upstream metadata fields: Repository-Browse.
+
+  [ G. Branden Robinson ]
+  * debian/patches/add-groff-1.23-forward-compatibility.patch: Prevent
+    formatter warnings and dropped man(7) document text when encountering
+    documents written using new features of groff 1.23.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 07 Mar 2023 09:38:03 +0000
+
+groff (1.22.4-9) unstable; urgency=medium
+
+  * Remove dh_missing override, no longer needed with debhelper v13.
+  * Simplify a debhelper override slightly.
+  * Update Lintian override to current syntax.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 15 Nov 2022 15:30:39 +0000
+
+groff (1.22.4-8) unstable; urgency=medium
+
+  [ Debian Janitor ]
+  * Remove constraints unnecessary since buster:
+    + Build-Depends: Drop versioned constraint on bison, dpkg-dev and texinfo.
+    + groff-base: Drop versioned constraint on groff in Replaces.
+    + groff-base: Drop versioned constraint on groff, pmake and troffcvt in
+      Breaks.
+    + groff: Drop versioned constraint on groff-base in Replaces.
+
+  [ Colin Watson ]
+  * Remove ancient Breaks/Replaces on jgroff and groff-x11.
+  * Upgrade to debhelper v13 (dh-exec is no longer needed).
+  * debian/watch: Upgrade to version 4.
+  * debian/upstream/signing-key.asc: Minimize exported keys.
+  * Cherry-pick from upstream:
+    - Clamp negative tab stop positions to 0 (closes: #990406).
+
+ -- Colin Watson <cjwatson@debian.org>  Sun, 26 Dec 2021 15:12:27 +0000
+
 groff (1.22.4-7) unstable; urgency=medium
 
   * Cherry-pick from upstream:

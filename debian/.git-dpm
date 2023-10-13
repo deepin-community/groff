@@ -1,11 +1,12 @@
 # see git-dpm(1) from git-dpm package
-912a8bf478e81282b8d965e577ef516e5b758151
-912a8bf478e81282b8d965e577ef516e5b758151
-ef16ff6c6e7ff7744b318b73feaeb9a2fadaa748
-ef16ff6c6e7ff7744b318b73feaeb9a2fadaa748
-groff_1.22.4.orig.tar.gz
-2ce4ab107e3fab1414fef2c5b5312f562a4e4d35
-4137480
+742dfac36f1fd23e17d27dbf83e3793d3f3a063d
+742dfac36f1fd23e17d27dbf83e3793d3f3a063d
+4e2e28947560f0b5e3a7e89d43846b9183fb4c09
+4e2e28947560f0b5e3a7e89d43846b9183fb4c09
+groff_1.23.0.orig.tar.gz
+c18099667889873704f6f953ba501abc014fae85
+7433031
 debianTag="debian/%v"
 patchedTag="patched/%v"
 upstreamTag="upstream/%u"
+signature:fbf11773b8cb8360a1ccc4a2c32630a95e436eb3:833:groff_1.23.0.orig.tar.gz.asc

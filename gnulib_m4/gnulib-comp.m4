@@ -1,9 +1,9 @@
 # DO NOT EDIT! GENERATED AUTOMATICALLY!
-# Copyright (C) 2002-2018 Free Software Foundation, Inc.
+# Copyright (C) 2002-2023 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # This file is distributed in the hope that it will be useful,
@@ -42,9 +42,10 @@ AC_DEFUN([gl_EARLY],
   AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
   AC_REQUIRE([gl_PROG_AR_RANLIB])
 
-  AC_REQUIRE([AM_PROG_CC_C_O])
   # Code from module absolute-header:
   # Code from module alloca-opt:
+  # Code from module assert-h:
+  # Code from module attribute:
   # Code from module errno:
   # Code from module extensions:
   # Code from module extern-inline:
@@ -53,13 +54,15 @@ AC_DEFUN([gl_EARLY],
   AC_REQUIRE([gl_FP_IEEE])
   # Code from module fprintf-posix:
   # Code from module fpucw:
+  # Code from module free-posix:
   # Code from module frexp-nolibm:
   # Code from module frexpl-nolibm:
   # Code from module fseterr:
+  # Code from module gen-header:
   # Code from module git-version-gen:
   # Code from module havelib:
-  # Code from module host-cpu-c-abi:
   # Code from module include_next:
+  # Code from module inttypes-incomplete:
   # Code from module isnand-nolibm:
   # Code from module isnanf-nolibm:
   # Code from module isnanl-nolibm:
@@ -69,28 +72,30 @@ AC_DEFUN([gl_EARLY],
   # Code from module memchr:
   # Code from module multiarch:
   # Code from module nocrash:
-  # Code from module non-recursive-gnulib-prefix-hack:
   # Code from module printf-frexp:
   # Code from module printf-frexpl:
   # Code from module printf-safe:
   # Code from module signbit:
   # Code from module size_max:
+  # Code from module snippet/_Noreturn:
   # Code from module snippet/arg-nonnull:
   # Code from module snippet/c++defs:
   # Code from module snippet/warn-on-use:
   # Code from module snprintf:
   # Code from module ssize_t:
+  # Code from module stdbool-c99:
   # Code from module stddef:
   # Code from module stdint:
   # Code from module stdio:
+  # Code from module stdlib:
   # Code from module streq:
   # Code from module string:
   # Code from module sys_types:
+  # Code from module unistd:
   # Code from module unitypes:
   # Code from module uniwidth/base:
   # Code from module uniwidth/width:
   # Code from module vasnprintf:
-  # Code from module verify:
   # Code from module vsnprintf:
   # Code from module wchar:
   # Code from module wctype-h:
@@ -112,20 +117,34 @@ AC_DEFUN([gl_INIT],
   m4_pushdef([AC_LIBSOURCES], m4_defn([gl_LIBSOURCES]))
   m4_pushdef([gl_LIBSOURCES_LIST], [])
   m4_pushdef([gl_LIBSOURCES_DIR], [])
+  m4_pushdef([GL_MACRO_PREFIX], [gl])
+  m4_pushdef([GL_MODULE_INDICATOR_PREFIX], [GL])
   gl_COMMON
   gl_source_base='lib'
+  gl_source_base_prefix='$(top_build_prefix)lib/'
   gl_FUNC_ALLOCA
+  gl_CONDITIONAL_HEADER([alloca.h])
+  AC_PROG_MKDIR_P
+  gl_ASSERT_H
+  gl_CONDITIONAL_HEADER([assert.h])
+  AC_PROG_MKDIR_P
   gl_HEADER_ERRNO_H
+  gl_CONDITIONAL_HEADER([errno.h])
+  AC_PROG_MKDIR_P
   AC_REQUIRE([gl_EXTERN_INLINE])
   gl_FLOAT_H
-  if test $REPLACE_FLOAT_LDBL = 1; then
-    AC_LIBOBJ([float])
-  fi
-  if test $REPLACE_ITOLD = 1; then
-    AC_LIBOBJ([itold])
-  fi
+  gl_CONDITIONAL_HEADER([float.h])
+  AC_PROG_MKDIR_P
+  gl_CONDITIONAL([GL_COND_OBJ_FLOAT], [test $REPLACE_FLOAT_LDBL = 1])
+  gl_CONDITIONAL([GL_COND_OBJ_ITOLD], [test $REPLACE_ITOLD = 1])
   gl_FUNC_FPRINTF_POSIX
   gl_STDIO_MODULE_INDICATOR([fprintf-posix])
+  gl_FUNC_FREE
+  gl_CONDITIONAL([GL_COND_OBJ_FREE], [test $REPLACE_FREE = 1])
+  AM_COND_IF([GL_COND_OBJ_FREE], [
+    gl_PREREQ_FREE
+  ])
+  gl_STDLIB_MODULE_INDICATOR([free-posix])
   gl_FUNC_FREXP_NO_LIBM
   if test $gl_func_frexp_no_libm != yes; then
     AC_LIBOBJ([frexp])
@@ -137,10 +156,11 @@ AC_DEFUN([gl_INIT],
   fi
   gl_MATH_MODULE_INDICATOR([frexpl])
   gl_FUNC_FSETERR
-  if test $ac_cv_func___fseterr = no; then
-    AC_LIBOBJ([fseterr])
-  fi
-  AC_REQUIRE([gl_HOST_CPU_C_ABI])
+  gl_CONDITIONAL([GL_COND_OBJ_FSETERR], [test $ac_cv_func___fseterr = no])
+  AC_DEFUN([gl_HAVE_MODULE_HAVELIB])
+  gl_INTTYPES_INCOMPLETE
+  gl_INTTYPES_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
   gl_FUNC_ISNAND_NO_LIBM
   if test $gl_func_isnand_no_libm != yes; then
     AC_LIBOBJ([isnand])
@@ -157,60 +177,121 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_ISNANL
   fi
   gl_LIMITS_H
+  gl_CONDITIONAL_HEADER([limits.h])
+  AC_PROG_MKDIR_P
   gl_LOCALCHARSET
   dnl For backward compatibility. Some packages still use this.
   LOCALCHARSET_TESTS_ENVIRONMENT=
   AC_SUBST([LOCALCHARSET_TESTS_ENVIRONMENT])
   gl_MATH_H
+  gl_MATH_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
   gl_FUNC_MEMCHR
-  if test $HAVE_MEMCHR = 0 || test $REPLACE_MEMCHR = 1; then
-    AC_LIBOBJ([memchr])
+  gl_CONDITIONAL([GL_COND_OBJ_MEMCHR], [test $REPLACE_MEMCHR = 1])
+  AM_COND_IF([GL_COND_OBJ_MEMCHR], [
     gl_PREREQ_MEMCHR
-  fi
+  ])
   gl_STRING_MODULE_INDICATOR([memchr])
   gl_MULTIARCH
-  dnl Run our hack near the end, just before config.status creation.
-  dnl It must happen late, i.e., after gl_LIBOBJS has been finalized.
-  AC_CONFIG_COMMANDS_PRE([
-    dnl Note we can't currently pass $gl_source_base instead of 'lib',
-    dnl because $gl_source_base is unset or the wrong value in the references
-    dnl generated in m4/non-recursive-gnulib-prefix-hack.m4
-    gl_NON_RECURSIVE_GNULIB_PREFIX_HACK([lib])
-    ])
   gl_FUNC_PRINTF_FREXP
   gl_FUNC_PRINTF_FREXPL
   m4_divert_text([INIT_PREPARE], [gl_printf_safe=yes])
   gl_SIGNBIT
-  if test $REPLACE_SIGNBIT = 1; then
-    AC_LIBOBJ([signbitf])
-    AC_LIBOBJ([signbitd])
-    AC_LIBOBJ([signbitl])
-  fi
+  gl_CONDITIONAL([GL_COND_OBJ_SIGNBIT3], [test $REPLACE_SIGNBIT = 1])
   gl_MATH_MODULE_INDICATOR([signbit])
   gl_SIZE_MAX
   gl_FUNC_SNPRINTF
   gl_STDIO_MODULE_INDICATOR([snprintf])
   gl_MODULE_INDICATOR([snprintf])
   gt_TYPE_SSIZE_T
-  gl_STDDEF_H
-  gl_STDINT_H
-  gl_STDIO_H
-  gl_HEADER_STRING_H
-  gl_SYS_TYPES_H
+  gl_STDBOOL_H
+  gl_CONDITIONAL_HEADER([stdbool.h])
   AC_PROG_MKDIR_P
-  gl_LIBUNISTRING_LIBHEADER([0.9.4], [unitypes.h])
-  gl_LIBUNISTRING_LIBHEADER([0.9.4], [uniwidth.h])
-  gl_LIBUNISTRING_MODULE([0.9.8], [uniwidth/width])
+  gl_STDDEF_H
+  gl_STDDEF_H_REQUIRE_DEFAULTS
+  gl_CONDITIONAL_HEADER([stddef.h])
+  AC_PROG_MKDIR_P
+  gl_STDINT_H
+  gl_CONDITIONAL_HEADER([stdint.h])
+  dnl Because of gl_REPLACE_LIMITS_H:
+  gl_CONDITIONAL_HEADER([limits.h])
+  AC_PROG_MKDIR_P
+  gl_STDIO_H
+  gl_STDIO_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
+  gl_CONDITIONAL([GL_COND_OBJ_STDIO_READ], [test $REPLACE_STDIO_READ_FUNCS = 1])
+  gl_CONDITIONAL([GL_COND_OBJ_STDIO_WRITE], [test $REPLACE_STDIO_WRITE_FUNCS = 1])
+  dnl No need to create extra modules for these functions. Everyone who uses
+  dnl <stdio.h> likely needs them.
+  gl_STDIO_MODULE_INDICATOR([fscanf])
+  gl_MODULE_INDICATOR([fscanf])
+  gl_STDIO_MODULE_INDICATOR([scanf])
+  gl_MODULE_INDICATOR([scanf])
+  gl_STDIO_MODULE_INDICATOR([fgetc])
+  gl_STDIO_MODULE_INDICATOR([getc])
+  gl_STDIO_MODULE_INDICATOR([getchar])
+  gl_STDIO_MODULE_INDICATOR([fgets])
+  gl_STDIO_MODULE_INDICATOR([fread])
+  dnl No need to create extra modules for these functions. Everyone who uses
+  dnl <stdio.h> likely needs them.
+  gl_STDIO_MODULE_INDICATOR([fprintf])
+  gl_STDIO_MODULE_INDICATOR([printf])
+  gl_STDIO_MODULE_INDICATOR([vfprintf])
+  gl_STDIO_MODULE_INDICATOR([vprintf])
+  gl_STDIO_MODULE_INDICATOR([fputc])
+  gl_STDIO_MODULE_INDICATOR([putc])
+  gl_STDIO_MODULE_INDICATOR([putchar])
+  gl_STDIO_MODULE_INDICATOR([fputs])
+  gl_STDIO_MODULE_INDICATOR([puts])
+  gl_STDIO_MODULE_INDICATOR([fwrite])
+  gl_STDLIB_H
+  gl_STDLIB_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
+  gl_STRING_H
+  gl_STRING_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
+  gl_SYS_TYPES_H
+  gl_SYS_TYPES_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
+  gl_UNISTD_H
+  gl_UNISTD_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
+  gl_LIBUNISTRING_LIBHEADER([0.9.11], [unitypes.h])
+  AC_PROG_MKDIR_P
+  AH_VERBATIM([unitypes_restrict], [
+  /* This definition is a duplicate of the one in unitypes.h.
+     It is here so that we can cope with an older version of unitypes.h
+     that does not contain this definition and that is pre-installed among
+     the public header files.  */
+  # if defined __restrict \
+       || 2 < __GNUC__ + (95 <= __GNUC_MINOR__) \
+       || __clang_major__ >= 3
+  #  define _UC_RESTRICT __restrict
+  # elif 199901L <= __STDC_VERSION__ || defined restrict
+  #  define _UC_RESTRICT restrict
+  # else
+  #  define _UC_RESTRICT
+  # endif
+  ])
+  gl_LIBUNISTRING_LIBHEADER([0.9.11], [uniwidth.h])
+  AC_PROG_MKDIR_P
+  gl_LIBUNISTRING_MODULE([1.1], [uniwidth/width])
+  AC_REQUIRE([AC_C_RESTRICT])
   gl_FUNC_VASNPRINTF
   gl_FUNC_VSNPRINTF
   gl_STDIO_MODULE_INDICATOR([vsnprintf])
   gl_WCHAR_H
+  gl_WCHAR_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
   gl_WCTYPE_H
+  gl_WCTYPE_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
   gl_FUNC_WCWIDTH
-  if test $HAVE_WCWIDTH = 0 || test $REPLACE_WCWIDTH = 1; then
-    AC_LIBOBJ([wcwidth])
+  gl_CONDITIONAL([GL_COND_OBJ_WCWIDTH],
+                 [test $HAVE_WCWIDTH = 0 || test $REPLACE_WCWIDTH = 1])
+  AM_COND_IF([GL_COND_OBJ_WCWIDTH], [
     gl_PREREQ_WCWIDTH
-  fi
+  ])
   gl_WCHAR_MODULE_INDICATOR([wcwidth])
   gl_XSIZE
   # End of code from modules
@@ -225,6 +306,8 @@ AC_DEFUN([gl_INIT],
       m4_if(m4_sysval, [0], [],
         [AC_FATAL([expected source file, required through AC_LIBSOURCES, not found])])
   ])
+  m4_popdef([GL_MODULE_INDICATOR_PREFIX])
+  m4_popdef([GL_MACRO_PREFIX])
   m4_popdef([gl_LIBSOURCES_DIR])
   m4_popdef([gl_LIBSOURCES_LIST])
   m4_popdef([AC_LIBSOURCES])
@@ -233,16 +316,28 @@ AC_DEFUN([gl_INIT],
   AC_CONFIG_COMMANDS_PRE([
     gl_libobjs=
     gl_ltlibobjs=
+    gl_libobjdeps=
     if test -n "$gl_LIBOBJS"; then
       # Remove the extension.
+changequote(,)dnl
       sed_drop_objext='s/\.o$//;s/\.obj$//'
+      sed_dirname1='s,//*,/,g'
+      sed_dirname2='s,\(.\)/$,\1,'
+      sed_dirname3='s,^[^/]*$,.,'
+      sed_dirname4='s,\(.\)/[^/]*$,\1,'
+      sed_basename1='s,.*/,,'
+changequote([, ])dnl
       for i in `for i in $gl_LIBOBJS; do echo "$i"; done | sed -e "$sed_drop_objext" | sort | uniq`; do
-        gl_libobjs="$gl_libobjs $i.$ac_objext"
-        gl_ltlibobjs="$gl_ltlibobjs $i.lo"
+        gl_libobjs="$gl_libobjs lib/$i.$ac_objext"
+        gl_ltlibobjs="$gl_ltlibobjs lib/$i.lo"
+        i_dir=`echo "$i" | sed -e "$sed_dirname1" -e "$sed_dirname2" -e "$sed_dirname3" -e "$sed_dirname4"`
+        i_base=`echo "$i" | sed -e "$sed_basename1"`
+        gl_libobjdeps="$gl_libobjdeps lib/$i_dir/\$(DEPDIR)/$i_base.Po"
       done
     fi
     AC_SUBST([gl_LIBOBJS], [$gl_libobjs])
     AC_SUBST([gl_LTLIBOBJS], [$gl_ltlibobjs])
+    AC_SUBST([gl_LIBOBJDEPS], [$gl_libobjdeps])
   ])
   gltests_libdeps=
   gltests_ltlibdeps=
@@ -251,8 +346,11 @@ AC_DEFUN([gl_INIT],
   m4_pushdef([AC_LIBSOURCES], m4_defn([gltests_LIBSOURCES]))
   m4_pushdef([gltests_LIBSOURCES_LIST], [])
   m4_pushdef([gltests_LIBSOURCES_DIR], [])
+  m4_pushdef([GL_MACRO_PREFIX], [gltests])
+  m4_pushdef([GL_MODULE_INDICATOR_PREFIX], [GL])
   gl_COMMON
   gl_source_base='tests'
+  gl_source_base_prefix=
 changequote(,)dnl
   gltests_WITNESS=IN_`echo "${PACKAGE-$PACKAGE_TARNAME}" | LC_ALL=C tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ | LC_ALL=C sed -e 's/[^A-Z0-9_]/_/g'`_GNULIB_TESTS
 changequote([, ])dnl
@@ -271,6 +369,8 @@ changequote([, ])dnl
       m4_if(m4_sysval, [0], [],
         [AC_FATAL([expected source file, required through AC_LIBSOURCES, not found])])
   ])
+  m4_popdef([GL_MODULE_INDICATOR_PREFIX])
+  m4_popdef([GL_MACRO_PREFIX])
   m4_popdef([gltests_LIBSOURCES_DIR])
   m4_popdef([gltests_LIBSOURCES_LIST])
   m4_popdef([AC_LIBSOURCES])
@@ -279,17 +379,30 @@ changequote([, ])dnl
   AC_CONFIG_COMMANDS_PRE([
     gltests_libobjs=
     gltests_ltlibobjs=
+    gltests_libobjdeps=
     if test -n "$gltests_LIBOBJS"; then
       # Remove the extension.
+changequote(,)dnl
       sed_drop_objext='s/\.o$//;s/\.obj$//'
+      sed_dirname1='s,//*,/,g'
+      sed_dirname2='s,\(.\)/$,\1,'
+      sed_dirname3='s,^[^/]*$,.,'
+      sed_dirname4='s,\(.\)/[^/]*$,\1,'
+      sed_basename1='s,.*/,,'
+changequote([, ])dnl
       for i in `for i in $gltests_LIBOBJS; do echo "$i"; done | sed -e "$sed_drop_objext" | sort | uniq`; do
-        gltests_libobjs="$gltests_libobjs $i.$ac_objext"
-        gltests_ltlibobjs="$gltests_ltlibobjs $i.lo"
+        gltests_libobjs="$gltests_libobjs lib/$i.$ac_objext"
+        gltests_ltlibobjs="$gltests_ltlibobjs lib/$i.lo"
+        i_dir=`echo "$i" | sed -e "$sed_dirname1" -e "$sed_dirname2" -e "$sed_dirname3" -e "$sed_dirname4"`
+        i_base=`echo "$i" | sed -e "$sed_basename1"`
+        gltests_libobjdeps="$gltests_libobjdeps lib/$i_dir/\$(DEPDIR)/$i_base.Po"
       done
     fi
     AC_SUBST([gltests_LIBOBJS], [$gltests_libobjs])
     AC_SUBST([gltests_LTLIBOBJS], [$gltests_ltlibobjs])
+    AC_SUBST([gltests_LIBOBJDEPS], [$gltests_libobjdeps])
   ])
+  AC_REQUIRE([gl_CC_GNULIB_WARNINGS])
   LIBGNU_LIBDEPS="$gl_libdeps"
   AC_SUBST([LIBGNU_LIBDEPS])
   LIBGNU_LTLIBDEPS="$gl_ltlibdeps"
@@ -355,10 +468,12 @@ AC_DEFUN([gltests_LIBSOURCES], [
 AC_DEFUN([gl_FILE_LIST], [
   build-aux/config.rpath
   build-aux/git-version-gen
-  build-aux/prefix-gnulib-mk
+  lib/_Noreturn.h
   lib/alloca.in.h
   lib/arg-nonnull.h
   lib/asnprintf.c
+  lib/assert.in.h
+  lib/attribute.h
   lib/c++defs.h
   lib/errno.in.h
   lib/float+.h
@@ -366,10 +481,12 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/float.in.h
   lib/fprintf.c
   lib/fpucw.h
+  lib/free.c
   lib/frexp.c
   lib/frexpl.c
   lib/fseterr.c
   lib/fseterr.h
+  lib/inttypes.in.h
   lib/isnan.c
   lib/isnand-nolibm.h
   lib/isnand.c
@@ -398,17 +515,26 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/signbitl.c
   lib/size_max.h
   lib/snprintf.c
+  lib/stdbool.in.h
   lib/stddef.in.h
   lib/stdint.in.h
   lib/stdio-impl.h
+  lib/stdio-read.c
+  lib/stdio-write.c
   lib/stdio.in.h
+  lib/stdlib.in.h
   lib/streq.h
   lib/string.in.h
   lib/sys_types.in.h
+  lib/unictype/bitmap.h
+  lib/unistd.c
+  lib/unistd.in.h
   lib/unitypes.in.h
   lib/uniwidth.in.h
   lib/uniwidth/cjk.h
   lib/uniwidth/width.c
+  lib/uniwidth/width0.h
+  lib/uniwidth/width2.h
   lib/vasnprintf.c
   lib/vasnprintf.h
   lib/verify.h
@@ -423,7 +549,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/00gnulib.m4
   m4/absolute-header.m4
   m4/alloca.m4
-  m4/asm-underscore.m4
+  m4/assert_h.m4
   m4/codeset.m4
   m4/errno_h.m4
   m4/exponentd.m4
@@ -434,6 +560,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/float_h.m4
   m4/fpieee.m4
   m4/fprintf-posix.m4
+  m4/free.m4
   m4/frexp.m4
   m4/frexpl.m4
   m4/fseterr.m4
@@ -441,6 +568,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/host-cpu-c-abi.m4
   m4/include_next.m4
   m4/intmax_t.m4
+  m4/inttypes.m4
   m4/inttypes_h.m4
   m4/isnand.m4
   m4/isnanf.m4
@@ -452,14 +580,13 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/libunistring-base.m4
   m4/limits-h.m4
   m4/localcharset.m4
-  m4/longlong.m4
   m4/math_h.m4
   m4/memchr.m4
   m4/mmap-anon.m4
   m4/multiarch.m4
   m4/nocrash.m4
-  m4/non-recursive-gnulib-prefix-hack.m4
   m4/off_t.m4
+  m4/pid_t.m4
   m4/printf-frexp.m4
   m4/printf-frexpl.m4
   m4/printf.m4
@@ -467,12 +594,15 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/size_max.m4
   m4/snprintf.m4
   m4/ssize_t.m4
+  m4/stdbool.m4
   m4/stddef_h.m4
   m4/stdint.m4
   m4/stdint_h.m4
   m4/stdio_h.m4
+  m4/stdlib_h.m4
   m4/string_h.m4
   m4/sys_types_h.m4
+  m4/unistd_h.m4
   m4/vasnprintf.m4
   m4/vsnprintf.m4
   m4/warn-on-use.m4
@@ -482,4 +612,5 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/wcwidth.m4
   m4/wint_t.m4
   m4/xsize.m4
+  m4/zzgnulib.m4
 ])

@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -16,6 +15,10 @@ for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <stdlib.h>
 
@@ -40,7 +43,7 @@ static char *salloc(int len, int *sizep)
 
 static void sfree(char *ptr, int)
 {
-  a_delete ptr;
+  delete[] ptr;
 }
 
 static char *sfree_alloc(char *ptr, int oldsz, int len, int *sizep)
@@ -49,7 +52,7 @@ static char *sfree_alloc(char *ptr, int oldsz, int len, int *sizep)
     *sizep = oldsz;
     return ptr;
   }
-  a_delete ptr;
+  delete[] ptr;
   if (len == 0) {
     *sizep = 0;
     return 0;
@@ -65,7 +68,7 @@ static char *srealloc(char *ptr, int oldsz, int oldlen, int newlen, int *sizep)
     return ptr;
   }
   if (newlen == 0) {
-    a_delete ptr;
+    delete[] ptr;
     *sizep = 0;
     return 0;
   }
@@ -73,7 +76,7 @@ static char *srealloc(char *ptr, int oldsz, int oldlen, int newlen, int *sizep)
     char *p = new char[*sizep = newlen*2];
     if (oldlen < newlen && oldlen != 0)
       memcpy(p, ptr, oldlen);
-    a_delete ptr;
+    delete[] ptr;
     return p;
   }
 }
@@ -273,7 +276,7 @@ void string::clear()
 
 int string::search(char c) const
 {
-  char *p = ptr ? (char *)memchr(ptr, c, len) : NULL;
+  char *p = ptr ? (char *)memchr(ptr, c, len) : 0;
   return p ? p - ptr : -1;
 }
 
@@ -289,11 +292,13 @@ char *string::extract() const
     if (p[i] == '\0')
       nnuls++;
   char *q =(char*)malloc(n + 1 - nnuls);
-  char *r = q;
-  for (i = 0; i < n; i++)
-    if (p[i] != '\0')
-      *r++ = p[i];
-  *r = '\0';
+  if (q != 0 /* nullptr */) {
+    char *r = q;
+    for (i = 0; i < n; i++)
+      if (p[i] != '\0')
+	*r++ = p[i];
+    *r = '\0';
+  }
   return q;
 }
 
@@ -313,13 +318,13 @@ void string::remove_spaces()
       len = l + 1;
       char *tmp = new char[sz];
       memcpy(tmp, p, len);
-      a_delete ptr;
+      delete[] ptr;
       ptr = tmp;
     }
     else {
       len = 0;
       if (ptr) {
-	a_delete ptr;
+	delete[] ptr;
 	ptr = 0;
 	sz = 0;
       }
@@ -342,3 +347,8 @@ string as_string(int i)
   return string(buf);
 }
 
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

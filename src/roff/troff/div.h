@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -151,10 +150,10 @@ public:
 extern top_level_diversion *topdiv;
 extern diversion *curdiv;
 
-extern int exit_started;
-extern int done_end_macro;
+extern bool is_exit_underway;
+extern bool is_eoi_macro_finished;
+extern bool seen_last_page_ejector;
 extern int last_page_number;
-extern int seen_last_page_ejector;
 
 void spring_trap(symbol);	// implemented by input.c
 extern int trap_sprung_flag;
@@ -168,3 +167,9 @@ void blank_line();
 void begin_page();
 
 extern void cleanup_and_exit(int);
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

@@ -1,6 +1,6 @@
 .\" X.tmac
 .\"
-.nr _C \n(.C
+.do nr *groff_X_tmac_C \n[.cp]
 .cp 0
 .ftr CW CR
 .ftr C CR
@@ -32,8 +32,8 @@
 \D'l .39m 0''\h'.5m'
 .fchar \[dd] \Z'\h'.25m'\v'.15m'\D'l 0 -.8m'\v'.2m'\h'-.195m'\
 \D'l .39m 0'\v'.4m'\D'l -.39m 0''\h'.5m'
-.fchar \[lq] ``
-.fchar \[rq] ''
+.fchar \[lq] \[dq]
+.fchar \[rq] \[dq]
 .fchar \[Bq] ,,
 .fchar \[OE] O\h'-.25m'E
 .fchar \[oe] o\h'-.14m'e
@@ -43,7 +43,6 @@
 .fchar \[lh] \[lA]
 .fchar \[rh] \[rA]
 .fchar \[bq] ,
-.fchar \[aq] '
 .fchar \[IJ] IJ
 .fchar \[ij] ij
 .fchar \[fo] <
@@ -122,16 +121,13 @@
 .  char \[radicalex] \h'-\w'\[sr]'u'\[radicalex]\h'\w'\[sr]'u'
 .fchar \[sqrtex] \[radicalex]
 .
-.cp \n[_C]
-.
-.do ie '\[char97]'a' \
-.  do mso latin1.tmac
+.ie '\[char97]'a' \
+.  mso latin1.tmac
 .el \
-.  do mso cp1047.tmac
+.  mso cp1047.tmac
 .
-.\" ====================================================================
-.\" Editor settings
-.\" ====================================================================
+.cp \n[*groff_X_tmac_C]
+.do rr *groff_X_tmac_C
 .
 .\" Local Variables:
 .\" mode: nroff

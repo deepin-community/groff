@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -23,11 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #include "request.h"
 #include "reg.h"
 
-object_dictionary number_reg_dictionary(101);
+object_dictionary register_dictionary(101);
 
-int reg::get_value(units * /*d*/)
+bool reg::get_value(units * /*d*/)
 {
-  return 0;
+  return false;
 }
 
 void reg::increment()
@@ -42,12 +41,12 @@ void reg::decrement()
 
 void reg::set_increment(units /*n*/)
 {
-  error("can't auto increment read-only register");
+  error("can't automatically increment read-only register");
 }
 
 void reg::alter_format(char /*f*/, int /*w*/)
 {
-  error("can't alter format of read-only register");
+  error("can't assign format of read-only register");
 }
 
 const char *reg::get_format()
@@ -265,7 +264,7 @@ class number_reg : public general_reg {
   units value;
 public:
   number_reg();
-  int get_value(units *);
+  bool get_value(units *);
   void set_value(units);
 };
 
@@ -273,10 +272,10 @@ number_reg::number_reg() : value(0)
 {
 }
 
-int number_reg::get_value(units *res)
+bool number_reg::get_value(units *res)
 {
   *res = value;
-  return 1;
+  return true;
 }
 
 void number_reg::set_value(units n)
@@ -293,20 +292,20 @@ void variable_reg::set_value(units n)
   *ptr = n;
 }
 
-int variable_reg::get_value(units *res)
+bool variable_reg::get_value(units *res)
 {
   *res = *ptr;
-  return 1;
+  return true;
 }
 
 void define_number_reg()
 {
-  symbol nm = get_name(1);
+  symbol nm = get_name(true /* required */);
   if (nm.is_null()) {
     skip_line();
     return;
   }
-  reg *r = (reg *)number_reg_dictionary.lookup(nm);
+  reg *r = (reg *)register_dictionary.lookup(nm);
   units v;
   units prev_value;
   if (!r || !r->get_value(&prev_value))
@@ -314,10 +313,10 @@ void define_number_reg()
   if (get_number(&v, 'u', prev_value)) {
     if (r == 0) {
       r = new number_reg;
-      number_reg_dictionary.define(nm, r);
+      register_dictionary.define(nm, r);
     }
     r->set_value(v);
-    if (tok.space() && has_arg() && get_number(&v, 'u'))
+    if (tok.is_space() && has_arg() && get_number(&v, 'u'))
       r->set_increment(v);
   }
   skip_line();
@@ -328,16 +327,16 @@ void inline_define_reg()
 {
   token start;
   start.next();
-  if (!start.delimiter(1))
+  if (!start.delimiter(true /* report error */))
     return;
   tok.next();
-  symbol nm = get_name(1);
+  symbol nm = get_name(true /* required */);
   if (nm.is_null())
     return;
-  reg *r = (reg *)number_reg_dictionary.lookup(nm);
+  reg *r = (reg *)register_dictionary.lookup(nm);
   if (r == 0) {
     r = new number_reg;
-    number_reg_dictionary.define(nm, r);
+    register_dictionary.define(nm, r);
   }
   units v;
   units prev_value;
@@ -358,36 +357,36 @@ void inline_define_reg()
 
 void set_number_reg(symbol nm, units n)
 {
-  reg *r = (reg *)number_reg_dictionary.lookup(nm);
+  reg *r = (reg *)register_dictionary.lookup(nm);
   if (r == 0) {
     r = new number_reg;
-    number_reg_dictionary.define(nm, r);
+    register_dictionary.define(nm, r);
   }
   r->set_value(n);
 }
 
 reg *lookup_number_reg(symbol nm)
 {
-  reg *r = (reg *)number_reg_dictionary.lookup(nm);
+  reg *r = (reg *)register_dictionary.lookup(nm);
   if (r == 0) {
-    warning(WARN_REG, "number register '%1' not defined", nm.contents());
+    warning(WARN_REG, "register '%1' not defined", nm.contents());
     r = new number_reg;
-    number_reg_dictionary.define(nm, r);
+    register_dictionary.define(nm, r);
   }
   return r;
 }
 
 void alter_format()
 {
-  symbol nm = get_name(1);
+  symbol nm = get_name(true /* required */);
   if (nm.is_null()) {
     skip_line();
     return;
   }
-  reg *r = (reg *)number_reg_dictionary.lookup(nm);
+  reg *r = (reg *)register_dictionary.lookup(nm);
   if (r == 0) {
     r = new number_reg;
-    number_reg_dictionary.define(nm, r);
+    register_dictionary.define(nm, r);
   }
   tok.skip();
   char c = tok.ch();
@@ -401,10 +400,13 @@ void alter_format()
   }
   else if (c == 'i' || c == 'I' || c == 'a' || c == 'A')
     r->alter_format(c);
-  else if (tok.newline() || tok.eof())
-    warning(WARN_MISSING, "missing number register format");
+  else if (tok.is_newline() || tok.is_eof())
+    warning(WARN_MISSING, "missing register format");
   else
-    error("bad number register format (got %1)", tok.description());
+    if (!cscntrl(c))
+      error("invalid register format '%1'", c);
+    else
+      error("invalid register format (got %1)", tok.description());
   skip_line();
 }
 
@@ -414,19 +416,19 @@ void remove_reg()
     symbol s = get_name();
     if (s.is_null())
       break;
-    number_reg_dictionary.remove(s);
+    register_dictionary.remove(s);
   }
   skip_line();
 }
 
 void alias_reg()
 {
-  symbol s1 = get_name(1);
+  symbol s1 = get_name(true /* required */);
   if (!s1.is_null()) {
-    symbol s2 = get_name(1);
+    symbol s2 = get_name(true /* required */);
     if (!s2.is_null()) {
-      if (!number_reg_dictionary.alias(s1, s2))
-	warning(WARN_REG, "number register '%1' not defined", s2.contents());
+      if (!register_dictionary.alias(s1, s2))
+	warning(WARN_REG, "register '%1' not defined", s2.contents());
     }
   }
   skip_line();
@@ -434,18 +436,18 @@ void alias_reg()
 
 void rename_reg()
 {
-  symbol s1 = get_name(1);
+  symbol s1 = get_name(true /* required */);
   if (!s1.is_null()) {
-    symbol s2 = get_name(1);
+    symbol s2 = get_name(true /* required */);
     if (!s2.is_null())
-      number_reg_dictionary.rename(s1, s2);
+      register_dictionary.rename(s1, s2);
   }
   skip_line();
 }
 
 void print_number_regs()
 {
-  object_dictionary_iterator iter(number_reg_dictionary);
+  object_dictionary_iterator iter(register_dictionary);
   reg *r;
   symbol s;
   while (iter.get(&s, (object **)&r)) {
@@ -469,3 +471,9 @@ void init_reg_requests()
   init_request("rnn", rename_reg);
   init_request("pnr", print_number_regs);
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

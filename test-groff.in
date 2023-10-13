@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# Copyright (C) 1989-2018 Free Software Foundation, Inc.
+# Copyright (C) 1989-2020 Free Software Foundation, Inc.
 #
 # This file is part of groff.
 #
@@ -44,7 +44,11 @@ $SEP$srcdir/contrib/mm/locale\
 $SEP$builddir/contrib/mm/locale\
 $SEP$srcdir/contrib/pdfmark\
 $SEP$builddir/contrib/pdfmark\
+$SEP$srcdir/contrib/rfc1345\
+$SEP$builddir/contrib/rfc1345\
+$SEP$srcdir/contrib/sboxes\
+$SEP$builddir/contrib/sboxes\
 
 export GROFF_BIN_PATH GROFF_COMMAND_PREFIX GROFF_FONT_PATH GROFF_TMAC_PATH
 
-exec $builddir/groff -b -ww ${1+"$@"}
+exec $builddir/groff ${1+"$@"}

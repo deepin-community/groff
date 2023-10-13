@@ -2,7 +2,7 @@
 .\"
 .\" Refer support for ms macros.
 .\"
-.\" Copyright (C) 2011-2018 Free Software Foundation, Inc.
+.\" Copyright (C) 2011-2020 Free Software Foundation, Inc.
 .\"   Written by Werner Lemberg (wl@gnu.org)
 .\"
 .\" This file is part of groff.
@@ -23,6 +23,8 @@
 .\"
 .\" Please send comments to groff@gnu.org.
 .
+.do nr *groff_refer-ms_tmac_C \n[.cp]
+.cp 0
 .
 .als ref*error @error
 .
@@ -42,8 +44,8 @@
 .de ref*biblio-item-end
 ..
 .
-.als ref*refnum-start par@sup-start
-.als ref*refnum-end   par@sup-end
+.als ref*refnum-start fn@mark-start
+.als ref*refnum-end   fn@mark-end
 .
 .ds [. \E*[ref*refnum-start]\"
 .ds .] \E*[ref*refnum-end]\"
@@ -82,9 +84,8 @@
 .
 .mso refer.tmac
 .
-.\" ====================================================================
-.\" Editor settings
-.\" ====================================================================
+.cp \n[*groff_refer-ms_tmac_C]
+.do rr *groff_refer-ms_tmac_C
 .
 .\" Local Variables:
 .\" mode: nroff

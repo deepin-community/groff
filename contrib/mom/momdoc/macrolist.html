@@ -2,7 +2,7 @@
 <!--
 This file is part of groff, the GNU roff type-setting system.
 
-Copyright (C) 2004-2018 Free Software Foundation, Inc.
+Copyright (C) 2004-2020 Free Software Foundation, Inc.
 Written by Peter Schaffter (peter@schaffter.ca).
 
 Permission is granted to copy, distribute and/or modify this document
@@ -47,7 +47,7 @@ major user-space macros.  The links point to references found
 elsewhere in the documentation.
 </p>
 
-<div class="macro-list-container" style="padding-left: 9px; padding-right: 9px; padding-bottom: 1px;">
+<div class="macro-list-container" style="padding-left: 9px; padding-right: 9px; padding-bottom: 9px;">
 <h2 class="docs" style="text-align: center; padding-top: 15px;">Index to the quick reference guide</h2>
 <div style="width: 50%; float: left; margin-right: 9px;">
 <h3 class="docs" style="margin-top: 1.25em;">TYPESETTING MACROS</h3>
@@ -85,7 +85,7 @@ elsewhere in the documentation.
   <li><a href="#qr-24">Initiate document processing</a></li>
 </ul>
 </div>
-<ul style="margin-top: 2.75em; margin-left: 0; padding-left: 0; list-style-type: none;">
+<ul style="margin-top: 1.75em; margin-left: 0; padding-left: 0; list-style-type: none;">
   <li><a href="#qr-42">Global print style changes after START</a></li>
   <li><a href="#qr-43">Managing the docheader</a></li>
   <li><a href="#qr-25">Epigraphs</a></li>
@@ -101,6 +101,7 @@ elsewhere in the documentation.
   <li><a href="#qr-38">Margin notes</a></li>
   <li><a href="#qr-49">Floats</a></li>
   <li><a href="#qr-53">Images and graphics</a></li>
+  <li><a href="#qr-60">Shaded backgrounds, frames, page colour</a></li>
   <li><a href="#qr-51">eqn support</a></li>
   <li><a href="#qr-52">pic support</a></li>
   <li><a href="#qr-58">grap support</a></li>
@@ -115,7 +116,6 @@ elsewhere in the documentation.
   <li><a href="#qr-46">Pagination</a></li>
   <li><a href="#qr-48">Utilities</a></li>
 </ul>
-<br/>
 </div>
 
 <h2 class="docs">Quick reference guide</h2>
@@ -239,7 +239,7 @@ elsewhere in the documentation.
 <table class="quick-ref">
 <tr>
 <th id="qr-5" class="quick-ref" colspan="2">
-<a href="typesetting.html#justification-intro">+++ Justification, quad direction, line-by-line setting, breaking lines</a></th>
+<a href="typesetting.html#justification-intro">+++ Justification, quad, line-by-line setting, breaking lines</a></th>
 </tr>
 <tr>
 <td><a href="typesetting.html#justify">JUSTIFY</a></td><td>-- justify text to both margins</td>
@@ -413,7 +413,7 @@ elsewhere in the documentation.
 <td><a href="typesetting.html#inline-st">\*[ST&lt;n&gt;]...</a></td><td>-- string tabs (mark tab positions inline)</td>
 </tr>
 <tr>
-<td><a href="typesetting.html#inline-st">\*[ST&lt;n&gt;X]</a>
+<td><a href="typesetting.html#inline-st">\*[ST&lt;n&gt;X]</a></td>
 </tr>
 <tr>
 <td><a href="typesetting.html#tn">TN</a></td><td>-- move to tab&lt;n+1&gt; without advancing on the page</td>
@@ -588,13 +588,16 @@ elsewhere in the documentation.
 <td><a href="inlines.html#inline-rule-mom">\*[RULE]</a></td><td>-- draw a full measure rule</td>
 </tr>
 <tr>
-<td><a href="goodies.html#sizespecs">SIZESPECS</a></td><td>-- get cap-height, x-height and descender depth</td>
+<td><a href="goodies.html#sizespecs">SIZESPECS</a></td><td>-- cap-height, x-height, descender depth</td>
 </tr>
 <tr>
 <td><a href="goodies.html#silent">SILENT</a></td><td>-- output processing off or on</td>
 </tr>
 <tr>
 <td><a href="goodies.html#trap">TRAP</a></td><td>-- enable or disable page position traps</td>
+</tr>
+<tr>
+<td><a href="goodies.html#left-hang">LEFT_HANG / \*[HANG]</a></td><td>-- hanging punctuation</td>
 </tr>
 </table>
 
@@ -637,7 +640,7 @@ elsewhere in the documentation.
 <td><a href="docprocessing.html#title">TITLE</a></td><td>-- document title</td>
 </tr>
 <tr>
-<td><a href="docprocessing.html#doc-title">DOCTITLE</a></td><td>-- overall document title (if different from TITLE)</td>
+<td><a href="docprocessing.html#doc-title">DOCTITLE</a></td><td>-- document title (if different from TITLE)</td>
 </tr>
 <tr>
 <td><a href="docelement.html#endnote-title">ENDNOTE_TITLE</a></td><td>-- document/chapter id string for endnotes</td>
@@ -681,6 +684,12 @@ elsewhere in the documentation.
 <tr>
 <td><a href="docprocessing.html#revision-string">REVISION_STRING</a></td><td>-- what to use in place of &#8220;Revision&#8221;</td>
 </tr>
+<tr>
+<td><a href="docprocessing.html#pdftitle">PDF_TITLE</a></td><td>-- PDF viewer window title</td>
+</tr>
+<tr>
+<td><a href="docprocessing.html#toc-heading">TOC_HEADING</a></td><td>-- non-pagenumbered line inserted into the TOC</td>
+</tr>
 </table>
 
 <table class="quick-ref">
@@ -717,7 +726,7 @@ elsewhere in the documentation.
 <td><a href="docelement.html#number-blockquote-lines">NUMBER_BLOCKQUOTE_LINES</a></td><td>-- numbering of BLOCKQUOTE lines on/off</td>
 </tr>
 <tr>
-<td><a href="docelement.html#number-lines-control">Control macros</a></td><td>-- numbering of BLOCKQUOTE lines on/off</td>
+<td><a href="docelement.html#number-lines-control">Control macros</a></td><td></td>
 </tr>
 </table>
 
@@ -740,6 +749,12 @@ elsewhere in the documentation.
 <table class="quick-ref">
 <tr>
 <th id="qr-23" class="quick-ref" colspan="2">+++ TYPEWRITE control macros</th>
+</tr>
+<tr>
+<td><a href="docprocessing.html#typewriter-family">TYPEWRITER_FAMILY</a></td><td>alternative to Courier</td>
+</tr>
+<tr>
+<td><a href="docprocessing.html#typewriter-size">TYPEWRITER_SIZE</a></td><td>point size of typewriter font</td>
 </tr>
 <tr>
 <td><a href="docprocessing.html#typewriter-underlining">UNDERLINE_ITALIC</a></td><td>--  underlining of italics on</td>
@@ -792,8 +807,10 @@ elsewhere in the documentation.
 <tr>
 <td><a href="docelement.html#heading-control">Control macros</a></td><td>-- style heading levels</td>
 </tr>
+<tr>
 <td><a href="docelement.html#heading-style">&nbsp;HEADING_STYLE</a></td><td>-- set style parameters for heading levels</td>
 </tr>
+<tr>
 <td><a href="docelement.html#prefix-chapter-number">&nbsp;PREFIX_CHAPTER_NUMBER</a></td><td>-- add chapter number to heading numbering</td>
 </tr>
 </table>
@@ -845,7 +862,7 @@ elsewhere in the documentation.
 <a href="docelement.html#blockquote-intro">+++ Blockquotes (cited passages of text)</a></th>
 </tr>
 <tr>
-<td><a href="docelement.html#blockquote">BLOCKQUOTE</a></td><td>-- set longer passages of cited text</td>
+<td><a href="docelement.html#blockquote">BLOCKQUOTE</a></td><td>-- set passages of cited text</td>
 </tr>
 <tr>
 <td><a href="docelement.html#blockquote-general">Control macros</a></td><td>-- change default blockquote style</td>
@@ -873,16 +890,29 @@ elsewhere in the documentation.
 <a href="images.html#images-intro">+++ Images and graphics</a></th>
 </tr>
 <tr>
-<td style="vertical-align: top"><a href="images.html#pdf">PDF_IMAGE</a></td><td>-- inserting pdf images
+<td style="vertical-align: top"><a href="images.html#pdf">PDF_IMAGE</a></td><td>-- inserting pdf images</td>
 </tr>
 <tr>
-<td style="vertical-align: top"><a href="images.html#pdf-image-frame">&nbsp;PDF_IMAGE_FRAME</a></td><td>-- set parameters for pdf image frames
+<td style="vertical-align: top"><a href="images.html#pdf-image-frame">&nbsp;PDF_IMAGE_FRAME</a></td><td>-- set parameters for pdf image frames</td>
 </tr>
 <tr>
-<td style="vertical-align: top"><a href="images.html#pspic">PSPIC</a></td><td>-- inserting PostScript images
+<td style="vertical-align: top"><a href="images.html#pspic">PSPIC</a></td><td>-- inserting PostScript images</td>
 </tr>
 </table>
 
+<table class="quick-ref">
+<tr>
+<th id="qr-60" class="quick-ref" colspan="2">
+<a href="images.html#box-intro">+++ Shaded backgrounds, frames, page colour</a></th>
+</tr>
+<tr>
+<td style="vertical-align: top"><a href="images.html#box-macro">BOX</a>&nbsp;-- shaded backgrounds and frames</td>
+</tr>
+<tr>
+<td style="vertical-align: top"><a href="images.html#page-color">PAGE_COLOR</a></td>
+</tr>
+
+</table>
 <table class="quick-ref">
 <tr>
 <th id="qr-51" class="quick-ref" colspan="2">
@@ -1199,6 +1229,12 @@ elsewhere in the documentation.
 <td><a href="tables-of-contents.html#toc">TOC</a></td><td>-- output a table of contents</td>
 </tr>
 <tr>
+<td><a href="docprocessing.html#no-toc-entry">NO_TOC_ENTRY</a></td><td>-- omit a document section from the TOC</td>
+</tr>
+<tr>
+<td><a href="docprocessing.html#toc-heading">TOC_HEADING</a></td><td>-- insert a heading into the TOC</td>
+</tr>
+<tr>
 <td><a href="tables-of-contents.html#index-toc-control">Control macros</a></td>
 </tr>
 </table>
@@ -1221,6 +1257,9 @@ elsewhere in the documentation.
 </tr>
 <tr>
 <td><a href="tables-of-contents.html#toc-entry-style">TOC_ENTRY_STYLE</a></td>
+</tr>
+<tr>
+<td><a href="docprocessing.html#toc-heading-style">TOC_HEADING_STYLE</a></td>
 </tr>
 <tr>
 <td><a href="tables-of-contents.html#toc-additional">Additional table of contents control macros</a></td>
@@ -1289,7 +1328,7 @@ elsewhere in the documentation.
 <table class="quick-ref">
 <tr>
 <th id="qr-43" class="quick-ref" colspan="2">
-<a href="docprocessing.html#docheader">+++ Managing a document&#8217;s first-page header<a></th>
+<a href="docprocessing.html#docheader">+++ Managing a document&#8217;s first-page header</a></th>
 </tr>
 <tr>
 <td><a href="docprocessing.html#docheader">DOCHEADER</a></td><td>-- document first-page header on/off</td>
@@ -1311,7 +1350,7 @@ elsewhere in the documentation.
 <td><a href="headfootpage.html#footers">FOOTERS</a></td><td>-- page footers on/off</td>
 </tr>
 <tr>
-<td style="vertical-align: top;"><a href="headfootpage.html#headers-and-footers">HEADERS_AND_FOOTERS</a></td><td>-- enable generation of both headers and</br>
+<td style="vertical-align: top;"><a href="headfootpage.html#headers-and-footers">HEADERS_AND_FOOTERS</a></td><td>-- enable generation of both headers and<br/>
 &nbsp;&nbsp;&nbsp;footers</td>
 </tr>
 <tr>
@@ -1468,9 +1507,6 @@ elsewhere in the documentation.
 </tr>
 <tr>
 <td><a href="goodies.html#center-block">CENTER_BLOCK</a></td><td>-- centre blocks of type</td>
-</tr>
-<tr>
-<td><a href="goodies.html#left-hang">LEFT_HANG / \*[HANG c]</a></td><td>-- hanging punctuation</td>
 </tr>
 </table>
 

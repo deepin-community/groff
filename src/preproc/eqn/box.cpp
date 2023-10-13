@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -16,6 +15,8 @@ for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+
+#include <assert.h>
 
 #include "eqn.h"
 #include "pbox.h"
@@ -203,19 +204,19 @@ const char *get_gbfont()
 
 void set_gfont(const char *s)
 {
-  a_delete gfont;
+  delete[] gfont;
   gfont = strsave(s);
 }
 
 void set_grfont(const char *s)
 {
-  a_delete grfont;
+  delete[] grfont;
   grfont = strsave(s);
 }
 
 void set_gbfont(const char *s)
 {
-  a_delete gbfont;
+  delete[] gbfont;
   gbfont = strsave(s);
 }
 
@@ -457,7 +458,7 @@ void box_list::append(box *pp)
     maxlen *= 2;
     p = new box*[maxlen];
     memcpy(p, oldp, sizeof(box*)*len);
-    a_delete oldp;
+    delete[] oldp;
   }
   p[len++] = pp;
 }
@@ -466,7 +467,7 @@ box_list::~box_list()
 {
   for (int i = 0; i < len; i++)
     delete p[i];
-  a_delete p;
+  delete[] p;
 }
 
 void box_list::list_check_tabs(int level)
@@ -642,3 +643,9 @@ void tab_box::debug_print()
 {
   fprintf(stderr, "<tab>");
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

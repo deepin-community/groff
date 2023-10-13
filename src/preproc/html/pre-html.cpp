@@ -1,33 +1,34 @@
-// -*- C++ -*-
-/* Copyright (C) 2000-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2021 Free Software Foundation, Inc.
  * Written by Gaius Mulley (gaius@glam.ac.uk).
  *
  * This file is part of groff.
  *
- * groff is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * groff is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
  *
- * groff is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * groff is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with groff; see the file COPYING.  If not, write to the Free Software
- * Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. 
+ * You should have received a copy of the GNU General Public License
+ * along with groff; see the file COPYING.  If not, write to the Free
+ * Software Foundation, 51 Franklin St - Fifth Floor, Boston, MA
+ * 02110-1301, USA.
  */
 
 #define PREHTMLC
 
 #include "lib.h"
 
-#include <signal.h>
-#include <ctype.h>
 #include <assert.h>
-#include <stdlib.h>
+#include <ctype.h>
 #include <errno.h>
+#include <signal.h>
+#include <stdlib.h>
+
 #include "errarg.h"
 #include "error.h"
 #include "stringclass.h"
@@ -67,8 +68,8 @@
 
 #if defined(__MSDOS__) || defined(_WIN32)
 
-// Most MS-DOS and Win32 environments will be missing the 'fork' capability
-// (some like Cygwin have it, but it is best avoided).
+// Most MS-DOS and Win32 environments will be missing the 'fork'
+// capability (some, like Cygwin, have it, but it is better avoided).
 
 # define MAY_FORK_CHILD_PROCESS 0
 
@@ -133,8 +134,8 @@
 
 #ifdef DEBUGGING
 // For a DEBUGGING version, we need some additional macros,
-// to direct the captured debug mode output to appropriately named files
-// in the specified DEBUG_FILE_DIR.
+// to direct the captured debugging mode output to appropriately named
+// files in the specified DEBUG_FILE_DIR.
 
 # define DEBUG_TEXT(text) #text
 # define DEBUG_NAME(text) DEBUG_TEXT(text)
@@ -149,7 +150,7 @@ extern "C" const char *Version_string;
 
 #define DEFAULT_LINE_LENGTH 7	// inches wide
 #define DEFAULT_IMAGE_RES 100	// number of pixels per inch resolution
-#define IMAGE_BOARDER_PIXELS 0
+#define IMAGE_BORDER_PIXELS 0
 #define INLINE_LEADER_CHAR '\\'
 
 // Don't use colour names here!  Otherwise there is a dependency on
@@ -165,57 +166,61 @@ extern "C" const char *Version_string;
 #define REGION_TEMPLATE_SHORT "rg"
 #define REGION_TEMPLATE_LONG "-regions-"
 
-#if !defined(TRUE)
-# define TRUE (1==1)
-#endif
-#if !defined(FALSE)
-# define FALSE (1==0)
-#endif
-
 typedef enum {
   CENTERED, LEFT, RIGHT, INLINE
 } IMAGE_ALIGNMENT;
 
 typedef enum {xhtml, html4} html_dialect;
 
-static int postscriptRes = -1;		// postscript resolution,
+static int postscriptRes = -1;		// PostScript resolution,
 					// dots per inch
 static int stdoutfd = 1;		// output file descriptor -
 					// normally 1 but might move
 					// -1 means closed
-static char *psFileName = NULL;		// name of postscript file
-static char *psPageName = NULL;		// name of file containing
-					// postscript current page
-static char *regionFileName = NULL;	// name of file containing all
-					// image regions
-static char *imagePageName = NULL;	// name of bitmap image containing
-					// current page
+static char *psFileName = 0 /* nullptr */;	// PostScript file name
+static char *psPageName = 0 /* nullptr */;	// name of file
+						// containing current
+						// PostScript page
+static char *regionFileName = 0 /* nullptr */;	// name of file
+						// containing all image
+						// regions
+static char *imagePageName = 0 /* nullptr */;	// name of bitmap image
+						// file containing
+						// current page
 static const char *image_device = "pnmraw";
 static int image_res = DEFAULT_IMAGE_RES;
 static int vertical_offset = 0;
-static char *image_template = NULL;	// image template filename
-static char *macroset_template= NULL;	// image template passed to troff
-					// by -D
+static char *image_template = 0 /* nullptr */;	// image file name
+						// template
+static char *macroset_template= 0 /* nullptr */;	// image file
+							// name template
+							// passed to
+							// troff by -D
 static int troff_arg = 0;		// troff arg index
-static char *image_dir = NULL;		// user specified image directory
+static char *image_dir = 0 /* nullptr */;	// user-specified image
+						// directory
 static int textAlphaBits = MAX_ALPHA_BITS;
 static int graphicAlphaBits = MAX_ALPHA_BITS;
-static char *antiAlias = NULL;		// antialias arguments we pass to gs
-static int show_progress = FALSE;	// should we display page numbers as
-					// they are processed?
+static char *antiAlias = 0 /* nullptr */;	// anti-alias arguments
+						// to be passed to gs
+static bool want_progress_report = false;	// display page numbers
+						// as they are processed
 static int currentPageNo = -1;		// current image page number
 #if defined(DEBUGGING)
-static int debug = FALSE;
-static char *troffFileName = NULL;	// output of pre-html output which
-					// is sent to troff -Tps
-static char *htmlFileName = NULL;	// output of pre-html output which
-					// is sent to troff -Thtml
+static bool debugging = false;
+static char *troffFileName = 0 /* nullptr */;	// pre-html output sent
+						// to troff -Tps
+static char *htmlFileName = 0 /* nullptr */;	// pre-html output sent
+						// to troff -Thtml
 #endif
-static int eqn_flag = FALSE;            // must we preprocess via eqn?
+static bool need_eqn = false;		// must we preprocess via eqn?
 
-static char *linebuf = NULL;		// for scanning devps/DESC
+static char *linebuf = 0 /* nullptr */;	// for scanning devps/DESC
 static int linebufsize = 0;
-static const char *image_gen = NULL;    // the 'gs' program
+static const char *image_gen = 0 /* nullptr */;	// the 'gs' program
+
+static const char devhtml_desc[] = "devhtml/DESC";
+static const char devps_desc[] = "devps/DESC";
 
 const char *const FONT_ENV_VAR = "GROFF_FONT_PATH";
 static search_path font_path(FONT_ENV_VAR, FONTPATH, 0, 0);
@@ -223,12 +228,9 @@ static html_dialect dialect = html4;
 
 
 /*
- *  Images are generated via postscript, gs, and the pnm utilities.
+ *  Images are generated via PostScript, gs, and the pnm utilities.
  */
 #define IMAGE_DEVICE "-Tps"
-
-
-static int do_file(const char *filename);
 
 
 /*
@@ -273,7 +275,7 @@ int get_line(FILE *f)
       char *old_linebuf = linebuf;
       linebuf = new char[linebufsize * 2];
       memcpy(linebuf, old_linebuf, linebufsize);
-      a_delete old_linebuf;
+      delete[] old_linebuf;
       linebufsize *= 2;
     }
     linebuf[i++] = c;
@@ -287,27 +289,66 @@ int get_line(FILE *f)
 }
 
 /*
- *  get_resolution - Return the postscript resolution from devps/DESC.
+ *  get_resolution - Return the PostScript device resolution.
  */
 
 static unsigned int get_resolution(void)
 {
   char *pathp;
   FILE *f;
-  unsigned int res;
-  f = font_path.open_file("devps/DESC", &pathp);
+  unsigned int res = 0;
+  f = font_path.open_file(devps_desc, &pathp);
+  if (0 == f)
+    fatal("cannot open file '%1'", devps_desc);
   free(pathp);
-  if (f == 0)
-    fatal("can't open devps/DESC");
+  // XXX: We should break out of this loop if we hit a "charset" line.
+  // "This line and everything following it in the file are ignored."
+  // (groff_font(5))
+  while (get_line(f))
+    (void) sscanf(linebuf, "res %u", &res);
+  fclose(f);
+  return res;
+}
+
+
+/*
+ *  get_image_generator - Return the declared program from the HTML
+ *                        device description.
+ */
+
+static char *get_image_generator(void)
+{
+  char *pathp;
+  FILE *f;
+  char *generator = 0;
+  const char keyword[] = "image_generator";
+  const size_t keyword_len = strlen(keyword);
+  f = font_path.open_file(devhtml_desc, &pathp);
+  if (0 == f)
+    fatal("cannot open file '%1'", devhtml_desc);
+  free(pathp);
+  // XXX: We should break out of this loop if we hit a "charset" line.
+  // "This line and everything following it in the file are ignored."
+  // (groff_font(5))
   while (get_line(f)) {
-    int n = sscanf(linebuf, "res %u", &res);
-    if (n >= 1) {
-      fclose(f);
-      return res;
+    char *cursor = linebuf;
+    size_t limit = strlen(linebuf);
+    char *end = linebuf + limit;
+    if (0 == (strncmp(linebuf, keyword, keyword_len))) {
+      cursor += keyword_len;
+      // At least one space or tab is required.
+      if(!(' ' == *cursor) || ('\t' == *cursor))
+	continue;
+      cursor++;
+      while((cursor < end) && ((' ' == *cursor) || ('\t' == *cursor)))
+	cursor++;
+      if (cursor == end)
+	continue;
+      generator = cursor;
     }
   }
-  fatal("can't find 'res' keyword in devps/DESC");
-  return 0;
+  fclose(f);
+  return generator;
 }
 
 /*
@@ -317,80 +358,63 @@ static unsigned int get_resolution(void)
 void html_system(const char *s, int redirect_stdout)
 {
 #if defined(DEBUGGING)
-  if (debug) {
+  if (debugging) {
     fprintf(stderr, "executing: ");
     fwrite(s, sizeof(char), strlen(s), stderr);
     fflush(stderr);
   }
 #endif
   {
-    // Redirect standard error to the null device.  This is more
-    // portable than using "2> /dev/null", since it doesn't require a
-    // Unixy shell.
-    int save_stderr = dup(2);
-    int save_stdout = dup(1);
+    int saved_stdout = dup(1);
     int fdnull = open(NULL_DEV, O_WRONLY|O_BINARY, 0666);
-    if (save_stderr > 2 && fdnull > 2)
-      dup2(fdnull, 2);
-    if (redirect_stdout && save_stdout > 1 && fdnull > 1)
+    if (redirect_stdout && saved_stdout > 1 && fdnull > 1)
       dup2(fdnull, 1);
     if (fdnull >= 0)
       close(fdnull);
     int status = system(s);
-    dup2(save_stderr, 2);
     if (redirect_stdout)
-      dup2(save_stdout, 1);
+      dup2(saved_stdout, 1);
     if (status == -1)
       fprintf(stderr, "Calling '%s' failed\n", s);
     else if (status)
       fprintf(stderr, "Calling '%s' returned status %d\n", s, status);
-    close(save_stderr);
-    close(save_stdout);
+    close(saved_stdout);
   }
 }
 
 /*
- *  make_message - Create a string via malloc and place the result of the
- *                 va args into string.  Finally the new string is returned.
- *                 Taken from man page of printf(3).
+ *  make_string - Create a string via `malloc()`, place the variadic
+ *                arguments as formatted by `fmt` into it, and return
+ *                it.  Adapted from Linux man-pages' printf(3) example.
+ *                We never return a null pointer, instead treating
+ *                failure as invariably fatal.
  */
 
-char *make_message(const char *fmt, ...)
+char *make_string(const char *fmt, ...)
 {
-  /* Guess we need no more than 100 bytes. */
-  int n, size = 100;
-  char *p;
-  char *np;
+  size_t size = 0;
+  char *p = 0 /* nullptr */;
   va_list ap;
-  if ((p = (char *)malloc(size)) == NULL)
-    return NULL;
-  while (1) {
-    /* Try to print in the allocated space. */
-    va_start(ap, fmt);
-    n = vsnprintf(p, size, fmt, ap);
-    va_end(ap);
-    /* If that worked, return the string. */
-    if (n > -1 && n < size - 1) { /* glibc 2.1 and pre-ANSI C 99 */
-      if (size > n + 1) {
-	np = strsave(p);
-	free(p);
-	return np;
-      }
-      return p;
-    }
-    /* Else try again with more space. */
-    else		/* glibc 2.0 */
-      size *= 2;	/* twice the old size */
-    if ((np = (char *)realloc(p, size)) == NULL) {
-      free(p);		/* realloc failed, free old, p. */
-      return NULL;
-    }
-    p = np;		/* use realloc'ed, p */
-  }
+  va_start(ap, fmt);
+  int n = vsnprintf(p, size, fmt, ap);
+  va_end(ap);
+  if (n < 0)
+    sys_fatal("vsnprintf");
+  size = static_cast<size_t>(n) + 1 /* '\0' */;
+  p = static_cast<char *>(malloc(size));
+  if (0 /* nullptr */ == p)
+    sys_fatal("vsnprintf");
+  va_start(ap, fmt);
+  n = vsnprintf(p, size, fmt, ap);
+  va_end(ap);
+  if (n < 0)
+    sys_fatal("vsnprintf");
+  assert(p != 0 /* nullptr */);
+  return p;
 }
 
 /*
- *  the class and methods for retaining ascii text
+ *  classes and methods for retaining ascii text
  */
 
 struct char_block {
@@ -401,10 +425,6 @@ struct char_block {
 
   char_block();
 };
-
-/*
- *  char_block - Constructor.  Set the, used, and, next, fields to zero.
- */
 
 char_block::char_block()
 : used(0), next(0)
@@ -417,36 +437,28 @@ class char_buffer {
 public:
   char_buffer();
   ~char_buffer();
-  int read_file(FILE *fp);
+  void read_file(FILE *fp);
   int do_html(int argc, char *argv[]);
   int do_image(int argc, char *argv[]);
   void emit_troff_output(int device_format_selector);
   void write_upto_newline(char_block **t, int *i, int is_html);
-  int can_see(char_block **t, int *i, const char *string);
-  int skip_spaces(char_block **t, int *i);
+  bool can_see(char_block **t, int *i, const char *string);
   void skip_until_newline(char_block **t, int *i);
 private:
   char_block *head;
   char_block *tail;
-  int run_output_filter(int device_format_selector, int argc, char *argv[]);
+  int run_output_filter(int device_format_selector, int argc,
+			char *argv[]);
 };
-
-/*
- *  char_buffer - Constructor.
- */
 
 char_buffer::char_buffer()
 : head(0), tail(0)
 {
 }
 
-/*
- *  char_buffer - Destructor.  Throw away the whole buffer list.
- */
-
 char_buffer::~char_buffer()
 {
-  while (head != NULL) {
+  while (head != 0 /* nullptr */) {
     char_block *temp = head;
     head = head->next;
     delete temp;
@@ -454,15 +466,14 @@ char_buffer::~char_buffer()
 }
 
 /*
- *  read_file - Read in a complete file, fp, placing the contents inside
- *              char_blocks.
+ *  read_file - Read file `fp` into char_blocks.
  */
 
-int char_buffer::read_file(FILE *fp)
+void char_buffer::read_file(FILE *fp)
 {
   int n;
   while (!feof(fp)) {
-    if (tail == NULL) {
+    if (0 /* nullptr */ == tail) {
       tail = new char_block;
       head = tail;
     }
@@ -472,16 +483,13 @@ int char_buffer::read_file(FILE *fp)
 	tail = tail->next;
       }
     }
-    // at this point we have a tail which is ready for the next SIZE
-    // bytes of the file
-    n = fread(tail->buffer, sizeof(char), char_block::SIZE-tail->used, fp);
-    if (n <= 0)
-      // error
-      return 0;
-    else
-      tail->used += n * sizeof(char);
+    // We now have a tail ready for the next `SIZE` bytes of the file.
+    n = fread(tail->buffer, sizeof(char), char_block::SIZE-tail->used,
+	      fp);
+    if ((n < 0) || ((0 == n) && !feof(fp)))
+      sys_fatal("fread");
+    tail->used += n * sizeof(char);
   }
-  return 1;
 }
 
 /*
@@ -518,40 +526,31 @@ static void writeString(const char *s)
 
 static void makeFileName(void)
 {
-  if ((image_dir != NULL) && (strchr(image_dir, '%') != NULL)) {
-    error("cannot use a '%%' within the image directory name");
-    exit(1);
-  }
-
-  if ((image_template != NULL) && (strchr(image_template, '%') != NULL)) {
-    error("cannot use a '%%' within the image template");
-    exit(1);
-  }
-
-  if (image_dir == NULL)
+  if ((image_dir != 0 /* nullptr */)
+      && (strchr(image_dir, '%') != 0 /* nullptr */))
+    fatal("'%%' is prohibited within the image directory name");
+  if ((image_template != 0 /* nullptr */)
+      && (strchr(image_template, '%') != 0 /* nullptr */))
+    fatal("'%%' is prohibited within the image template");
+  if (0 /* nullptr */ == image_dir)
     image_dir = (char *)"";
   else if (strlen(image_dir) > 0
-	   && image_dir[strlen(image_dir) - 1] != '/') {
-    image_dir = make_message("%s/", image_dir);
-    if (image_dir == NULL)
-      sys_fatal("make_message");
-  }
-
-  if (image_template == NULL)
-    macroset_template = make_message("%sgrohtml-%d", image_dir,
-				     (int)getpid());
+	   && image_dir[strlen(image_dir) - 1] != '/')
+    image_dir = make_string("%s/", image_dir);
+  if (0 /* nullptr */ == image_template)
+    macroset_template = make_string("%sgrohtml-%d-", image_dir,
+				     int(getpid()));
   else
-    macroset_template = make_message("%s%s", image_dir, image_template);
-
-  if (macroset_template == NULL)
-    sys_fatal("make_message");
-
-  image_template =
-    (char *)malloc(strlen("-%d") + strlen(macroset_template) + 1);
-  if (image_template == NULL)
+    macroset_template = make_string("%s%s-", image_dir,
+				     image_template);
+  size_t mtlen = strlen(macroset_template);
+  image_template = (char *)malloc(strlen("%d") + mtlen + 1);
+  if (0 /* nullptr */ == image_template)
     sys_fatal("malloc");
-  strcpy(image_template, macroset_template);
-  strcat(image_template, "-%d");
+  char *s = strcpy(image_template, macroset_template);
+  s += mtlen;
+  // Keep this format string synced with troff:suppress_node::tprint().
+  strcpy(s, "%d");
 }
 
 /*
@@ -561,14 +560,16 @@ static void makeFileName(void)
 static void setupAntiAlias(void)
 {
   if (textAlphaBits == 0 && graphicAlphaBits == 0)
-    antiAlias = make_message(" ");
+    antiAlias = make_string(" ");
   else if (textAlphaBits == 0)
-    antiAlias = make_message("-dGraphicsAlphaBits=%d ", graphicAlphaBits);
+    antiAlias = make_string("-dGraphicsAlphaBits=%d ",
+			    graphicAlphaBits);
   else if (graphicAlphaBits == 0)
-    antiAlias = make_message("-dTextAlphaBits=%d ", textAlphaBits);
+    antiAlias = make_string("-dTextAlphaBits=%d ", textAlphaBits);
   else
-    antiAlias = make_message("-dTextAlphaBits=%d -dGraphicsAlphaBits=%d ",
-			     textAlphaBits, graphicAlphaBits);
+    antiAlias = make_string("-dTextAlphaBits=%d"
+			    " -dGraphicsAlphaBits=%d ", textAlphaBits,
+			    graphicAlphaBits);
 }
 
 /*
@@ -577,11 +578,10 @@ static void setupAntiAlias(void)
 
 static void checkImageDir(void)
 {
-  if (image_dir != NULL && strcmp(image_dir, "") != 0)
-    if (!(mkdir(image_dir, 0777) == 0 || errno == EEXIST)) {
-      error("cannot create directory '%1'", image_dir);
-      exit(1);
-    }
+  if (image_dir != 0 /* nullptr */ && strcmp(image_dir, "") != 0)
+    if (!(mkdir(image_dir, 0777) == 0 || errno == EEXIST))
+      fatal("cannot create directory '%1': %2", image_dir,
+	    strerror(errno));
 }
 
 /*
@@ -610,8 +610,8 @@ static void write_end_image(int is_html)
  *  write_start_image - Write troff code which will:
  *
  *                      (i)  disable html output for the following image
- *                      (ii) reset the max/min x/y registers during postscript
- *                           rendering.
+ *                      (ii) reset the max/min x/y registers during
+ *                           Postscript Rendering.
  */
 
 static void write_start_image(IMAGE_ALIGNMENT pos, int is_html)
@@ -642,13 +642,15 @@ static void write_start_image(IMAGE_ALIGNMENT pos, int is_html)
 }
 
 /*
- *  write_upto_newline - Write the contents of the buffer until a newline
- *                       is seen.  Check for HTML_IMAGE_INLINE_BEGIN and
+ *  write_upto_newline - Write the contents of the buffer until a
+ *                       newline is seen.  Check for
+ *                       HTML_IMAGE_INLINE_BEGIN and
  *                       HTML_IMAGE_INLINE_END; process them if they are
  *                       present.
  */
 
-void char_buffer::write_upto_newline(char_block **t, int *i, int is_html)
+void char_buffer::write_upto_newline(char_block **t, int *i,
+				     int is_html)
 {
   int j = *i;
 
@@ -687,10 +689,10 @@ void char_buffer::write_upto_newline(char_block **t, int *i, int is_html)
 }
 
 /*
- *  can_see - Return TRUE if we can see string in t->buffer[i] onwards.
+ *  can_see - Return true if we can see string in t->buffer[i] onwards.
  */
 
-int char_buffer::can_see(char_block **t, int *i, const char *str)
+bool char_buffer::can_see(char_block **t, int *i, const char *str)
 {
   int j = 0;
   int l = strlen(str);
@@ -705,39 +707,14 @@ int char_buffer::can_see(char_block **t, int *i, const char *str)
     if (j == l) {
       *i = k;
       *t = s;
-      return TRUE;
+      return true;
     }
     else if (k < s->used && s->buffer[k] != str[j])
-      return( FALSE );
+      return false;
     s = s->next;
     k = 0;
   }
-  return FALSE;
-}
-
-/*
- *  skip_spaces - Return TRUE if we have not run out of data.
- *                Consume spaces also.
- */
-
-int char_buffer::skip_spaces(char_block **t, int *i)
-{
-  char_block *s = *t;
-  int k = *i;
-
-  while (s) {
-    while (k < s->used && isspace(s->buffer[k]))
-      k++;
-    if (k == s->used) {
-      k = 0;
-      s = s->next;
-    }
-    else {
-      *i = k;
-      return TRUE;
-    }
-  }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -786,12 +763,13 @@ void char_buffer::emit_troff_output(int device_format_selector)
   //
   //   HTML_FORMAT(IMAGE_OUTPUT_FILTER)
   //     Buffer data is written to the output stream
-  //     with no translation, for image file creation in the post-processor.
+  //     with no translation, for image file creation in the
+  //     post-processor.
 
   int idx = 0;
   char_block *element = head;
 
-  while (element != NULL)
+  while (element != 0 /* nullptr */)
     write_upto_newline(&element, &idx, device_format_selector);
 
 #if 0
@@ -808,7 +786,7 @@ void char_buffer::emit_troff_output(int device_format_selector)
 
 /*
  *  The image class remembers the position of all images in the
- *  postscript file and assigns names for each image.
+ *  PostScript file and assigns names for each image.
  */
 
 struct imageItem {
@@ -842,7 +820,7 @@ imageItem::imageItem(int x1, int y1, int x2, int y2,
   resolution = res;
   maxx = max_width;
   imageName = name;
-  next = NULL;
+  next = 0 /* nullptr */;
 }
 
 /*
@@ -890,7 +868,7 @@ imageList::imageList()
 
 imageList::~imageList()
 {
-  while (head != NULL) {
+  while (head != 0 /* nullptr */) {
     imageItem *i = head;
     head = head->next;
     delete i;
@@ -898,7 +876,7 @@ imageList::~imageList()
 }
 
 /*
- *  createPage - Create one image of, page pageno, from the postscript file.
+ *  createPage - Create image of page `pageno` from PostScript file.
  */
 
 int imageList::createPage(int pageno)
@@ -911,46 +889,41 @@ int imageList::createPage(int pageno)
   if (currentPageNo >= 1) {
     /*
      *  We need to unlink the files which change each time a new page is
-     *  processed.  The final unlink is done by xtmpfile when pre-grohtml
-     *  exits.
+     *  processed.  The final unlink is done by xtmpfile when
+     *  pre-grohtml exits.
      */
     unlink(imagePageName);
     unlink(psPageName);
   }
 
-  if (show_progress) {
+  if (want_progress_report) {
     fprintf(stderr, "[%d] ", pageno);
     fflush(stderr);
   }
 
 #if defined(DEBUGGING)
-  if (debug)
+  if (debugging)
     fprintf(stderr, "creating page %d\n", pageno);
 #endif
 
-  s = make_message("psselect -q -p%d %s %s\n",
+  s = make_string("psselect -q -p%d %s %s\n",
 		   pageno, psFileName, psPageName);
-
-  if (s == NULL)
-    sys_fatal("make_message");
   html_system(s, 1);
-
-  s = make_message("echo showpage | "
-		   "%s%s -q -dBATCH -dSAFER "
-		   "-dDEVICEHEIGHTPOINTS=792 "
-		   "-dDEVICEWIDTHPOINTS=%d -dFIXEDMEDIA=true "
-		   "-sDEVICE=%s -r%d %s "
-		   "-sOutputFile=%s %s -\n",
-		   image_gen,
-		   EXE_EXT,
-		   (getMaxX(pageno) * image_res) / postscriptRes,
-		   image_device,
-		   image_res,
-		   antiAlias,
-		   imagePageName,
-		   psPageName);
-  if (s == NULL)
-    sys_fatal("make_message");
+  assert(strlen(image_gen) > 0);
+  s = make_string("echo showpage | "
+		  "%s%s -q -dBATCH -dSAFER "
+		  "-dDEVICEHEIGHTPOINTS=792 "
+		  "-dDEVICEWIDTHPOINTS=%d -dFIXEDMEDIA=true "
+		  "-sDEVICE=%s -r%d %s "
+		  "-sOutputFile=%s %s -\n",
+		  image_gen,
+		  EXE_EXT,
+		  (getMaxX(pageno) * image_res) / postscriptRes,
+		  image_device,
+		  image_res,
+		  antiAlias,
+		  imagePageName,
+		  psPageName);
   html_system(s, 1);
   free(s);
   currentPageNo = pageno;
@@ -983,7 +956,7 @@ int max(int x, int y)
 
 /*
  *  getMaxX - Return the largest right-hand position for any image
- *            on, pageno.
+ *            on `pageno`.
  */
 
 int imageList::getMaxX(int pageno)
@@ -991,7 +964,7 @@ int imageList::getMaxX(int pageno)
   imageItem *h = head;
   int x = postscriptRes * DEFAULT_LINE_LENGTH;
 
-  while (h != NULL) {
+  while (h != 0 /* nullptr */) {
     if (h->pageNo == pageno)
       x = max(h->X2, x);
     h = h->next;
@@ -1000,7 +973,8 @@ int imageList::getMaxX(int pageno)
 }
 
 /*
- *  createImage - Generate a minimal png file from the set of page images.
+ *  createImage - Generate a minimal PNG file from the set of page
+ *                images.
  */
 
 void imageList::createImage(imageItem *i)
@@ -1008,40 +982,40 @@ void imageList::createImage(imageItem *i)
   if (i->X1 != -1) {
     char *s;
     int x1 = max(min(i->X1, i->X2) * image_res / postscriptRes
-		   - IMAGE_BOARDER_PIXELS,
+		   - IMAGE_BORDER_PIXELS,
 		 0);
     int y1 = max(image_res * vertical_offset / 72
 		   + min(i->Y1, i->Y2) * image_res / postscriptRes
-		   - IMAGE_BOARDER_PIXELS,
+		   - IMAGE_BORDER_PIXELS,
 		 0);
     int x2 = max(i->X1, i->X2) * image_res / postscriptRes
-	     + IMAGE_BOARDER_PIXELS;
+	     + IMAGE_BORDER_PIXELS;
     int y2 = image_res * vertical_offset / 72
 	     + max(i->Y1, i->Y2) * image_res / postscriptRes
-	     + 1 + IMAGE_BOARDER_PIXELS;
+	     + 1 + IMAGE_BORDER_PIXELS;
     if (createPage(i->pageNo) == 0) {
-      s = make_message("pnmcut%s %d %d %d %d < %s "
-		       "| pnmcrop -quiet | pnmtopng%s %s > %s\n",
-		       EXE_EXT,
-		       x1, y1, x2 - x1 + 1, y2 - y1 + 1,
-		       imagePageName,
-		       EXE_EXT,
-		       TRANSPARENT,
-		       i->imageName);
-      if (s == NULL)
-	sys_fatal("make_message");
-
+      s = make_string("pnmcut%s %d %d %d %d < %s "
+		      "| pnmcrop%s -quiet | pnmtopng%s -quiet %s"
+		      "> %s\n",
+		      EXE_EXT,
+		      x1, y1, x2 - x1 + 1, y2 - y1 + 1,
+		      imagePageName,
+		      EXE_EXT,
+		      EXE_EXT,
+		      TRANSPARENT,
+		      i->imageName);
       html_system(s, 0);
       free(s);
     }
     else {
-      fprintf(stderr, "failed to generate image of page %d\n", i->pageNo);
+      fprintf(stderr, "failed to generate image of page %d\n",
+	      i->pageNo);
       fflush(stderr);
     }
 #if defined(DEBUGGING)
   }
   else {
-    if (debug) {
+    if (debugging) {
       fprintf(stderr, "ignoring image as x1 coord is -1\n");
       fflush(stderr);
     }
@@ -1058,7 +1032,7 @@ void imageList::add(int x1, int y1, int x2, int y2,
 {
   imageItem *i = new imageItem(x1, y1, x2, y2, page, res, maxx, name);
 
-  if (head == NULL) {
+  if (0 /* nullptr */ == head) {
     head = i;
     tail = i;
   }
@@ -1077,19 +1051,18 @@ void imageList::createImages(void)
 {
   imageItem *h = head;
 
-  while (h != NULL) {
+  while (h != 0 /* nullptr */) {
     createImage(h);
     h = h->next;
   }
 }
 
-static imageList listOfImages;	// List of images defined by the region file.
+static imageList listOfImages;	// list of images defined by region file
 
 /*
- *  generateImages - Parse the region file and generate images
- *                   from the postscript file.  The region file
- *                   contains the x1,y1--x2,y2 extents of each
- *                   image.
+ *  generateImages - Parse the region file and generate images from the
+ *                   PostScript file.  The region file contains the
+ *                   x1,y1--x2,y2 extents of each image.
  */
 
 static void generateImages(char *region_file_name)
@@ -1118,9 +1091,10 @@ static void generateImages(char *region_file_name)
       fputc(f->getPB(), stderr);
     }
   }
+  fflush(stderr);
 
   listOfImages.createImages();
-  if (show_progress) {
+  if (want_progress_report) {
     fprintf(stderr, "done\n");
     fflush(stderr);
   }
@@ -1128,8 +1102,8 @@ static void generateImages(char *region_file_name)
 }
 
 /*
- *  set_redirection - Set up I/O Redirection for handle, was, to refer to
- *                    stream on handle, willbe.
+ *  set_redirection - Redirect file descriptor `was` to file descriptor
+ *                    `willbe`.
  */
 
 static void set_redirection(int was, int willbe)
@@ -1137,7 +1111,7 @@ static void set_redirection(int was, int willbe)
   // Nothing to do if 'was' and 'willbe' already have same handle.
   if (was != willbe) {
     // Otherwise attempt the specified redirection.
-    if (dup2 (willbe, was) < 0) {
+    if (dup2(willbe, was) < 0) {
       // Redirection failed, so issue diagnostic and bail out.
       fprintf(stderr, "failed to replace fd=%d with %d\n", was, willbe);
       if (willbe == STDOUT_FILENO)
@@ -1155,14 +1129,14 @@ static void set_redirection(int was, int willbe)
 }
 
 /*
- *  save_and_redirect - Get duplicate handle for stream, was, then
- *                      redirect, was, to refer to, willbe.
+ *  save_and_redirect - Duplicate file descriptor for `was` on file
+ *                      descriptor `willbe`.
  */
 
 static int save_and_redirect(int was, int willbe)
 {
   if (was == willbe)
-    // No redirection specified so don't do anything but silently bailing out.
+    // No redirection specified; silently bail out.
     return (was);
 
   // Proceeding with redirection so first save and verify our duplicate
@@ -1176,15 +1150,15 @@ static int save_and_redirect(int was, int willbe)
   // Duplicate handle safely established so complete redirection.
   set_redirection(was, willbe);
 
-  // Finally return the saved duplicate descriptor for the
-  // original 'was' stream.
+  // Finally return the saved duplicate descriptor for the original
+  // 'was' descriptor.
   return saved;
 }
 
 /*
- *  alterDeviceTo - If, toImage, is set
+ *  alterDeviceTo - If toImage is set
  *                     the argument list is altered to include
- *                     IMAGE_DEVICE and we invoke groff rather than troff.
+ *                     IMAGE_DEVICE; we invoke groff rather than troff.
  *                  Else
  *                     set -Thtml and groff.
  */
@@ -1225,7 +1199,7 @@ char **addArg(int argc, char *argv[], char *newarg)
   char **new_argv = (char **)malloc((argc + 2) * sizeof(char *));
   int i = 0;
 
-  if (new_argv == NULL)
+  if (0 /* nullptr */ == new_argv)
     sys_fatal("malloc");
 
   if (argc > 0) {
@@ -1238,7 +1212,7 @@ char **addArg(int argc, char *argv[], char *newarg)
     i++;
   }
   argc++;
-  new_argv[argc] = NULL;
+  new_argv[argc] = 0 /* nullptr */;
   return new_argv;
 }
 
@@ -1252,7 +1226,7 @@ char **addRegDef(int argc, char *argv[], const char *numReg)
   char **new_argv = (char **)malloc((argc + 2) * sizeof(char *));
   int i = 0;
 
-  if (new_argv == NULL)
+  if (0 /* nullptr */ == new_argv)
     sys_fatal("malloc");
 
   while (i < argc) {
@@ -1261,7 +1235,7 @@ char **addRegDef(int argc, char *argv[], const char *numReg)
   }
   new_argv[argc] = strsave(numReg);
   argc++;
-  new_argv[argc] = NULL;
+  new_argv[argc] = 0 /* nullptr */;
   return new_argv;
 }
 
@@ -1278,14 +1252,14 @@ void dump_args(int argc, char *argv[])
 }
 
 /*
- *  print_args - print arguments as if they were issued on the command line.
+ *  print_args - Print arguments as if issued on the command line.
  */
 
 #if defined(DEBUGGING)
 
 void print_args(int argc, char *argv[])
 {
-  if (debug) {
+  if (debugging) {
     fprintf(stderr, "executing: ");
     for (int i = 0; i < argc; i++)
       fprintf(stderr, "%s ", argv[i]);
@@ -1305,7 +1279,7 @@ int char_buffer::run_output_filter(int filter, int argc, char **argv)
 {
   int pipedes[2];
   PID_T child_pid;
-  int status;
+  int wstatus;
 
   print_args(argc, argv);
   if (pipe(pipedes) < 0)
@@ -1319,14 +1293,14 @@ int char_buffer::run_output_filter(int filter, int argc, char **argv)
     sys_fatal("fork");
 
   else if (child_pid == 0) {
-    // This is the child process fork.  We redirect its 'stdin' stream
-    // to read data emerging from our pipe.  There is no point in saving,
-    // since we won't be able to restore later!
+    // This is the child process.  We redirect its input file descriptor
+    // to read data emerging from our pipe.  There is no point in
+    // saving, since we won't be able to restore later!
 
     set_redirection(STDIN_FILENO, pipedes[0]);
 
-    // The parent process will be writing this data, so we should release
-    // the child's writeable handle on the pipe, since we have no use for it.
+    // The parent process will be writing this data; release the child's
+    // writeable handle on the pipe since we have no use for it.
 
     if (close(pipedes[1]) < 0)
       sys_fatal("close");
@@ -1334,7 +1308,9 @@ int char_buffer::run_output_filter(int filter, int argc, char **argv)
     // The IMAGE_OUTPUT_FILTER needs special output redirection...
 
     if (filter == IMAGE_OUTPUT_FILTER) {
-      // with BOTH 'stdout' AND 'stderr' diverted to files.
+      // ...with BOTH 'stdout' AND 'stderr' diverted to files, the
+      // latter so that `generateImages()` can scrape "grohtml-info"
+      // from it.
 
       set_redirection(STDOUT_FILENO, PS_OUTPUT_STREAM);
       set_redirection(STDERR_FILENO, REGION_OUTPUT_STREAM);
@@ -1342,26 +1318,20 @@ int char_buffer::run_output_filter(int filter, int argc, char **argv)
 
     // Now we are ready to launch the output filter.
 
-    execvp(argv[0], argv);
-
-    // If we get to here then the 'exec...' request for the output filter
-    // failed.  Diagnose it and bail out.
-
-    error("couldn't exec %1: %2", argv[0], strerror(errno), ((char *)0));
-    fflush(stderr);	// just in case error() didn't
-    exit(1);
+    execvp(argv[0], argv); // does not return unless it fails
+    fatal("cannot execute '%1': %2", argv[0], strerror(errno));
   }
 
   else {
-    // This is the parent process fork.  We will be writing data to the
-    // filter pipeline, and the child will be reading it.  We have no further
-    // use for our read handle on the pipe, and should close it.
+    // This is the parent process.  We write data to the filter pipeline
+    // where the child will read it.  We have no need to read from the
+    // input side ourselves, so close it.
 
     if (close(pipedes[0]) < 0)
       sys_fatal("close");
 
-    // Now we redirect the 'stdout' stream to the inlet end of the pipe,
-    // and push out the appropiately formatted data to the filter.
+    // Now redirect the standard output file descriptor to the inlet end
+    // of the pipe, and push the formatted data to the filter.
 
     pipedes[1] = save_and_redirect(STDOUT_FILENO, pipedes[1]);
     emit_troff_output(DEVICE_FORMAT(filter));
@@ -1373,24 +1343,24 @@ int char_buffer::run_output_filter(int filter, int argc, char **argv)
 
     // Finally, we must wait for the child process to complete.
 
-    if (WAIT(&status, child_pid, _WAIT_CHILD) != child_pid)
+    if (WAIT(&wstatus, child_pid, _WAIT_CHILD) != child_pid)
       sys_fatal("wait");
   }
 
 #elif MAY_SPAWN_ASYNCHRONOUS_CHILD
 
-  // We do not have 'fork', (or we prefer not to use it),
-  // but asynchronous processes are allowed, passing data through pipes.
-  // This should be ok for most Win32 systems and is preferred to 'fork'
-  // for starting child processes under Cygwin.
+  // We do not have `fork` (or we prefer not to use it), but
+  // asynchronous processes are allowed, passing data through pipes.
+  // This should be okay for most Win32 systems and is preferred to
+  // `fork` for starting child processes under Cygwin.
 
-  // Before we start the post-processor we bind its inherited 'stdin'
-  // stream to the readable end of our pipe, saving our own 'stdin' stream
-  // in 'pipedes[0]'.
+  // Before we start the post-processor we bind its inherited standard
+  // input file descriptor to the readable end of our pipe, saving our
+  // own standard input file descriptor in `pipedes[0]`.
 
   pipedes[0] = save_and_redirect(STDIN_FILENO, pipedes[0]);
 
-  // for the Win32 model,
+  // For the Win32 model,
   // we need special provision for saving BOTH 'stdout' and 'stderr'.
 
   int saved_stdout = dup(STDOUT_FILENO);
@@ -1403,16 +1373,14 @@ int char_buffer::run_output_filter(int filter, int argc, char **argv)
     // duplicate handle for 'stderr'.
 
     set_redirection(STDOUT_FILENO, PS_OUTPUT_STREAM);
-    saved_stderr = save_and_redirect(STDERR_FILENO, REGION_OUTPUT_STREAM);
+    saved_stderr = save_and_redirect(STDERR_FILENO,
+				     REGION_OUTPUT_STREAM);
   }
 
-  // We then use an asynchronous spawn request to start the post-processor.
+  // Use an asynchronous spawn request to start the post-processor.
 
   if ((child_pid = spawnvp(_P_NOWAIT, argv[0], argv)) < 0) {
-    // Should the spawn request fail we issue a diagnostic and bail out.
-
-    error("cannot spawn %1: %2", argv[0], strerror(errno), ((char *)0));
-    exit(1);
+    fatal("cannot spawn %1: %2", argv[0], strerror(errno));
   }
 
   // Once the post-processor has been started we revert our 'stdin'
@@ -1427,8 +1395,8 @@ int char_buffer::run_output_filter(int filter, int argc, char **argv)
   if (filter == IMAGE_OUTPUT_FILTER)
     set_redirection(STDERR_FILENO, saved_stderr);
 
-  // Now we redirect the 'stdout' stream to the inlet end of the pipe,
-  // and push out the appropiately formatted data to the filter.
+  // Now we redirect the standard output to the inlet end of the pipe,
+  // and push out the appropriately formatted data to the filter.
 
   set_redirection(STDOUT_FILENO, pipedes[1]);
   emit_troff_output(DEVICE_FORMAT(filter));
@@ -1440,17 +1408,17 @@ int char_buffer::run_output_filter(int filter, int argc, char **argv)
 
   // And finally, we must wait for the child process to complete.
 
-  if (WAIT(&status, child_pid, _WAIT_CHILD) != child_pid)
+  if (WAIT(&wstatus, child_pid, _WAIT_CHILD) != child_pid)
     sys_fatal("wait");
 
 #else /* can't do asynchronous pipes! */
 
-  // TODO: code to support an MS-DOS style process model
-  //        should go here
+  // TODO: code to support an MS-DOS style process model should go here
+  fatal("output filtering not supported on this platform");
 
 #endif /* MAY_FORK_CHILD_PROCESS or MAY_SPAWN_ASYNCHRONOUS_CHILD */
 
-  return 0;
+  return wstatus;
 }
 
 /*
@@ -1469,16 +1437,16 @@ int char_buffer::do_html(int argc, char *argv[])
   argc++;
 
   s = (char *)"-dwww-image-template=";
-  s += macroset_template;	// do not combine these statements,
-				// otherwise they will not work
-  s += '\0';                	// the trailing '\0' is ignored
+  s += macroset_template;	// Do not combine these statements,
+				// otherwise they will not work.
+  s += '\0';			// The trailing '\0' is ignored.
   argv = addRegDef(argc, argv, s.contents());
   argc++;
 
   if (dialect == xhtml) {
     argv = addRegDef(argc, argv, "-rxhtml=1");
     argc++;
-    if (eqn_flag) {
+    if (need_eqn) {
       argv = addRegDef(argc, argv, "-e");
       argc++;
     }
@@ -1486,9 +1454,10 @@ int char_buffer::do_html(int argc, char *argv[])
 
 #if defined(DEBUGGING)
 # define HTML_DEBUG_STREAM  OUTPUT_STREAM(htmlFileName)
-  // slight security risk so only enabled if compiled with defined(DEBUGGING)
-  if (debug) {
-    int saved_stdout = save_and_redirect(STDOUT_FILENO, HTML_DEBUG_STREAM);
+  // slight security risk: only enabled if defined(DEBUGGING)
+  if (debugging) {
+    int saved_stdout = save_and_redirect(STDOUT_FILENO,
+					 HTML_DEBUG_STREAM);
     emit_troff_output(DEVICE_FORMAT(HTML_OUTPUT_FILTER));
     set_redirection(STDOUT_FILENO, saved_stdout);
   }
@@ -1517,12 +1486,13 @@ int char_buffer::do_image(int argc, char *argv[])
   argv = addRegDef(argc, argv, s.contents());
   argc++;
 
-  // override local settings and produce a page size letter postscript file
+  // Override local settings and produce a letter-size PostScript page
+  // file.
   argv = addRegDef(argc, argv, "-P-pletter");
   argc++;
 
   if (dialect == xhtml) {
-    if (eqn_flag) {
+    if (need_eqn) {
       argv = addRegDef(argc, argv, "-rxhtml=1");
       argc++;
     }
@@ -1532,9 +1502,10 @@ int char_buffer::do_image(int argc, char *argv[])
 
 #if defined(DEBUGGING)
 # define IMAGE_DEBUG_STREAM  OUTPUT_STREAM(troffFileName)
-  // slight security risk so only enabled if compiled with defined(DEBUGGING)
-  if (debug) {
-    int saved_stdout = save_and_redirect(STDOUT_FILENO, IMAGE_DEBUG_STREAM);
+  // slight security risk: only enabled if defined(DEBUGGING)
+  if (debugging) {
+    int saved_stdout = save_and_redirect(STDOUT_FILENO,
+					 IMAGE_DEBUG_STREAM);
     emit_troff_output(DEVICE_FORMAT(IMAGE_OUTPUT_FILTER));
     set_redirection(STDOUT_FILENO, saved_stdout);
   }
@@ -1546,20 +1517,34 @@ int char_buffer::do_image(int argc, char *argv[])
 static char_buffer inputFile;
 
 /*
- *  usage - Emit usage arguments.
+ *  usage - Emit usage message.
  */
 
 static void usage(FILE *stream)
 {
   fprintf(stream,
-    "\n"
-    "This program is not intended to be called stand-alone;\n"
-    "it is part of the groff pipeline to produce HTML output.\n"
-    "\n"
-    "If there is ever the need to call it manually (e.g., for\n"
-    "debugging purposes), add command-line option '-V' while calling\n"
-    "the 'groff' program to see which arguments are passed to it.\n"
-    "\n");
+"usage: %s [-epV] [-a anti-aliasing-text-bits] [-D image-directory]"
+" [-F font-directory] [-g anti-aliasing-graphics-bits] [-i resolution]"
+" [-I image-stem] [-o image-vertical-offset] [-x html-dialect]"
+" troff-command troff-argument ...\n"
+"usage: %s {-v | --version}\n"
+"usage: %s --help\n",
+	 program_name, program_name, program_name);
+  if (stdout == stream) {
+    fputs(
+"\n"
+"Prepare a troff(1) document for HTML formatting.\n"
+"\n"
+"This program is not intended to be executed standalone; it is\n"
+"normally part of a groff pipeline.  If your need to run it manually\n"
+"(e.g., for debugging purposes), give the 'groff' program the\n"
+"command-line option '-V' to inspect the arguments with which\n",
+	  stream);
+    fprintf(stream,
+"'%s' is called.  See the grohtml(1) manual page.\n",
+	  program_name);
+    exit(EXIT_SUCCESS);
+  }
 }
 
 /*
@@ -1570,43 +1555,47 @@ static void usage(FILE *stream)
 
 static int scanArguments(int argc, char **argv)
 {
-  const char *command_prefix = getenv("GROFF_COMMAND_PREFIX");
-  if (!command_prefix)
-    command_prefix = PROG_PREFIX;
-  char *troff_name = new char[strlen(command_prefix) + strlen("troff") + 1];
-  strcpy(troff_name, command_prefix);
-  strcat(troff_name, "troff");
+  const char *cmdprefix = getenv("GROFF_COMMAND_PREFIX");
+  if (!cmdprefix)
+    cmdprefix = PROG_PREFIX;
+  size_t pfxlen = strlen(cmdprefix);
+  char *troff_name = new char[pfxlen + strlen("troff") + 1];
+  char *s = strcpy(troff_name, cmdprefix);
+  s += pfxlen;
+  strcpy(s, "troff");
   int c, i;
   static const struct option long_options[] = {
     { "help", no_argument, 0, CHAR_MAX + 1 },
     { "version", no_argument, 0, 'v' },
-    { NULL, 0, 0, 0 }
+    { 0 /* nullptr */, 0, 0, 0 }
   };
-  while ((c = getopt_long(argc, argv, "+a:bdD:eF:g:hi:I:j:lno:prs:S:vVx:y",
-			  long_options, NULL))
+  while ((c = getopt_long(argc, argv,
+	  "+a:bCdD:eF:g:Ghi:I:j:lno:prs:S:vVx:y", long_options,
+	  0 /* nullptr */))
 	 != EOF)
     switch(c) {
     case 'a':
       textAlphaBits = min(max(MIN_ALPHA_BITS, atoi(optarg)),
 			  MAX_ALPHA_BITS);
-      if (textAlphaBits == 3) {
-	error("cannot use 3 bits of antialiasing information");
-	exit(1);
-      }
+      if (textAlphaBits == 3)
+	fatal("cannot use 3 bits of antialiasing information");
       break;
     case 'b':
       // handled by post-grohtml (set background color to white)
       break;
+    case 'C':
+      // handled by post-grohtml (don't write Creator HTML comment)
+      break;
     case 'd':
 #if defined(DEBUGGING)
-      debug = TRUE;
+      debugging = true;
 #endif
       break;
     case 'D':
       image_dir = optarg;
       break;
     case 'e':
-      eqn_flag = TRUE;
+      need_eqn = true;
       break;
     case 'F':
       font_path.command_line_dir(optarg);
@@ -1614,13 +1603,14 @@ static int scanArguments(int argc, char **argv)
     case 'g':
       graphicAlphaBits = min(max(MIN_ALPHA_BITS, atoi(optarg)),
 			     MAX_ALPHA_BITS);
-      if (graphicAlphaBits == 3) {
-	error("cannot use 3 bits of antialiasing information");
-	exit(1);
-      }
+      if (graphicAlphaBits == 3)
+	fatal("cannot use 3 bits of antialiasing information");
+      break;
+    case 'G':
+      // handled by post-grohtml (don't write CreationDate HTML comment)
       break;
     case 'h':
-      // handled by post-grohtml
+      // handled by post-grohtml (write headings with font size changes)
       break;
     case 'i':
       image_res = atoi(optarg);
@@ -1641,20 +1631,20 @@ static int scanArguments(int argc, char **argv)
       vertical_offset = atoi(optarg);
       break;
     case 'p':
-      show_progress = TRUE;
+      want_progress_report = true;
       break;
     case 'r':
       // handled by post-grohtml (no header and footer lines)
       break;
     case 's':
-      // handled by post-grohtml (use font size n as the html base font size)
+      // handled by post-grohtml (use font size n as the HTML base size)
       break;
     case 'S':
       // handled by post-grohtml (set file split level)
       break;
     case 'v':
       printf("GNU pre-grohtml (groff) version %s\n", Version_string);
-      exit(0);
+      exit(EXIT_SUCCESS);
     case 'V':
       // handled by post-grohtml (create validator button)
       break;
@@ -1665,18 +1655,17 @@ static int scanArguments(int argc, char **argv)
       else if (strcmp(optarg, "4") == 0)
 	dialect = html4;
       else
-	printf("unsupported html dialect %s (defaulting to html4)\n", optarg);
+	warning("unsupported HTML dialect: '%1'", optarg);
       break;
     case 'y':
       // handled by post-grohtml (create groff signature)
       break;
     case CHAR_MAX + 1: // --help
       usage(stdout);
-      exit(0);
       break;
     case '?':
       usage(stderr);
-      exit(1);
+      exit(EXIT_FAILURE);
       break;
     default:
       break;
@@ -1690,7 +1679,7 @@ static int scanArguments(int argc, char **argv)
       return i;
     i++;
   }
-  a_delete troff_name;
+  delete[] troff_name;
 
   return argc;
 }
@@ -1699,7 +1688,7 @@ static int scanArguments(int argc, char **argv)
  *  makeTempFiles - Name the temporary files.
  */
 
-static int makeTempFiles(void)
+static void makeTempFiles(void)
 {
 #if defined(DEBUGGING)
   psFileName = DEBUG_FILE("prehtml-ps");
@@ -1711,104 +1700,36 @@ static int makeTempFiles(void)
 #else /* not DEBUGGING */
   FILE *f;
 
-  /* psPageName contains a single page of postscript */
-  f = xtmpfile(&psPageName,
-	       PS_TEMPLATE_LONG, PS_TEMPLATE_SHORT,
-	       TRUE);
-  if (f == NULL) {
+  // psPageName contains a single page of PostScript.
+  f = xtmpfile(&psPageName, PS_TEMPLATE_LONG, PS_TEMPLATE_SHORT, true);
+  if (0 /* nullptr */ == f)
     sys_fatal("xtmpfile");
-    return -1;
-  }
   fclose(f);
 
-  /* imagePageName contains a bitmap image of the single postscript page */
-  f = xtmpfile(&imagePageName,
-	       PAGE_TEMPLATE_LONG, PAGE_TEMPLATE_SHORT,
-	       TRUE);
-  if (f == NULL) {
+  // imagePageName contains a bitmap image of a single PostScript page.
+  f = xtmpfile(&imagePageName, PAGE_TEMPLATE_LONG, PAGE_TEMPLATE_SHORT,
+	       true);
+  if (0 /* nullptr */ == f)
     sys_fatal("xtmpfile");
-    return -1;
-  }
   fclose(f);
 
-  /* psFileName contains a postscript file of the complete document */
-  f = xtmpfile(&psFileName,
-	       PS_TEMPLATE_LONG, PS_TEMPLATE_SHORT,
-	       TRUE);
-  if (f == NULL) {
+  // psFileName contains a PostScript file of the complete document.
+  f = xtmpfile(&psFileName, PS_TEMPLATE_LONG, PS_TEMPLATE_SHORT, true);
+  if (0 /* nullptr */ == f)
     sys_fatal("xtmpfile");
-    return -1;
-  }
   fclose(f);
 
-  /* regionFileName contains a list of the images and their boxed coordinates */
+  // regionFileName contains a list of the images and their boxed
+  // coordinates.
   f = xtmpfile(&regionFileName,
-	       REGION_TEMPLATE_LONG, REGION_TEMPLATE_SHORT,
-	       TRUE);
-  if (f == NULL) {
+	       REGION_TEMPLATE_LONG, REGION_TEMPLATE_SHORT, true);
+  if (0 /* nullptr */ == f)
     sys_fatal("xtmpfile");
-    return -1;
-  }
   fclose(f);
-
 #endif /* not DEBUGGING */
-  return 0;
 }
 
-int main(int argc, char **argv)
-{
-  program_name = argv[0];
-  int i;
-  int found = 0;
-  int ok = 1;
-
-#ifdef CAPTURE_MODE
-  FILE *dump;
-  fprintf(stderr, "%s: invoked with %d arguments ...\n", argv[0], argc);
-  for (i = 0; i < argc; i++)
-    fprintf(stderr, "%2d: %s\n", i, argv[i]);
-  if ((dump = fopen(DEBUG_FILE("pre-html-data"), "wb")) != NULL) {
-    while((i = fgetc(stdin)) >= 0)
-      fputc(i, dump);
-    fclose(dump);
-  }
-  exit(1);
-#endif /* CAPTURE_MODE */
-  device = "html";
-  if (!font::load_desc())
-    fatal("cannot find devhtml/DESC exiting");
-  image_gen = font::image_generator;
-  if (image_gen == NULL || (strcmp(image_gen, "") == 0))
-    fatal("devhtml/DESC must set the image_generator field, exiting");
-  postscriptRes = get_resolution();
-  i = scanArguments(argc, argv);
-  setupAntiAlias();
-  checkImageDir();
-  makeFileName();
-  while (i < argc) {
-    if (argv[i][0] != '-') {
-      /* found source file */
-      ok = do_file(argv[i]);
-      if (!ok)
-	return 0;
-      found = 1;
-    }
-    i++;
-  }
-
-  if (!found)
-    do_file("-");
-  if (makeTempFiles())
-    return 1;
-  ok = inputFile.do_image(argc, argv);
-  if (ok == 0) {
-    generateImages(regionFileName);
-    ok = inputFile.do_html(argc, argv);
-  }
-  return ok;
-}
-
-static int do_file(const char *filename)
+static bool do_file(const char *filename)
 {
   FILE *fp;
 
@@ -1817,18 +1738,82 @@ static int do_file(const char *filename)
     fp = stdin;
   else {
     fp = fopen(filename, "r");
-    if (fp == 0) {
-      error("can't open '%1': %2", filename, strerror(errno));
-      return 0;
+    if (0 /* nullptr*/ == fp) {
+      error("unable to open '%1': %2", filename, strerror(errno));
+      return false;
     }
   }
+  inputFile.read_file(fp);
+  if (fp != stdin)
+    if (fclose(fp) != 0)
+      sys_fatal("fclose");
+  current_filename = 0 /* nullptr */;
+  return true;
+}
 
-  if (inputFile.read_file(fp)) {
-    // XXX
+static void cleanup(void)
+{
+  free(const_cast<char *>(image_gen));
+}
+
+int main(int argc, char **argv)
+{
+#ifdef CAPTURE_MODE
+  fprintf(stderr, "%s: invoked with %d arguments ...\n", argv[0], argc);
+  for (int i = 0; i < argc; i++)
+    fprintf(stderr, "%2d: %s\n", i, argv[i]);
+  FILE *dump = fopen(DEBUG_FILE("pre-html-data"), "wb");
+  if (dump != 0 /* nullptr */) {
+    while((int ch = fgetc(stdin)) >= 0)
+      fputc(ch, dump);
+    fclose(dump);
+  }
+  exit(EXIT_FAILURE);
+#endif /* CAPTURE_MODE */
+  program_name = argv[0];
+  if (atexit(&cleanup) != 0)
+    sys_fatal("atexit");
+  int operand_index = scanArguments(argc, argv);
+  image_gen = strsave(get_image_generator());
+  if (0 == image_gen)
+    fatal("'image_generator' directive not found in file '%1'",
+	  devhtml_desc);
+  postscriptRes = get_resolution();
+  if (postscriptRes < 1) // TODO: what's a more sane minimum value?
+    fatal("'res' directive missing or invalid in file '%1'",
+	  devps_desc);
+  setupAntiAlias();
+  checkImageDir();
+  makeFileName();
+  bool have_file_operand = false;
+  while (operand_index < argc) {
+    if (argv[operand_index][0] != '-') {
+      if(!do_file(argv[operand_index]))
+	exit(EXIT_FAILURE);
+      have_file_operand = true;
+    }
+    operand_index++;
   }
 
-  if (fp != stdin)
-    fclose(fp);
-  current_filename = NULL;
-  return 1;
+  if (!have_file_operand)
+    do_file("-");
+  makeTempFiles();
+  int wstatus = inputFile.do_image(argc, argv);
+  if (wstatus == 0) {
+    generateImages(regionFileName);
+    wstatus = inputFile.do_html(argc, argv);
+  }
+  else
+    if (WEXITSTATUS(wstatus) != 0)
+      // XXX: This is a crappy suggestion.  See Savannah #62673.
+      fatal("'%1' exited with status %2; re-run with a different output"
+	    " driver to see diagnostic messages", argv[0],
+	    WEXITSTATUS(wstatus));
+  exit(EXIT_SUCCESS);
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

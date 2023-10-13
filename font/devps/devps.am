@@ -1,6 +1,4 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
-#
-# Last update: 13 Aug 2015
+# Copyright (C) 2014-2022 Free Software Foundation, Inc.
 #
 # This file is part of 'groff'.
 #
@@ -58,18 +56,20 @@ DEVPSFONTFILES = \
   font/devps/TI \
   font/devps/TR \
   font/devps/EURO \
-  font/devps/freeeuro.pfa \
   font/devps/freeeuro.afm \
+  font/devps/symbolsl.afm \
   font/devps/text.enc \
+  font/devps/zapfdr.afm \
   font/devps/download
 
 DEVPSFONTFILES_GENERATED = \
   font/devps/DESC \
   font/devps/prologue \
+  font/devps/freeeuro.pfa \
   font/devps/zapfdr.pfa \
   font/devps/symbolsl.pfa
 devpsfontdir = $(fontdir)/devps
-dist_devpsfont_DATA = $(DEVPSFONTFILES) 
+dist_devpsfont_DATA = $(DEVPSFONTFILES)
 nodist_devpsfont_DATA = $(DEVPSFONTFILES_GENERATED)
 
 # these files will be installed in oldfontdir
@@ -111,11 +111,11 @@ dist_olddevpsfont_DATA = $(OLDDEVPSFONTFILES)
 DEVPSGENFILES = \
   font/devps/generate/Makefile \
   font/devps/generate/dingbats.map \
-  font/devps/generate/dingbats.rmap \
-  font/devps/generate/lgreekmap \
+  font/devps/generate/dingbats-reversed.map \
+  font/devps/generate/slanted-symbol.map \
+  font/devps/generate/symbol.map \
   font/devps/generate/symbolchars \
-  font/devps/generate/symbolsl.afm \
-  font/devps/generate/textmap
+  font/devps/generate/text.map
 DEVPSGENSCRIPTS = \
   font/devps/generate/afmname \
   font/devps/generate/symbol.sed
@@ -124,11 +124,12 @@ dist_devpsgen_DATA = $(DEVPSGENFILES) $(DEVPSGENSCRIPTS)
 
 MOSTLYCLEANFILES += $(DEVPSFONTFILES_GENERATED)
 EXTRA_DIST += \
-  font/devps/symbolmap \
   font/devps/DESC.in  \
   font/devps/prologue.ps \
   font/devps/psstrip.sed \
+  font/devps/freeeuro.ps \
   font/devps/symbol.afm \
+  font/devps/symbolsl.afm \
   font/devps/symbolsl.ps \
   font/devps/zapfdr.afm \
   font/devps/zapfdr.ps \
@@ -140,20 +141,36 @@ EXTRA_DIST += \
 
 font/devps/DESC: $(devps_srcdir)/DESC.in
 	$(AM_V_GEN)$(MKDIR_P) font/devps \
-	&& cat $(devps_srcdir)/DESC.in >$@ \
-	&& echo broken $(BROKEN_SPOOLER_FLAGS) >>$@ \
+	&& cat $(devps_srcdir)/DESC.in >$@.tmp \
+	&& echo broken $(BROKEN_SPOOLER_FLAGS) >>$@.tmp \
 	&& if test "$(PAGE)" = A4; then \
-	     echo "papersize a4" >>$@; \
+	     echo "papersize a4" >>$@.tmp; \
 	   else \
-	     echo "papersize letter" >>$@; \
+	     echo "papersize letter" >>$@.tmp; \
 	   fi \
 	&& (test -z '$(PSPRINT)' \
-	    || echo print '$(PSPRINT)' >>$@)
+	    || echo print '$(PSPRINT)' >>$@.tmp)
+	$(AM_V_at)mv $@.tmp $@
 
-fonts: devps_fonts
+# PostScript documents to be produced by troff should depend on this
+# stamp file to ensure that grops's device and font description files
+# are available.
+MOSTLYCLEANFILES += font/devps/stamp
+font/devps/stamp: font/devps/DESC \
+  $(DEVPSFONTFILES) $(DEVPSFONTFILES_GENERATED)
+	$(AM_V_at)>$@
+
+maintainer-font-descriptions: devps_font-descriptions
+# This target generates font descriptions from installed Type 1 AFM
+# files; these are _not_ normally generated during a build, but provided
+# with the groff source distribution.
+#
 # We add top_builddir to the PATH in case the only afmtodit available is
 # the one in the current build.
-devps_fonts: afmtodit font/devps/DESC
+#
+# The AFM files from which these descriptions are produced must be
+# obtained elsewhere, so this target runs only in "maintainer mode".
+devps_font-descriptions: afmtodit font/devps/DESC
 	PATH=$(top_builddir)$(GROFF_PATH_SEPARATOR)$(PATH) \
 	  $(MAKE) -f $(devps_srcdir)/generate/Makefile \
 	  srcdir=$(devps_srcdir)/generate DESC=$(devps_srcdir)/DESC.in
@@ -162,22 +179,15 @@ font/devps/prologue: $(devps_srcdir)/prologue.ps
 	$(AM_V_GEN)$(MKDIR_P) font/devps \
 	&& $(RM) $@ \
 	&& sed -f $(devps_srcdir)/psstrip.sed $? >$@
-font/devps/zapfdr.pfa: $(devps_srcdir)/zapfdr.ps
-	$(AM_V_GEN)$(MKDIR_P) font/devps \
-	&& $(RM) $@ \
-	&& sed -f $(devps_srcdir)/psstrip.sed $? >$@
-font/devps/symbolsl.pfa: $(devps_srcdir)/symbolsl.ps
+
+.ps.pfa:
 	$(AM_V_GEN)$(MKDIR_P) font/devps \
 	&& $(RM) $@ \
 	&& sed -f $(devps_srcdir)/psstrip.sed $? >$@
 
 
-########################################################################
-# Editor settings
-########################################################################
-#
 # Local Variables:
 # mode: makefile-automake
 # fill-column: 72
 # End:
-# vim: set filetype=automake textwidth=72:
+# vim: set autoindent filetype=automake textwidth=72:

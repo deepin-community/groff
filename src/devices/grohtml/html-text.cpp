@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* Copyright (C) 2000-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2020 Free Software Foundation, Inc.
  *
  *  Gaius Mulley (gaius@glam.ac.uk) wrote html-text.cpp
  *
@@ -38,9 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 
 #include "html-text.h"
-
-#undef DEBUGGING
-// #define DEBUGGING
 
 html_text::html_text (simple_output *op, html_dialect d) :
   stackptr(NULL), lastptr(NULL), out(op), dialect(d),
@@ -214,8 +211,8 @@ void html_text::issue_tag (const char *tagname, const char *arg,
 
 void html_text::issue_color_begin (color *c)
 {
+  char buf[(INT_HEXDIGITS * 3) + 1];
   unsigned int r, g, b;
-  char buf[6+1];
 
   out->put_string("<font color=\"#");
   if (c->is_default())

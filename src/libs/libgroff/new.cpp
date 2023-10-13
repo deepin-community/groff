@@ -1,4 +1,4 @@
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -36,11 +36,7 @@ void *operator new(size_t size)
   // Avoid relying on the behaviour of malloc(0).
   if (size == 0)
     size++;
-#ifdef COOKIE_BUG
-  char *p = (char *)malloc(unsigned(size + 8));
-#else /* not COOKIE_BUG */
   char *p = (char *)malloc(unsigned(size));
-#endif /* not COOKIE_BUG */
   if (p == 0) {
     if (program_name) {
       ewrite(program_name);
@@ -49,23 +45,13 @@ void *operator new(size_t size)
     ewrite("out of memory\n");
     _exit(-1);
   }
-#ifdef COOKIE_BUG
-  ((unsigned *)p)[1] = 0;
-  return p + 8;
-#else /* not COOKIE_BUG */
   return p;
-#endif /* not COOKIE_BUG */
 }
 
-void operator delete(void *p)
+void operator delete(void *p) throw()
 {
-#ifdef COOKIE_BUG
-  if (p)
-    free((void *)((char *)p - 8));
-#else
   if (p)
     free(p);
-#endif /* COOKIE_BUG */
 }
 
 void operator delete(void *p,
@@ -78,11 +64,12 @@ void operator delete(void *p,
   // In function 'void operator delete(void*, long unsigned int)':
   //   warning: deleting 'void*' is undefined [-Wdelete-incomplete]
   //delete p;
-#ifdef COOKIE_BUG
-  if (p)
-    free((void *)((char *)p - 8));
-#else
   if (p)
     free(p);
-#endif /* COOKIE_BUG */
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

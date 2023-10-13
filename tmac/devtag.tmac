@@ -1,16 +1,13 @@
 .ig
 devtag.tmac - macro package for adding tags to roff documents.
 
-File position: <groff_source_top>/tmac/devtag.tmac
-Installed position: groff's main macro directory.
-
 ------------------------------------------------------------------------
     Legalese
 ------------------------------------------------------------------------
 
 This file is part of groff, the GNU roff type-setting system.
 
-Copyright (C) 2004-2018 Free Software Foundation, Inc.
+Copyright (C) 2004-2020 Free Software Foundation, Inc.
 written by Gaius Mulley <gaius@glam.ac.uk>.
 
 groff is free software; you can redistribute it and/or modify it under
@@ -31,20 +28,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     Description
 ------------------------------------------------------------------------
 
-A simple set of macros to provide markup devices (currently only grohtml)
-with tags that define the meaning of the formatted text and also
-basic formatting instructions.  It generalizes the tag concept used within
-grohtml and in the future it is hoped that more markup based devices
-can capitalize on this work.  It also clearly defines those tags which are
-honoured by grohtml.  Note that not all tags are included here.  Some
-of the grohtml specific tags (header specific and jobname, etc.) are
-called directly from within www.tmac.  The tags defined here are
-reasonably generic and could be applied to other devices.
+A simple set of macros to provide markup devices (currently only
+grohtml) with tags that define the meaning of the formatted text and
+also basic formatting instructions.  It generalizes the tag concept used
+within grohtml and in the future it is hoped that more markup based
+devices can capitalize on this work.  It also clearly defines those tags
+which are honoured by grohtml.  Note that not all tags are included
+here.  Some of the grohtml specific tags (header specific and jobname,
+etc.) are called directly from within www.tmac.  The tags defined here
+are reasonably generic and could be applied to other devices.
 ..
 .
 .do if d DEVTAG-NH .nx
 .
-.nr _C \n(.C
+.do nr *groff_devtag_tmac_C \n[.cp]
 .cp 0
 .
 .\" --------------------------------------------------------------------
@@ -52,7 +49,7 @@ reasonably generic and could be applied to other devices.
 .\"
 .\"   Emit a tag <name>
 .\"
-.de DEVTAG
+.de1 DEVTAG
 .  tag devtag:\\$*
 ..
 .\" --------------------------------------------------------------------
@@ -60,7 +57,7 @@ reasonably generic and could be applied to other devices.
 .\"
 .\"   When the troff state changes, emit tag <name>
 .\"
-.de DEVTAG-NEXT
+.de1 DEVTAG-NEXT
 .  taga devtag:\\$*
 ..
 .
@@ -71,7 +68,7 @@ reasonably generic and could be applied to other devices.
 .\"       Takes a single parameter <level>. <level> 1
 .\"       is the outer most level.
 .
-.de DEVTAG-NH
+.de1 DEVTAG-NH
 .   DEVTAG ".NH \\$1"
 ..
 .als DEVTAG-SH DEVTAG-NH
@@ -81,7 +78,7 @@ reasonably generic and could be applied to other devices.
 .\"     indicate that the following text is aligned for the column <n>
 .\"     n: [1..MAX(n)]
 .
-.de DEVTAG-COL
+.de1 DEVTAG-COL
 .   DEVTAG ".col \\$1"
 ..
 .
@@ -89,21 +86,21 @@ reasonably generic and could be applied to other devices.
 .\"  EO-H
 .\"     indicate that a header has finished.
 .
-.de DEVTAG-EO-H
+.de1 DEVTAG-EO-H
 .   DEVTAG ".eo.h"
 ..
 .\" --------------------------------------------------------------------
 .\"  EO-TL
 .\"     indicate that a title has finished.
 .
-.de DEVTAG-EO-TL
+.de1 DEVTAG-EO-TL
 .   DEVTAG ".eo.tl"
 ..
 .\" --------------------------------------------------------------------
 .\"  TL
 .\"     indicate that the following text forms a title.
 .
-.de DEVTAG-TL
+.de1 DEVTAG-TL
 .   DEVTAG ".tl"
 ..
 .
@@ -111,17 +108,14 @@ reasonably generic and could be applied to other devices.
 .\"  COL-NEXT <n>
 .\"     emit a column tag just before the next glyph.
 .
-.de DEVTAG-COL-NEXT
+.de1 DEVTAG-COL-NEXT
 .   DEVTAG-NEXT ".col \\$1"
 ..
 .
 .
-.cp \n[_C]
+.cp \n[*groff_devtag_tmac_C]
+.do rr *groff_devtag_tmac_C
 .
-.
-.\" ====================================================================
-.\" Editor settings
-.\" ====================================================================
 .
 .\" Local Variables:
 .\" mode: nroff

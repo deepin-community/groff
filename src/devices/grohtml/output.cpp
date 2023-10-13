@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* Copyright (C) 2000-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2020 Free Software Foundation, Inc.
  *
  *  Gaius Mulley (gaius@glam.ac.uk) wrote output.cpp
  *  but it owes a huge amount of ideas and raw code from
@@ -36,9 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
-#undef DEBUGGING
-// #define DEBUGGING
 
 #if !defined(TRUE)
 #   define TRUE  (1==1)
@@ -77,7 +74,7 @@ word::word (const char *w, int n)
 
 word::~word ()
 {
-  a_delete s;
+  delete[] s;
 }
 
 /*

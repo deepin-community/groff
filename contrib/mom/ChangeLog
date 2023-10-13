@@ -1,3 +1,145 @@
+2023-06-15
+
+	* om.tmac: Enclose all calls to \D't n' in \Z
+
+2023-03-01  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	[mom]: Generate test script even if we'll skip it.
+
+	* examples/test-mom.sh.in: Check availability of required
+	pdfinfo(1) and pdfimages(1) commands at test time; skip if they
+	aren't present.
+	* mom.am [!HAVE_PDFTOOLS]: Generate the test script even if
+	these tools aren't available.
+
+2023-02-18  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* mom.am (uninstall_mom): Clean more fastidiously; try to remove
+	the configured `pdfdocdir` in the event it is empty, but do not
+	fail if it isn't.  (It can be a directory shared with other
+	groff components; we don't know in what order the uninstall
+	targets will serialize, but the last one run should succeed.)
+
+2023-02-02
+	* om.tmac (UNDERSCORE, UNDERSCORE2): Add PREFIX and SUFFIX
+	arguments so surrounding punctuation can be protected from
+	underscoring.
+
+2023-01-16
+	* om.tmac (PRINTSTYLE): Abort with message if nroff is called on
+	a document using PRINTSTYLE TYPESET.
+
+	Fixes <https://savannah.gnu.org/bugs/?63581>.  Thanks to Gene
+	for the report.
+
+2022-11-16
+
+	* om.tmac (PAPER): Adjust #R_MARGIN to work with papersize.tmac.
+
+2022-10-23  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* om.tmac (FORCE_RECTO): Use backslash before newline when
+	starting multi-line conditional block.
+
+2022-09-02
+
+	* examples/mom-pdf.mom: Fixes missing parameter to \*[SIZE] at
+	line 457.
+
+	* om.tmac: Fixes CODE <anything> not restoring point size
+	correctly.  The point size was being stored in a number register
+	instead of a string.
+
+	* BUGS: Updated.
+
+	Fixes <https://savannah.gnu.org/bugs/?62996>.
+
+2022-08-29  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* mom.am (MOMPDFMOM): Pass `PDFMOMBIN` '-K utf8', not '-k', in
+	case 'configure' didn't find uchardet.
+
+	Fixes <https://savannah.gnu.org/bugs/?62975>.  Thanks to Bjarni
+	Ingi Gislason for the report.
+
+2022-05-31
+
+	* Make mom emit a warning and abort when tbl(1) data present
+		without a corresponding -t on the command line.
+
+2022-05-20  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* momdoc/appendices.html: Reflect file rename in groff
+	distribution: the name of the file mapping Adobe Glyph List
+	names to groff special character identifiers for text (as
+	opposed to "special") fonts has changed from "textmap" to
+	"text.map".
+
+2022-05-20  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* mom.am (MOMPROCESSEDEXAMPLEFILES): Include "typesetting.pdf"
+	only if `HAVE_URW_FONTS`, since the document demands them.
+
+2022-05-20  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* mom.am: Rename `BUILD_PDFDOC` to `USE_GROPDF`.
+
+2022-05-01  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* mom.am ($(MOMPROCESSEDEXAMPLEFILES)): Depend on new name for
+	devpdf stamp file.
+
+2022-04-12  Ingo Schwarze <schwarze@openbsd.org>
+
+	Delete the harmful, ill-designed, buggy, and essentially
+	unmaintained and untested --with-doc option of the configure
+	script.  See the NEWS file for more details on the rationale.
+
+	* mom.am: Delete one INSTALL_SHIPPED_HTML and one BUILD_EXAMPLES
+	conditional and use BUILD_PDFDOC instead of BUILD_PDFEXAMPLES.
+
+2021-03-29  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* mom.am: Eliminate `MOM_TFLAG` and `MOM_PFLAG` Make macros;
+	they were expanded in only one place.
+	(MOMPDFMOM): Track rename of Make macro `TFLAG` to `MFLAG`.
+
+2022-03-26  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* mom.am (MOMPROCESSEDEXAMPLEFILES): Drop dependency on gnu.eps.
+	No mom document appears to require this file; it came in with
+	the initial Automake file for mom in commit 4d84d0f1d, 27
+	January 2015, and may have been a copy-and-paste error.
+
+2021-10-21  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* mom.am (mom_test_template): Pull file name into a new
+	variable.
+	(EXTRA_DIST, contrib/mom/examples/tests-mom.sh): Use it.
+	(contrib/mom/examples/tests-mom.sh): Build more quietly;
+	prefix rule with `$(AM_V_GEN)`.  Also run `chmod` conditionally.
+
+2021-10-04
+
+	* version 2.5 release (see NEWS)
+
+	* removed orphaned stubs for abandoned cutaround feature from
+		om.tmac
+
+2019-12-26
+
+	* added PREFIX_CHAPTER argument to HEADING_STYLE
+
+	* added TOC_HEADING; single line, non-pagenumbered insertions into
+		the TOC
+
+2019-11-03
+
+	* templates added for setting up copyright pages
+
+	* updated mom.am to include the templates when building
+		pdfs in mom/examples
+
 2018-11-24
 
 	* version 2.4 release (see NEWS)
@@ -20,7 +162,7 @@
 
 2017-10-29  Bjarni Ingi Gislason <bjarniig@rhi.hi.is>
 
-	om.tmac-u: Fix typo in register reference.
+	* om.tmac-u: Fix typo in register reference.
 
 	Fix bug https://savannah.gnu.org/bugs/?51608.
 
@@ -200,7 +342,7 @@
 
 * Thu Sep 20 2012
 
-	o Simplify enviroment handling.
+	o Simplify environment handling.
 
 * Fri Aug 31 2012
 
@@ -218,7 +360,7 @@
 
 * Thu Sep 8 2011
 
-	o Added register #SUBHEAD, analagous to #HEAD, to fix excessive
+	o Added register #SUBHEAD, analogous to #HEAD, to fix excessive
 	spacing between SUBHEADs and SUBSUBHEADs.
 
 * Sun Feb 20 2011
@@ -933,7 +1075,7 @@
 	footnotes, both "normal" footnotes and footnotes that occur inside
 	QUOTE, BLOCKQUOTE and EPIGRAPH.
 
-	o Addtion of font "styles" to om.tmac, plus changes to the FAMILY
+	o Addition of font "styles" to om.tmac, plus changes to the FAMILY
 	and FT macros to manage them.  New section in the doc appendices
 	on adding fonts and managing the new font styles.
 
@@ -947,7 +1089,7 @@
 	used in justified text.
 
 	o NEWPAGE, which used to be an alias for .bp, has been moved into
-	its own macro, in order to make it more responsive to some unusal
+	its own macro, in order to make it more responsive to some unusual
 	situations.
 
 	o Some changes to elvis_syn.new, including that the file
@@ -1224,7 +1366,7 @@
 
 	o Changed .ne in .HEAD when PRINTSTYLE TYPESET from 5 to 4.  With
 	5, heads required at least 2 lines of text underneath or they'd be
-	defered to the next page, which created too much whitespace at the
+	deferred to the next page, which created too much whitespace at the
 	end of the page.  Heads will now be processed on the same page if
 	the head plus at least one line of text underneath fits.  I figure
 	it's easier for the user to break to a new page manually if this
@@ -1548,7 +1690,7 @@
 
 	o String tabs weren't working as advertised when set from within a
 	tab.  Fixed.  Two new registers added: #ST_OFFSET and #IN_TAB.
-	String tabs now behave poperly and intuitively when set within
+	String tabs now behave properly and intuitively when set within
 	tabs.
 
 	o Added a note to docs about surrounding \w'...' escape with
@@ -1630,15 +1772,17 @@ ________________________________________________________________________
 
 ##### License
 
-Copyright 2004-2018 Free Software Foundation, Inc.
+Copyright 2004-2020 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.
 
-##### Emacs settings
+##### Editor settings
 Local Variables:
-version-control: never
-mode: change-log
 coding: latin-1
+fill-column: 72
+mode: change-log
+version-control: never
 End:
+vim:set autoindent textwidth=72:

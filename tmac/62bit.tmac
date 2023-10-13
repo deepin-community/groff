@@ -1,6 +1,6 @@
 .\" 62bit.tmac
 .\"
-.\" Copyright (C) 2003-2018 Free Software Foundation, Inc.
+.\" Copyright (C) 2003-2020 Free Software Foundation, Inc.
 .\"      Written by Werner Lemberg (wl@gnu.org)
 .\"
 .\" This file is part of groff.
@@ -29,6 +29,9 @@
 .\" values fit within 31 bits (this is the range
 .\" [-1073741824,1073741823]).
 .\"
+.
+.do nr *groff_62bit_tmac_C \n[.cp]
+.cp 0
 .
 .if d add31to62 \
 .  nx
@@ -190,9 +193,8 @@
 .  nr \\$3 \\n[62bit-3]
 ..
 .
-.\" ====================================================================
-.\" Editor settings
-.\" ====================================================================
+.cp \n[*groff_62bit_tmac_C]
+.do rr *groff_62bit_tmac_C
 .
 .\" Local Variables:
 .\" mode: nroff

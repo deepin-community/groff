@@ -1,6 +1,4 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
-#
-# Latest update: 22 Aug 2015
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # This file is part of groff.
 #
@@ -9,8 +7,8 @@
 # Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# groff is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# groff is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
@@ -30,22 +28,34 @@ refer_SOURCES =  \
   src/preproc/refer/ref.h \
   src/preproc/refer/token.h \
   src/preproc/refer/command.h
+
 PREFIXMAN1 += src/preproc/refer/refer.1
-EXTRA_DIST += src/preproc/refer/TODO src/preproc/refer/refer.1.man
-CLEANFILES += \
-  src/preproc/refer/label.cpp \
-  src/preproc/refer/label.hpp \
-  src/preproc/refer/label.output
-# As refer_CPPFLAGS was set, all the .o have a 'refer-' prefix
+EXTRA_DIST += \
+  src/preproc/refer/TODO \
+  src/preproc/refer/refer.1.man
+
+# Since refer_CPPFLAGS was set, all .o files have a 'refer-' prefix.
 src/preproc/refer/refer-command.$(OBJEXT): defs.h
 src/preproc/refer/refer-ref.$(OBJEXT): defs.h
 src/preproc/refer/refer-refer.$(OBJEXT): defs.h
 src/preproc/refer/refer-token.$(OBJEXT): defs.h
 src/preproc/refer/refer-label.$(OBJEXT): defs.h
 
+MAINTAINERCLEANFILES += \
+  src/preproc/refer/label.cpp \
+  src/preproc/refer/label.hpp \
+  src/preproc/refer/label.output
 
-########################################################################
-### Emacs settings
+refer_TESTS = \
+  src/preproc/refer/tests/report-correct-line-numbers.sh
+TESTS += $(refer_TESTS)
+EXTRA_DIST += \
+  $(refer_TESTS) \
+  src/preproc/refer/tests/artifacts/62124.bib
+
+
 # Local Variables:
+# fill-column: 72
 # mode: makefile-automake
 # End:
+# vim: set autoindent filetype=automake textwidth=72:

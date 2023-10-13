@@ -2,8 +2,8 @@
  *
  * Copyright -C- 1982 Barry S. Roitblat
  *
- * This file contains database routines for the hard copy programs of the
- * gremlin picture editor.
+ * This file contains database routines for the hard copy programs of
+ * the gremlin picture editor.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -23,10 +23,10 @@
 
 /* imports from main.cpp */
 
-extern int linenum;		/* current line number in input file */
 extern char gremlinfile[];	/* name of file currently reading */
 extern int SUNFILE;		/* TRUE if SUN gremlin file */
 extern int compatibility_flag;	/* TRUE if in compatibility mode */
+extern void *grnmalloc(size_t size, const char *what);
 extern void savebounds(double x, double y);
 
 /* imports from hpoint.cpp */
@@ -35,12 +35,13 @@ extern POINT *PTInit();
 extern POINT *PTMakePoint(double x, double y, POINT ** pplist);
 
 
-int DBGetType(register char *s);
+int DBGetType(char *s);
 
+static long lineno = 0;		/* line number of gremlin file */
 
 /*
- * This routine returns a pointer to an initialized database element which
- * would be the only element in an empty list.
+ * This routine returns a pointer to an initialized database element
+ * which would be the only element in an empty list.
  */
 ELT *
 DBInit()
@@ -61,9 +62,9 @@ DBCreateElt(int type,
 	    char *text,
 	    ELT **db)
 {
-  register ELT *temp;
+  ELT *temp = 0;
 
-  temp = (ELT *) malloc(sizeof(ELT));
+  temp = (ELT *) grnmalloc(sizeof(ELT), "picture element");
   temp->nextelt = *db;
   temp->type = type;
   temp->ptlist = pointlist;
@@ -80,11 +81,11 @@ DBCreateElt(int type,
  * pointer to that database.
  */
 ELT *
-DBRead(register FILE *file)
+DBRead(FILE *file)
 {
-  register int i;
-  register int done;		/* flag for input exhausted */
-  register double nx;		/* x holder so x is not set before orienting */
+  int i;
+  int done;		/* flag for input exhausted */
+  double nx;		/* x holder so x is not set before orienting */
   int type;			/* element type */
   ELT *elist;			/* pointer to the file's elements */
   POINT *plist;			/* pointer for reading in points */
@@ -95,16 +96,32 @@ DBRead(register FILE *file)
 
   SUNFILE = FALSE;
   elist = DBInit();
-  (void) fscanf(file, "%" MAXSTRING_S "s%*[^\n]\n", string);
+  int nitems = fscanf(file, "%" MAXSTRING_S "s%*[^\n]\n", string);
+  if (nitems != 1) {
+    error_with_file_and_line(gremlinfile, lineno,
+			     "malformed input; giving up on this"
+			     " picture");
+    return (elist);
+  }
+  lineno++;
   if (strcmp(string, "gremlinfile")) {
     if (strcmp(string, "sungremlinfile")) {
-      error("'%1' is not a gremlin file", gremlinfile);
+      error_with_file_and_line(gremlinfile, lineno,
+			       "not a gremlin file; giving up on this"
+			       " picture");
       return (elist);
     }
     SUNFILE = TRUE;
   }
 
-  (void) fscanf(file, "%d%lf%lf\n", &size, &x, &y);
+  nitems = fscanf(file, "%d%lf%lf\n", &size, &x, &y);
+  if (nitems != 3) {
+    error_with_file_and_line(gremlinfile, lineno,
+			     "malformed input; giving up on this"
+			     " picture");
+    return (elist);
+  }
+  lineno++;
   /* ignore orientation and file positioning point */
 
   done = FALSE;
@@ -112,28 +129,42 @@ DBRead(register FILE *file)
     /* if (fscanf(file,"%" MAXSTRING_S "s\n", string) == EOF) */
     /* I changed the scanf format because the element */
     /* can have two words (e.g. CURVE SPLINE)         */
-    if (fscanf(file, "\n%" MAXSTRING_S "[^\n]%*[^\n]\n", string) == EOF) {
-      error("'%1', error in file format", gremlinfile);
+    if (fscanf(file, "\n%"
+		      MAXSTRING_S
+		     "[^\n]%*[^\n]\n", string) == EOF) {
+      lineno++;
+      error_with_file_and_line(gremlinfile, lineno, "error in format;"
+			       " giving up on this picture");
       return (elist);
     }
+    lineno++;
 
     type = DBGetType(string);	/* interpret element type */
     if (type < 0) {		/* no more data */
       done = TRUE;
     } else {
+      /* always one point */
 #ifdef UW_FASTSCAN
-      (void) xscanf(file, &x, &y);		/* always one point */
+      (void) xscanf(file, &x, &y);
 #else
-      (void) fscanf(file, "%lf%lf\n", &x, &y);	/* always one point */
+      nitems = fscanf(file, "%lf%lf\n", &x, &y);
+      if (nitems != 2) {
+	error_with_file_and_line(gremlinfile, lineno,
+				 "malformed input; giving up on this"
+				 " picture");
+	return (elist);
+      }
+      lineno++;
 #endif	/* UW_FASTSCAN */
       plist = PTInit();		/* NULL point list */
 
       /*
        * Files created on the SUN have point lists terminated by a line
-       * containing only an asterik ('*').  Files created on the AED have
-       * point lists terminated by the coordinate pair (-1.00 -1.00).
+       * containing only an asterisk ('*').  Files created on the AED
+       * have point lists terminated by the coordinate pair (-1.00
+       * -1.00).
        */
-      if (TEXT(type)) {		/* read only first point for TEXT elements */
+      if (TEXT(type)) {	/* read only first point for TEXT elements */
 	nx = xorn(x, y);
 	y = yorn(x, y);
 	(void) PTMakePoint(nx, y, &plist);
@@ -144,11 +175,25 @@ DBRead(register FILE *file)
 #else
 	lastpoint = FALSE;
 	do {
-	  fgets(string, MAXSTRING, file);
+	  char *cp = fgets(string, MAXSTRING, file);
+	  if (0 /* nullptr */ == cp) {
+	    error_with_file_and_line(gremlinfile, lineno,
+				     "premature end-of-file or error"
+				     " reading input; giving up on this"
+				     " picture");
+	    return(elist);
+	  }
+	  lineno++;
 	  if (string[0] == '*') {	/* SUN gremlin file */
 	    lastpoint = TRUE;
 	  } else {
-	    (void) sscanf(string, "%lf%lf", &x, &y);
+	    if (!sscanf(string, "%lf%lf", &x, &y)) {
+	      error_with_file_and_line(gremlinfile, lineno,
+				       "expected coordinate pair, got"
+				       " '%1'; giving up on this"
+				       " picture", string);
+	      return(elist);
+	    }
 	    if ((x == -1.00 && y == -1.00) && (!SUNFILE))
 	      lastpoint = TRUE;
 	    else {
@@ -174,7 +219,15 @@ DBRead(register FILE *file)
 	  (void) PTMakePoint(nx, y, &plist);
 	  savebounds(nx, y);
 
-	  fgets(string, MAXSTRING, file);
+	  char *cp = fgets(string, MAXSTRING, file);
+	  if (0 /* nullptr */ == cp) {
+	    error_with_file_and_line(gremlinfile, lineno,
+				     "premature end-of-file or error"
+				     " reading input; giving up on this"
+				     " picture");
+	    return(elist);
+	  }
+	  lineno++;
 	  if (string[0] == '*') {	/* SUN gremlin file */
 	    lastpoint = TRUE;
 	  } else {
@@ -185,15 +238,43 @@ DBRead(register FILE *file)
 	}
 #endif	/* UW_FASTSCAN */
       }
-      (void) fscanf(file, "%d%d\n", &brush, &size);
-      (void) fscanf(file, "%d", &len);	/* text length */
+      nitems = fscanf(file, "%d%d\n", &brush, &size);
+      if (nitems != 2) {
+	error_with_file_and_line(gremlinfile, lineno,
+				 "malformed input; giving up on this"
+				 " picture");
+	return (elist);
+      }
+      lineno++;
+      nitems = fscanf(file, "%d", &len);	/* text length */
+      if (nitems != 1) {
+	error_with_file_and_line(gremlinfile, lineno,
+				 "malformed input; giving up on this"
+				 " picture");
+	return (elist);
+      }
       (void) getc(file);		/* eat blank */
-      txt = (char *) malloc((unsigned) len + 1);
+      lineno++;				/* advance line counter early */
+      if (len < 0) {
+	error_with_file_and_line(gremlinfile, lineno,
+				 "length claimed for text is nonsense:"
+				 " '%1'; giving up on this picture",
+				 len);
+	return (elist);
+      }
+      txt = (char *) grnmalloc((unsigned) len + 1, "element text");
       for (i = 0; i < len; ++i) {	/* read text */
         int c = getc(file);
         if (c == EOF)
           break;
 	txt[i] = c;
+      }
+      if (feof(file)) {
+	error_with_file_and_line(gremlinfile, lineno,
+				 "end of file while reading text of"
+				 " length %1; giving up on this"
+				 " picture", len);
+	return (elist);
       }
       txt[len] = '\0';
       (void) DBCreateElt(type, plist, brush, size, txt, &elist);
@@ -209,7 +290,7 @@ DBRead(register FILE *file)
  * New file format has literal names for element types.
  */
 int
-DBGetType(register char *s)
+DBGetType(char *s)
 {
   if (isdigit(s[0]) || (s[0] == '-'))	/* old element format or EOF */
     return (atoi(s));
@@ -226,11 +307,11 @@ DBGetType(register char *s)
       if (s[5] == '\n')
 	return (CURVE);
       switch (s[7]) {
-      case 'S': 
+      case 'S':
 	return(BSPLINE);
       case 'E':
-	fprintf(stderr,
-		"Warning: Bezier Curves will be printed as B-Splines\n");
+	warning_with_file_and_line(gremlinfile, lineno,
+				   "using B-spline for Bezier curve");
 	return(BSPLINE);
       default:
 	return(CURVE);
@@ -244,8 +325,9 @@ DBGetType(register char *s)
     case 'R':
       return (CENTRIGHT);
     default:
-      fatal("unknown element type");
-      // fatal() does not return
+      error_with_file_and_line(gremlinfile, lineno,
+			       "unknown element type '%1'", s);
+      return -1;
     }
   case 'B':
     switch (s[3]) {
@@ -256,8 +338,9 @@ DBGetType(register char *s)
     case 'R':
       return (BOTRIGHT);
     default:
-      fatal("unknown element type");
-      // fatal() does not return
+      error_with_file_and_line(gremlinfile, lineno,
+			       "unknown element type '%1'", s);
+      return -1;
     }
   case 'T':
     switch (s[3]) {
@@ -268,22 +351,23 @@ DBGetType(register char *s)
     case 'R':
       return (TOPRIGHT);
     default:
-      fatal("unknown element type");
-      // fatal() does not return
+      error_with_file_and_line(gremlinfile, lineno,
+			       "unknown element type '%1'", s);
+      return -1;
     }
   default:
-    fatal("unknown element type");
+    error_with_file_and_line(gremlinfile, lineno,
+			     "unknown element type '%1'", s);
+    return -1;
   }
-
-  return 0;				/* never reached */
 }
 
 #ifdef UW_FASTSCAN
 /*
  * Optimization hack added by solomon@crys.wisc.edu, 12/2/86.
- * A huge fraction of the time was spent reading floating point numbers from
- * the input file, but the numbers always have the format 'ddd.dd'.  Thus
- * the following special-purpose version of fscanf.
+ * A huge fraction of the time was spent reading floating point numbers
+ * from the input file, but the numbers always have the format 'ddd.dd'.
+ * Thus the following special-purpose version of fscanf.
  *
  * xscanf(f,xp,yp) does roughly what fscanf(f,"%f%f",xp,yp) does except:
  *   -the next piece of input must be of the form
@@ -298,7 +382,7 @@ xscanf(FILE *f,
        double *xp,
        double *yp)
 {
-  register int c, i, j, m, frac;
+  int c, i, j, m, frac;
   int iscale = 1, jscale = 1;	/* x = i/scale, y=j/jscale */
 
   while ((c = getc(f)) == ' ');
@@ -350,4 +434,8 @@ xscanf(FILE *f,
 }
 #endif	/* UW_FASTSCAN */
 
-/* EOF */
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

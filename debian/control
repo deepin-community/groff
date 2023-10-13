@@ -3,7 +3,24 @@ Section: text
 Priority: important
 Maintainer: Colin Watson <cjwatson@debian.org>
 Standards-Version: 3.9.8
-Build-Depends: bison (>= 1:1.875b), debhelper-compat (= 12), dh-exec, dpkg-dev (>= 1.17.0~), ghostscript, netpbm, psutils, x11proto-core-dev, libx11-dev, libxmu-dev, libxt-dev, libxaw7-dev, texinfo (>= 4.8), pkg-config, libuchardet-dev, gsfonts, poppler-utils <!nocheck>
+Build-Depends: bison,
+               debhelper-compat (= 13),
+               ghostscript,
+               gsfonts,
+               libuchardet-dev,
+               libx11-dev,
+               libxaw7-dev,
+               libxmu-dev,
+               libxt-dev,
+               m4,
+               netpbm,
+               pkg-config,
+               poppler-utils <!nocheck>,
+               psutils,
+               texinfo,
+               texlive-base,
+               texlive-latex-base,
+               x11proto-core-dev,
 Homepage: https://www.gnu.org/software/groff/
 Vcs-Git: https://salsa.debian.org/debian/groff.git
 Vcs-Browser: https://salsa.debian.org/debian/groff
@@ -11,10 +28,9 @@ Rules-Requires-Root: no
 
 Package: groff-base
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Suggests: groff
-Replaces: groff (<< 1.22.4~rc2-2), jgroff (<< 1.17-1)
-Breaks: groff (<< 1.22.4~rc2-2), jgroff (<< 1.17-1), pmake (<< 1.45-7), troffcvt (<< 1.04-14)
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+Suggests: groff,
 Multi-Arch: foreign
 Description: GNU troff text-formatting system (base system components)
  This package contains the traditional UN*X text formatting tools
@@ -30,11 +46,17 @@ Description: GNU troff text-formatting system (base system components)
 Package: groff
 Priority: optional
 Architecture: any
-Depends: groff-base (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
-Recommends: ghostscript, imagemagick, libpaper1, netpbm, perl, psutils
-Provides: jgroff, groff-x11
-Breaks: jgroff (<< 1.17-1), groff-x11 (<< 1.18-1)
-Replaces: jgroff (<< 1.17-1), groff-base (<< 1.17.2-9), groff-x11 (<< 1.18-1)
+Depends: groff-base (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends},
+Recommends: ghostscript,
+            imagemagick,
+            libpaper1,
+            netpbm,
+            perl,
+            psutils,
+Provides: groff-x11,
+          jgroff,
 Multi-Arch: foreign
 Description: GNU troff text-formatting system
  This package contains optional components of the GNU troff text-formatting

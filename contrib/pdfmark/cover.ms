@@ -1,9 +1,12 @@
-.\" Copyright (C) 2004-2018 Free Software Foundation, Inc.
+.\" Copyright (C) 2004-2020 Free Software Foundation, Inc.
 .\"
 .\" Copying and distribution of this file, with or without modification,
 .\" are permitted in any medium without royalty provided the copyright
 .\" notice and this notice are preserved.
 .\"
+.am pspic*error-hook
+.  ab \\n[.F]:\\n[.c]: fatal error: PSPIC failed to include '\\$1'
+..
 .de CS
 .if !rCO .nr CO 0
 .if !rTL .nr TL 0

@@ -6,10 +6,8 @@ extratmacdirs.patch
 papersize-config.patch
 load-desc-failure.patch
 mmse-note.patch
-display-utc-times.patch
-sort-perl-hash-keys.patch
-avoid-perl-diamond.patch
-mdoc-Lk-arguments.patch
-bsd-updates.patch
-document-sgr.patch
-destructor-segv.patch
+source-date-epoch-utc.patch
+doc-default-os-debian.patch
+man-hyperlinks.patch
+nroff-map-CW-to-R.patch
+doc-default-os-deepin.patch

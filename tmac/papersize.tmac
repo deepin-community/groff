@@ -1,6 +1,4 @@
-.\" papersize.tmac
-.\"
-.\" Set up groff for various paper sizes.
+.\" Set up GNU troff for various paper sizes.
 .\"
 .\" Usage:
 .\"
@@ -15,12 +13,12 @@
 .\" '-l' to override the default paper length and orientation as set in
 .\" the driver specific DESC file.
 .\"
-.\" For example, use the following for PS output on A4 paper in
+.\" For example, use the following for PostScript output on A4 paper in
 .\" landscape orientation:
 .\"
 .\"   groff -Tps -dpaper=a4l -P-pa4 -P-l -ms foo.ms > foo.ps
 .
-.nr _C \n(.C
+.do nr *groff_papersize_tmac_C \n[.cp]
 .cp 0
 .
 .if d paper \{\
@@ -106,18 +104,10 @@
 .  ds paper-dl-length 22c
 .  ds paper-dl-width 11c
 .
-.  \" We assume that letters a-z and A-Z aren't mapped during start-up.
-.  tr AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz
-.  di lowercase
-.    nop \*[paper]
-.    br
-.  di
-.  asciify lowercase
-.  chop lowercase
-.  tr AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZ
-.  ds paper \*[lowercase]
-.  rm lowercase
-.
+.  \" Save the input parameter for a later diagnostic.
+.  ds paper-arg \*[paper]\"
+.  ds paper \*[paper-arg]\"
+.  stringdown paper
 .  ds paper-p \*[paper]
 .  ds paper-l \*[paper]
 .  length paper-n \*[paper]
@@ -149,18 +139,26 @@
 .  el \
 .    nr paper-w 1
 .
-.  ie \n[paper-w] \
-.    tm warning: Unknown paper size '\*[paper]'
-.  el \
+.  ie \n[paper-w] \{\
+.    tmc papersize.tmac: warning: ignoring unrecognized paper format
+.    tm1 " '\*[paper-arg]'
+.  \}
+.  el \{\
 .    if !r LL \
 .      nr LL \n[.l]u  \" for ms, mdoc, man
+.    if !r #R_MARGIN \
+.      nr R_MARGIN 1i \" for mom
+.    \" for mm
+.    if !r W \{\
+.      nr W \n[.l]u
+.      if !r O \
+.        nr O 1i
+.    \}
+.  \}
 .\}
 .
-.cp \n[_C]
-.
-.\" ====================================================================
-.\" Editor settings
-.\" ====================================================================
+.cp \n[*groff_papersize_tmac_C]
+.do rr *groff_papersize_tmac_C
 .
 .\" Local Variables:
 .\" mode: nroff

@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -19,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lib.h"
 
-#include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "errarg.h"
 #include "error.h"
@@ -38,8 +37,11 @@ extern "C" const char *Version_string;
 
 static void usage(FILE *stream)
 {
-  fprintf(stream, "usage: %s [-v] [-i XYZ] [-t N] database ...\n",
-	  program_name);
+  fprintf(stream,
+	  "usage: %s [-i XYZ] [-t N] database ...\n"
+	  "usage: %s {-v | --version}\n"
+	  "usage: %s --help\n",
+	  program_name, program_name, program_name);
 }
 
 int main(int argc, char **argv)
@@ -56,7 +58,7 @@ int main(int argc, char **argv)
   while ((opt = getopt_long(argc, argv, "vVi:t:", long_options, NULL)) != EOF)
     switch (opt) {
     case 'V':
-      verify_flag = 1;
+      do_verify = true;
       break;
     case 'i':
       linear_ignore_fields = optarg;
@@ -137,3 +139,8 @@ int main(int argc, char **argv)
   return 0;
 }
 
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

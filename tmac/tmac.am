@@ -1,8 +1,7 @@
-# Copyright (C) 1989-2018 Free Software Foundation, Inc.
-#      Written by James Clark (jjc@jclark.com)
+# Copyright (C) 1989-2020 Free Software Foundation, Inc.
+#      Written by James Clark <jjc@jclark.com>
 #      Automake migration by Bertrand Garrigues
-#
-# Latest update: 22 Aug 2015
+#        <bertrand.garrigues@laposte.net>
 #
 # This file is part of groff.
 #
@@ -18,12 +17,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 tmac_srcdir = $(top_srcdir)/tmac
 tmac_builddir = $(top_builddir)/tmac
 
 man7_MANS += \
   tmac/groff_ms.7 \
   tmac/groff_man.7 \
+  tmac/groff_man_style.7 \
   tmac/groff_me.7 \
   tmac/groff_mdoc.7 \
   tmac/groff_trace.7 \
@@ -33,23 +34,24 @@ TMACNORMALFILES = \
   tmac/man.tmac \
   tmac/mandoc.tmac \
   tmac/andoc.tmac \
-  tmac/an-old.tmac \
   tmac/an-ext.tmac \
   tmac/ms.tmac \
+  tmac/e.tmac \
   tmac/me.tmac \
+  tmac/doc-old.tmac \
+  tmac/doc.tmac \
   tmac/mdoc.tmac \
   tmac/pic.tmac \
-  tmac/a4.tmac \
   tmac/papersize.tmac \
   tmac/62bit.tmac \
   tmac/ec.tmac \
-  tmac/safer.tmac \
   tmac/trace.tmac \
   tmac/ps.tmac \
   tmac/psold.tmac \
   tmac/pdfpic.tmac \
   tmac/pspic.tmac \
   tmac/psatk.tmac \
+  tmac/ptx.tmac \
   tmac/pdf.tmac \
   tmac/dvi.tmac \
   tmac/tty.tmac \
@@ -59,7 +61,6 @@ TMACNORMALFILES = \
   tmac/latin5.tmac \
   tmac/latin9.tmac \
   tmac/cp1047.tmac \
-  tmac/unicode.tmac \
   tmac/X.tmac \
   tmac/Xps.tmac \
   tmac/lj4.tmac \
@@ -77,10 +78,13 @@ TMACNORMALFILES = \
   tmac/troffrc \
   tmac/troffrc-end \
   tmac/trans.tmac \
-  tmac/hyphen.us \
-  tmac/hyphenex.us \
+  tmac/en.tmac \
+  tmac/hyphen.en \
+  tmac/hyphenex.en \
   tmac/fr.tmac \
   tmac/hyphen.fr \
+  tmac/it.tmac \
+  tmac/hyphen.it \
   tmac/sv.tmac \
   tmac/hyphen.sv \
   tmac/de.tmac \
@@ -92,36 +96,41 @@ TMACNORMALFILES = \
   tmac/hyphenex.cs \
   tmac/ja.tmac \
   tmac/zh.tmac
-NORMALFILES = `echo $(TMACNORMALFILES) | sed -e "s|tmac/||g"`
 
-# TMACSTRIPFILES are built from their unstripped version (-u)
-TMACSTRIPFILES = tmac/e.tmac tmac/doc.tmac tmac/doc-old.tmac
-
-# Files installed in tmacdir
-dist_tmac_DATA = $(TMACNORMALFILES) tmac/an.tmac tmac/s.tmac
-nodist_tmac_DATA = $(TMACSTRIPFILES) tmac/www.tmac
+# files installed in tmacdir
+#
+# "s" and "an" are not "NORMAL" because they may use compatibility
+# wrappers; see install_tmac_wrap_hook.
+dist_tmac_DATA = \
+  $(TMACNORMALFILES) \
+  tmac/an.tmac \
+  tmac/s.tmac
+nodist_tmac_DATA = tmac/www.tmac
 
 TMACMDOCFILES = \
-  tmac/doc-common \
-  tmac/doc-ditroff \
-  tmac/doc-nroff \
-  tmac/doc-syms
-MDOCFILES = `echo $(TMACMDOCFILES) | sed -e "s|tmac/||g"`
+  tmac/mdoc/doc-common \
+  tmac/mdoc/doc-ditroff \
+  tmac/mdoc/doc-nroff \
+  tmac/mdoc/doc-syms
 mdocdir=$(tmacdir)/mdoc
 # Files installed in mdocdir
-nodist_mdoc_DATA = $(TMACMDOCFILES)
+dist_mdoc_DATA = $(TMACMDOCFILES)
 
 # Installed in localtmacdir
 dist_localtmac_DATA = tmac/man.local tmac/mdoc.local
 
-MOSTLYCLEANFILES += $(TMACMDOCFILES) tmac/www.tmac $(TMACSTRIPFILES) \
+MOSTLYCLEANFILES += \
+   tmac/groff_man.7.man \
+   tmac/groff_man_style.7.man \
+   tmac/www.tmac \
+   tmac/*-stamp \
    tmac/stamp-wrap \
    tmac/*-wrap
 
 EXTRA_DIST += \
   tmac/fixmacros.sed \
   tmac/groff_ms.7.man \
-  tmac/groff_man.7.man \
+  tmac/groff_man.7.man.in \
   tmac/groff_me.7.man \
   tmac/groff_mdoc.7.man \
   tmac/groff_trace.7.man \
@@ -131,28 +140,131 @@ EXTRA_DIST += \
   tmac/man.ultrix \
   tmac/psfig.tmac \
   tmac/ptx.tmac \
-  tmac/strip.sed \
   tmac/TESTING-HINTS \
   tmac/TODO \
   tmac/www.tmac.in
 
-dist-hook: tmac-dist-hook
-tmac-dist-hook:
-	chmod u+w $(distdir)/tmac
-	for f in $(TMACMDOCFILES) $(TMACSTRIPFILES); do \
-	  cp -f $(top_srcdir)/$$f-u $(distdir)/tmac; \
-	done
+tmac_TESTS = \
+  tmac/tests/an-ext_MR-works.sh \
+  tmac/tests/an-ext_MT-works.sh \
+  tmac/tests/an-ext_UR-works.sh \
+  tmac/tests/an_AT-and-UC-footer-saved-and-restored.sh \
+  tmac/tests/an_CS-register-off.sh \
+  tmac/tests/an_CS-register-on.sh \
+  tmac/tests/an_CS-register-unspecified.sh \
+  tmac/tests/an_CT-register-off.sh \
+  tmac/tests/an_CT-register-on.sh \
+  tmac/tests/an_CT-register-unspecified.sh \
+  tmac/tests/an_FT-bad-value-should-not-trash-titles.sh \
+  tmac/tests/an_HY-register-works.sh \
+  tmac/tests/an_LL-init-sanely.sh \
+  tmac/tests/an_ME-punct-hyphenates.sh \
+  tmac/tests/an_MR-works.sh \
+  tmac/tests/an_MT-body-hyphenates.sh \
+  tmac/tests/an_MT-works.sh \
+  tmac/tests/an_P-register-works.sh \
+  tmac/tests/an_TH-repairs-ad-damage.sh \
+  tmac/tests/an_TH-repairs-hy-damage.sh \
+  tmac/tests/an_TS-adds-no-vertical-space.sh \
+  tmac/tests/an_TS-do-not-keep-tables-when-cR-set.sh \
+  tmac/tests/an_UE-breaks-before-long-URIs.sh \
+  tmac/tests/an_UE-punct-hyphenates.sh \
+  tmac/tests/an_UR-body-hyphenates.sh \
+  tmac/tests/an_UR-works.sh \
+  tmac/tests/an_X-register-works.sh \
+  tmac/tests/an_adjust-link-text-correctly.sh \
+  tmac/tests/an_avoid-two-font-denial-of-service.sh \
+  tmac/tests/an_do-not-abbreviate-escape-using-TH-arguments.sh \
+  tmac/tests/an_font-remapping-does-not-affect-titles.sh \
+  tmac/tests/an_handle-degenerate-input-quietly.sh \
+  tmac/tests/an_inner-footer-abbreviation-works.sh \
+  tmac/tests/an_link-macros-work-in-paragraph-tags.sh \
+  tmac/tests/an_link-trailing-text-hugs-previous.sh \
+  tmac/tests/an_no-break-after-short-paragraph-tags.sh \
+  tmac/tests/an_output-footer-when-continuously-rendering.sh \
+  tmac/tests/an_page-footers-present.sh \
+  tmac/tests/an_page-header-has-current-data.sh \
+  tmac/tests/an_reset-hyphenation-correctly.sh \
+  tmac/tests/an_title-abbreviation-works.sh \
+  tmac/tests/an_use-input-traps-correctly.sh \
+  tmac/tests/an_works-with-ec.sh \
+  tmac/tests/andoc_P-register-works.sh \
+  tmac/tests/andoc_check-an-to-doc-transition.sh \
+  tmac/tests/andoc_clear-doc-traps.sh \
+  tmac/tests/andoc_flush-between-packages.sh \
+  tmac/tests/doc_CS-works.sh \
+  tmac/tests/doc_CT-works.sh \
+  tmac/tests/doc_D-places-page-numbers-correctly.sh \
+  tmac/tests/doc_Lk-respect-sentence-ending-punctuation.sh \
+  tmac/tests/doc_Mt-works.sh \
+  tmac/tests/doc_Nm-works.sh \
+  tmac/tests/doc_P-register-works.sh \
+  tmac/tests/doc_X-register-works.sh \
+  tmac/tests/doc_accept-mixed-case-section-headings.sh \
+  tmac/tests/doc_do-not-loop-infinitely-when-shortening-headers.sh \
+  tmac/tests/doc_heading-font-remapping-works.sh \
+  tmac/tests/doc_indents-correctly.sh \
+  tmac/tests/doc_output-footer-when-continuously-rendering.sh \
+  tmac/tests/doc_smoke-test.sh \
+  tmac/tests/e_chapter-titles-work.sh \
+  tmac/tests/e_columns-work-on-long-pages.sh \
+  tmac/tests/e_delayed-text-marks-work.sh \
+  tmac/tests/e_footnote-marks-work.sh \
+  tmac/tests/e_footnotes-work-with-columns.sh \
+  tmac/tests/e_ld-works.sh \
+  tmac/tests/e_line-numbering-works.sh \
+  tmac/tests/e_rejects-too-short-page-lengths.sh \
+  tmac/tests/ec_works.sh \
+  tmac/tests/latin2_works.sh \
+  tmac/tests/latin5_works.sh \
+  tmac/tests/latin9_works.sh \
+  tmac/tests/localization-works.sh \
+  tmac/tests/pdfpic_does-not-choke-on-bad-pdfinfo-output.sh \
+  tmac/tests/pdfpic_falls-back-to-PSPIC.sh \
+  tmac/tests/s_IP-indents-using-paragraph-type-size.sh \
+  tmac/tests/s_IP-respects-inter-sentence-space-in-tags.sh \
+  tmac/tests/s_PN-works.sh \
+  tmac/tests/s_R-handles-its-arguments.sh \
+  tmac/tests/s_SH-resets-IP-indentation-amount.sh \
+  tmac/tests/s_TC-works-with-percent-in-custom-titles.sh \
+  tmac/tests/s_XA-literal-no-argument-suppresses-leader.sh \
+  tmac/tests/s_honor-MINGW-when-two-columns.sh \
+  tmac/tests/s_mark-column-start-correctly.sh \
+  tmac/tests/s_no-excess-space-around-displays.sh \
+  tmac/tests/s_rejects-too-short-page-lengths.sh
+TESTS += $(tmac_TESTS)
+EXTRA_DIST += $(tmac_TESTS)
 
-$(TMACMDOCFILES) $(TMACSTRIPFILES): 
-	$(MKDIR_P) $(top_builddir)/tmac
-	for f in $(TMACMDOCFILES) $(TMACSTRIPFILES); do \
-	   sed -f $(tmac_srcdir)/strip.sed $(top_srcdir)/$$f-u > $(top_builddir)/$$f; \
-	done
+tmac_XFAIL_TESTS = \
+  tmac/tests/an-ext_ME-punct-hyphenates.sh \
+  tmac/tests/an-ext_UE-punct-hyphenates.sh \
+  tmac/tests/an-ext_UE-breaks-before-long-URIs.sh \
+  tmac/tests/e_footnotes-work-with-columns.sh
+XFAIL_TESTS += $(tmac_XFAIL_TESTS)
 
 tmac/www.tmac: tmac/www.tmac.in
-	$(MKDIR_P) $(top_builddir)/tmac
-	sed -e "s;[@]PNMTOPS_NOSETPAGE[@];$(pnmtops_nosetpage);g" \
+	$(AM_V_at)$(MKDIR_P) $(top_builddir)/tmac
+	$(AM_V_GEN)sed -e \
+	  "s;[@]PNMTOPS_NOSETPAGE[@];$(pnmtops_nosetpage);g" \
 	  $(tmac_srcdir)/www.tmac.in > $(top_builddir)/tmac/www.tmac
+
+
+# Check input file for bare m4 keywords.
+M4WORDS = define|divert|include|index|shift|undefine|undivert
+M4CHECK = tmac/groff_man-passed-check-for-m4-keywords-stamp
+
+$(M4CHECK): tmac/groff_man.7.man.in
+	$(AM_V_at)! $(EGREP) \
+	  '(^|[[:space:]])($(M4WORDS))($$|[[:space:]])' \
+	  $(tmac_srcdir)/groff_man.7.man.in > $@
+
+tmac/groff_man.7.man: tmac/groff_man.7.man.in $(M4CHECK)
+	$(AM_V_GEN)$(M4) -D_groff_man_not_style \
+	  $(tmac_srcdir)/groff_man.7.man.in > $@
+
+tmac/groff_man_style.7.man: tmac/groff_man.7.man.in $(M4CHECK)
+	$(AM_V_GEN)$(M4) -D_groff_man_style \
+	  $(tmac_srcdir)/groff_man.7.man.in > $@
 
 # The installation of groff compatibility wrappers for vendor-provided
 # non-GNU macro sets is controlled by 'compatibility_wrappers' (see the
@@ -186,21 +298,22 @@ tmac/www.tmac: tmac/www.tmac.in
 
 all: tmac/stamp-wrap
 
-# Generate groff compatibility wrappers for all non-GNU OS provided
-# macro sets.
+# Generate compatibility wrappers for non-GNU OS-provided macro packages
+# for which groff provides an alternative implementation.
 tmac/stamp-wrap:
-	$(MKDIR_P) $(top_builddir)/tmac;
-	if test -n "$(tmac_wrap)"; then \
+	$(AM_V_at)$(MKDIR_P) $(top_builddir)/tmac;
+	$(AM_V_at)if test -n "$(tmac_wrap)"; then \
 	  for m in ""$(tmac_wrap); do \
 	    $(RM) $(top_builddir)/tmac/$$m-wrap; \
 	    if test "$$m" = an; then \
-	      echo .do mso andoc.tmac >>$(top_builddir)/tmac/$$m-wrap; \
+	      echo .do mso an.tmac >>$(top_builddir)/tmac/$$m-wrap; \
 	    fi; \
 	    echo .cp 1 >>$(top_builddir)/tmac/$$m-wrap; \
-	    echo .so $(sys_tmac_prefix)$$m >>$(top_builddir)/tmac/$$m-wrap; \
+	    echo .so $(sys_tmac_prefix)$$m \
+	      >>$(top_builddir)/tmac/$$m-wrap; \
 	  done; \
 	fi
-	touch $@
+	$(AM_V_at)touch $@
 
 # Install groff compatibility wrappers into
 # <prefix>/lib/groff/site-tmac.
@@ -211,7 +324,7 @@ install_tmac_wrap:
 	  if test -n "$(tmac_wrap)"; then \
 	    for m in ""$(tmac_wrap); do \
 	      $(INSTALL_DATA) $(tmac_builddir)/$$m-wrap \
-                $(DESTDIR)$(systemtmacdir)/$$m$(wrapper_suffix).tmac; \
+	        $(DESTDIR)$(systemtmacdir)/$$m$(wrapper_suffix).tmac; \
 	    done; \
 	  fi; \
 	fi
@@ -258,13 +371,15 @@ uninstall_tmac_hook:
 	  rmdir $(DESTDIR)$(localtmacdir); \
 	fi
 
+# Define convenience macros for in-tree documents to depend on.  Don't
+# use these above.
+TMAC_PACKAGE_MAN = tmac/an.tmac tmac/an-ext.tmac
+TMAC_PACKAGE_MDOC = tmac/doc.tmac tmac/mdoc/doc-common \
+  tmac/mdoc/doc-ditroff tmac/mdoc/doc-nroff tmac/mdoc/doc-syms
 
-########################################################################
-# Editor settings
-########################################################################
-#
+
 # Local Variables:
 # mode: makefile-automake
 # fill-column: 72
 # End:
-# vim: set filetype=automake textwidth=72:
+# vim: set autoindent filetype=automake textwidth=72:

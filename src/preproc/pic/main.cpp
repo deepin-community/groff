@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -25,7 +24,9 @@ extern "C" const char *Version_string;
 output *out;
 char *graphname;		// the picture box name in TeX mode
 
-int flyback_flag;
+bool want_flyback = false;
+// groff pic supports '.PY' to work around mm package stepping on 'PF'.
+bool want_alternate_flyback = false;
 int zero_length_line_flag = 0;
 // Non-zero means we're using a groff driver.
 int driver_extension_flag = 1;
@@ -80,7 +81,7 @@ int top_input::get()
     return c;
   }
   int c = getc(fp);
-  while (invalid_input_char(c)) {
+  while (is_invalid_input_char(c)) {
     error("invalid input character code %1", int(c));
     c = getc(fp);
     bol = 0;
@@ -89,13 +90,14 @@ int top_input::get()
     c = getc(fp);
     if (c == 'P') {
       c = getc(fp);
-      if (c == 'F' || c == 'E') {
+      if (c == 'E' || c == 'F' || c == 'Y') {
 	int d = getc(fp);
 	if (d != EOF)
 	  ungetc(d, fp);
 	if (d == EOF || d == ' ' || d == '\n' || compatible_flag) {
 	  eof = 1;
-	  flyback_flag = c == 'F';
+	  want_flyback = (c == 'F');
+	  want_alternate_flyback = (c == 'Y');
 	  return EOF;
 	}
 	push_back[0] = c;
@@ -134,7 +136,7 @@ int top_input::get()
   bol = 0;
   if (c == EOF) {
     eof = 1;
-    error("end of file before .PE or .PF");
+    error("end of file before .PE, .PF, or .PY");
     error_with_file_and_line(current_filename, start_lineno - 1,
 			     ".PS was here");
   }
@@ -152,7 +154,7 @@ int top_input::peek()
   if (push_back[0] != EOF)
     return push_back[0];
   int c = getc(fp);
-  while (invalid_input_char(c)) {
+  while (is_invalid_input_char(c)) {
     error("invalid input character code %1", int(c));
     c = getc(fp);
     bol = 0;
@@ -161,13 +163,14 @@ int top_input::peek()
     c = getc(fp);
     if (c == 'P') {
       c = getc(fp);
-      if (c == 'F' || c == 'E') {
+      if (c == 'E' || c == 'F' || c == 'Y') {
 	int d = getc(fp);
 	if (d != EOF)
 	  ungetc(d, fp);
 	if (d == EOF || d == ' ' || d == '\n' || compatible_flag) {
 	  eof = 1;
-	  flyback_flag = c == 'F';
+	  want_flyback = (c == 'F');
+	  want_alternate_flyback = (c == 'Y');
 	  return EOF;
 	}
 	push_back[0] = c;
@@ -218,7 +221,7 @@ int top_input::get_location(const char **filenamep, int *linenop)
 
 void do_picture(FILE *fp)
 {
-  flyback_flag = 0;
+  want_flyback = false;
   int c;
   if (!graphname)
     free(graphname);
@@ -288,7 +291,7 @@ void do_picture(FILE *fp)
     parse_cleanup();
     lex_cleanup();
 
-    // skip the rest of the .PF/.PE line
+    // skip the rest of the .PE/.PF/.PY line
     while ((c = getc(fp)) != EOF && c != '\n')
       ;
     if (c == '\n')
@@ -319,7 +322,7 @@ void do_file(const char *filename)
   enum { START, MIDDLE, HAD_DOT, HAD_P, HAD_PS, HAD_l, HAD_lf } state = START;
   for (;;) {
     int c = getc(fp);
-    while (invalid_input_char(c)) {
+    while (is_invalid_input_char(c)) {
       error("invalid input character code %1", int(c));
       c = getc(fp);
     }
@@ -479,13 +482,15 @@ void do_whole_file(const char *filename)
 
 void usage(FILE *stream)
 {
-  fprintf(stream, "usage: %s [ -nvCSU ] [ filename ... ]\n", program_name);
+  fprintf(stream, "usage: %s [-CnSU] [file ...]\n", program_name);
 #ifdef TEX_SUPPORT
-  fprintf(stream, "       %s -t [ -cvzCSU ] [ filename ... ]\n", program_name);
+  fprintf(stream, "usage: %s -t [-cCSUz] [file ...]\n", program_name);
 #endif
 #ifdef FIG_SUPPORT
-  fprintf(stream, "       %s -f [ -v ] [ filename ]\n", program_name);
+  fprintf(stream, "usage: %s -f [-v] [file]\n", program_name);
 #endif
+  fprintf(stream, "usage: %s {-v | --version}\n", program_name);
+  fprintf(stream, "usage: %s --help\n", program_name);
 }
 
 #if defined(__MSDOS__) || defined(__EMX__)
@@ -621,8 +626,10 @@ int main(int argc, char **argv)
 #endif
   {
     out = make_troff_output();
-    printf(".if !dPS .ds PS\n"
-	   ".if !dPE .ds PE\n");
+    printf(".do if !dPS .ds PS\n"
+	   ".do if !dPE .ds PE\n"
+	   ".do if !dPF .ds PF\n"
+	   ".do if !dPY .ds PY\n");
   }
 #ifdef FIG_SUPPORT
   if (whole_file_flag) {
@@ -650,3 +657,8 @@ int main(int argc, char **argv)
   return had_parse_error;
 }
 
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

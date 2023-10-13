@@ -2,7 +2,7 @@
 
 s.tmac
 
-Copyright (C) 1989-2018 Free Software Foundation, Inc.
+Copyright (C) 1989-2021 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -20,35 +20,81 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ..
-.if !\n(.g .ab These ms macros require groff.
+.if !\n(.g \
+.  ab groff ms macros require groff extensions; aborting
+.
 .if \n(.C \
-.	ab The groff ms macros do not work in compatibility mode.
-.\" Enable warnings (only if none are given on the command line).
-.\" You can delete this if you want.
-.if (\n[.warn] == 65543) .warn
+.  ab groff ms macros do not work in compatibility mode; aborting
+.
 .\" See if already loaded.
 .if r GS .nx
-.mso devtag.tmac
 .nr GS 1
-.nr need_eo_h 0
-.nr need_eo_tl 0
+.
+.mso devtag.tmac
+.nr s@devtag-needs-end-of-heading 0
+.nr s@devtag-needs-end-of-title 0
+.
+.\" Define a string for use in diagnostic messages.
+.ds @s s.tmac\"
+.
+.de @diag
+.	ds *file \" empty
+.	ds *line \" empty
+.	if !'\\n[.F]'' .ds *file \\n[.F]:\"
+.	if !'\\n[.c]'0' .ds *line \\n[.c]:\"
+.	tm \*[@s]:\\*[*file]\\*[*line] \\$*
+.	rm *file
+.	rm *line
+..
+.
 .de @error
-.tm \\n(.F:\\n(.c: macro error: \\$*
+.	@diag error: \\$*
 ..
+.
 .de @warning
-.tm \\n(.F:\\n(.c: macro warning: \\$*
+.	@diag warning: \\$*
 ..
-.de @fatal
-.ab \\n(.F:\\n(.c: fatal macro error: \\$*
-..
-.de @not-implemented
-.@error sorry, \\$0 not implemented
-.als \\$0 @nop
-..
-.als TM @not-implemented
-.als CT @not-implemented
+.
 .de @nop
 ..
+.
+.de @not-implemented
+.@error sorry, .\\$0 not implemented
+.als \\$0 @nop
+..
+.
+.\" documented Unix Version 7 ms macros that we don't implement
+.als EG @not-implemented \" engineer's notes
+.als IM @not-implemented \" internal memorandum
+.als MF @not-implemented \" memorandum for file
+.als MR @not-implemented \" memorandum for record
+.als TM @not-implemented \" technical memorandum
+.als TR @not-implemented \" technical report
+.als AT @not-implemented \" attachments
+.als CS @not-implemented \" cover sheet info for `TM` documents
+.als CT @not-implemented \" copies to
+.als OK @not-implemented \" "other keywords" for `TM` documents
+.als SG @not-implemented \" signatures for `TM` documents
+.als HO @not-implemented \" Holmdel
+.als IH @not-implemented \" Naperville (Indian Hill)
+.als MH @not-implemented \" Murray Hill
+.als PY @not-implemented \" Piscataway
+.als WH @not-implemented \" Whippany
+.als UX @not-implemented \" Unix w/ footnote trademark
+.
+.\" 4.2BSD ms macros documented by Tuthill 1983 that we don't implement
+.\"als TM @not-implemented \" thesis mode (already handled)
+.\"als CT @not-implemented \" chapter title for thesis (already handled)
+.
+.\" Wrap the .di request to save the name of the file being processed
+.\" when a diversion is started.  This aids diagnostics when diversions
+.\" are still open after input has been processed and \n[.F] is empty.
+.als @divert di
+.de di
+.	if \\n[.$] .ds @last-file-seen \\n[.F]\"
+.	@divert \\$*
+..
+.
 .de @init
 .if !rPO .nr PO \\n(.o
 .\" a non-empty environment
@@ -83,10 +129,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .if \\n[.$] .ds DY "\\$*
 .ds CF \\*[DY]
 ..
-.\" indexing
-.de IX
-.tm \\$1\t\\$2\t\\$3\t\\$4 ... \\n[PN]
-..
 .\" print an error message and then try to recover
 .de @error-recover
 .@error \\$@ (recovering)
@@ -97,7 +139,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	el .*div-end-default
 .	nr *pop-count +1
 .	\" ensure that we don't loop forever
-.	if \\n[*pop-count]>20 .@fatal recovery failed
+.	if \\n[*pop-count]>20 .ab \*[@s]: fatal error: recovery failed
 .\}
 .while !'\\n[.ev]'0' .ev
 .par@reset-env
@@ -116,16 +158,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .\" ****************************
 .\" Cover sheet and first page.
 .de cov*err-not-after-first-page
-.@error \\$0 is not allowed after the first page has started
+.@error .\\$0 is not allowed after the first page has started
 ..
 .de cov*err-not-before-tl
-.@error \\$0 is not allowed before TL
+.@error .\\$0 is not allowed before .TL
 ..
 .de cov*err-not-again
-.@error \\$0 is not allowed more than once
+.@error .\\$0 is not allowed more than once
 ..
 .de cov*err-not-after-ab
-.@error \\$0 is not allowed after first AB, LP, PP, IP, SH or NH
+.@error .\\$0 is not allowed after first .AB, .LP, .PP, .IP, .SH or .NH
 ..
 .als AU cov*err-not-before-tl
 .als AI cov*err-not-before-tl
@@ -137,13 +179,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .ch cov*first-page-init
 .rm cov*first-page-init
 .if !'\\n[.ev]'0' \{\
-.	@error must be in top-level environment, not '\\n[.ev]',
-.	@error when first page is started
+.	ds cov*msg must be in top-level environment, not '\\n[.ev]',\"
+.	as cov*msg " when first page is started\"
+.	@error \\*[cov*msg]
+.	rm cov*msg
 .\}
 .par@init
 .als RP cov*err-not-after-first-page
 .@init
-.ie \\n[cov*rp-format] \{\
+.ie \\n[cov*use-rp-format] \{\
 .	pg@cs-top
 .	als FS cov*FS
 .	als FE cov*FE
@@ -162,14 +206,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .br
 \\*[FS]\\
 ..
-.nr cov*rp-format 0
-.nr cov*rp-no 0
-.\" released paper format
+.nr cov*use-rp-format 0
+.\" If we add more cover page formats, these behaviors and names could
+.\" be generalized.
+.nr cov*rp-no-repeat-info 0
+.nr cov*rp-no-renumber 0
+.\" report (AT&T: "released paper") document type
 .de RP
-.nr cov*rp-format 1
-.if \\n[.$] .if '\\$1'no' .nr cov*rp-no 1
+.nr cov*use-rp-format 1
+.while \\n[.$] \{\
+.	if '\\$1'no' .nr cov*rp-no-repeat-info 1
+.	if '\\$1'no-repeat-info' .nr cov*rp-no-repeat-info 1
+.	if '\\$1'no-renumber' .nr cov*rp-no-renumber 1
+.	shift
+.\}
 .if rPO .po \\n(POu
-.pn 0
 ..
 .de TL
 .br
@@ -207,7 +258,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	br
 .	di
 .\}
-.ie !\\n[cov*n-au] .@error AI before AU
+.ie !\\n[cov*n-au] .@error .AI before .AU
 .el \{\
 .	di cov*ai-div!\\n[cov*n-au]
 .	nf
@@ -259,6 +310,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .als MC @MC
 .als EQ @EQ
 .als EN @EN
+.als PS @PS
 .als TS @TS
 .als AB cov*err-not-after-ab
 .als AU par@AU
@@ -280,10 +332,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .par@ab-indent
 .par@reset
 .if !'\\$1'no' \{\
-.       if '\*(.T'html'  \{\
+.	if '\*(.T'html' \{\
 .		nf
 .		sp
-.       \}
+.	\}
 .	ft I
 .	ce 1
 \\*[ABSTRACT]
@@ -314,22 +366,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	par@reset
 .	cov*print
 .  \}
-.  el .@error AE without AB
+.  el .@error .AE without .AB
 .\}
 ..
 .de @div-end!cov*ab-div
 .AE
 ..
+.de cov*break-page
+.ie \\n[cov*rp-no-renumber] .bp
+.el .bp 1
+..
 .de cov*print
 .als cov*print @nop
 .ie d cov*tl-div \{\
-.	ie \\n[cov*rp-format] .cov*rp-print
+.	ie \\n[cov*use-rp-format] .cov*rp-print
 .	el .cov*draft-print
 .\}
 .el \{\
-.	if \\n[cov*rp-format] \{\
-.		@warning RP format but no TL
-.		bp 1
+.	if \\n[cov*use-rp-format] \{\
+.		@warning .RP format but no .TL
+.		.cov*break-page
 .		als FS @FS
 .		als FE @FE
 .		CHECK-FOOTER-AND-KEEP
@@ -357,7 +413,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	ev nf
 .	cov*fn-div
 .	ev
-.	ie \\n[cov*rp-no] .rm cov*fn-div
+.	ie \\n[cov*rp-no-repeat-info] .rm cov*fn-div
 .	el \{\
 .		rn cov*fn-div fn@overflow-div
 .		nr fn@have-overflow 1
@@ -368,10 +424,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .CHECK-FOOTER-AND-KEEP
 .\" If anything was printed below where the footer line is normally
 .\" printed, then that's an overflow.
-.if -\\n[FM]/2+1v+\\n[cov*page-length]<\\n[nl] .@error cover sheet overflow
+.if -\\n[FM]/2+1v+\\n[cov*page-length]<\\n[nl] \
+.	@error cover sheet overflow
 .pl \\n[cov*page-length]u
-.bp 1
-.if !\\n[cov*rp-no] .cov*tl-au-print
+.cov*break-page
+.if !\\n[cov*rp-no-repeat-info] .cov*tl-au-print
 .rs
 .sp 1
 ..
@@ -391,17 +448,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .sp 3
 .ce 9999
 .if d cov*tl-div \{\
-.    cov*tl-div
-.    DEVTAG-EO-TL
+.	cov*tl-div
+.	DEVTAG-EO-TL
 .\}
 .nr cov*i 1
 .nr cov*sp 1v
 .while \\n[cov*i]<=\\n[cov*n-au] \{\
-.       ie '\*(.T'html' .br
+.	ie '\*(.T'html' .br
 .	el .sp \\n[cov*sp]u
 .	cov*au-div!\\n[cov*i]
 .	ie d cov*ai-div!\\n[cov*i] \{\
-.		sp .5v	
+.		sp .5v
 .		cov*ai-div!\\n[cov*i]
 .		nr cov*sp 1v
 .	\}
@@ -415,7 +472,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .\" start of footnote on cover
 .de cov*FS
 .if \\n[cov*in-fn] \{\
-.	@error nested FS
+.	@error nested .FS
 .	FE
 .\}
 .nr cov*in-fn 1
@@ -438,7 +495,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	nr cov*in-fn 0
 .	nr cov*fn-height +\\n[dn]
 .\}
-.el .@error FE without matching FS
+.el .@error .FE without matching .FS
 ..
 .\" ***************************
 .\" ******** module pg ********
@@ -454,7 +511,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .ds CF
 .ds RF
 .ds LH
-.ds CH -\En[PN]-
+.ds CH -\En[%]-\"
 .ds RH
 .ds pg*OH '\E*[LH]'\E*[CH]'\E*[RH]'
 .ds pg*EH '\E*[LH]'\E*[CH]'\E*[RH]'
@@ -466,31 +523,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .als EH OH
 .als OF OH
 .als EF OH
+.aln PN % \" Lesk 1978 documents PN.
 .de PT
-.ie \\n%=1 .if \\n[pg*P1] .tl \\*[pg*OH]
+.\" To compare the page number to 1, we need it in Arabic format.
+.ds pg*saved-page-number-format \\g%\"
+.af % 0
+.nr pg*page-number-in-decimal \\n%
+.af % \\*[pg*saved-page-number-format]
+.fam \\*[pg@titles-font-family]
+.ie \\n[pg*page-number-in-decimal]=1 .if \\n[pg*P1] .tl \\*[pg*OH]
 .el \{\
 .	ie o .tl \\*[pg*OH]
 .	el .tl \\*[pg*EH]
 .\}
+.rm pg*saved-page-number-format
 ..
 .de BT
+.fam \\*[pg@titles-font-family]
 .ie o .tl \\*[pg*OF]
 .el .tl \\*[pg*EF]
 ..
 .nr pg*P1 0
 .de P1
-.ie r bell_localisms \{\
-.	DS L
-.	ft CW
-.\}
-.el .nr pg*P1 1
+.nr pg*P1 1
 ..
 .wh -\n[FM]u pg@bottom
 .wh -\n[FM]u/2u pg*footer
 .nr MINGW 2n
 .nr pg@ncols 1
 .de @MC
-.if !'\\n(.z'' .error-recover MC while diversion open
+.if !'\\n(.z'' .@error-recover .MC while diversion open
 .br
 .ie \\n[pg@ncols]>1 .pg@super-eject
 .el \{\
@@ -501,8 +563,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	\}
 .\}
 .ie !\\n(.$ \{\
-.	nr pg@colw \\n[LL]*7/15
-.	nr pg*gutw \\n[LL]-(2*\\n[pg@colw])
+.	nr pg*gutw \\n[MINGW]
+.	nr pg@colw \\n[LL]-\\n[pg*gutw]/2u
 .	nr pg@ncols 2
 .\}
 .el \{\
@@ -515,10 +577,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	el .nr pg*gutw 0
 .\}
 .DEVTAG ".mc \\n[pg@ncols] \\n[pg@colw] \\n[pg*gutw]"
-.ns
 .nr pg*col-num 0
-.nr pg@fn-colw \\n[pg@colw]*5/6
+.nr pg@fn-colw \\n[pg@colw]*\\*[FR]
 .par@reset
+.ns
 .mk pg*col-top
 ..
 .de 2C
@@ -527,10 +589,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .de 1C
 .MC \\n[LL]u
 ..
-.\" top of page macro
 .de pg@top
+.\" invoked by '.wh 0' trap at the top of every page
+.\"
+.\" At short page lengths, footers may get truncated or recursion may
+.\" occur; ensure that the page length suffices to avoid these problems.
+.if (u;\\n[HM]+\\n[FM]+\n[.V]>=\\n[.p]) \{\
+.	@error insufficient page length; aborting\"
+.	pl \\n[nl]u
+.	ab
+.\}
 .ch pg*footer -\\n[FM]u/2u
-.nr PN \\n%
 .nr pg*col-num 0
 .nr pg@fn-bottom-margin 0
 .po \\n[PO]u
@@ -592,7 +661,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .		pn \\n[pg*next-number]
 .		rr pg*next-number
 .		if d pg*next-format \{\
-.			af PN \\*[pg*next-format]
+.			af % \\*[pg*next-format]
 .			rm pg*next-format
 .		\}
 .	\}
@@ -619,7 +688,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .\" flush out any keeps or footnotes
 .de pg@super-eject
 .br
-.if !'\\n(.z'' .@error-recover diversion open while ejecting page
+.if !'\\n(.z'' \{\
+.	ds @msg diversion open while ejecting page\"
+.	as @msg " (last file seen: \\*[@last-file-seen])\"
+.	@error-recover \\*[@msg]
+.	rm @msg
+.\}
 .\" Make sure we stay in the end macro while there is still footnote
 .\" overflow left, or floating keeps.
 .while \\n[kp@tail]>\\n[kp@head]:\\n[pg@fn-flag] \{\
@@ -647,19 +721,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .ev
 .nr fn*text-num 0 1
 .nr fn*note-num 0 1
-.ds * \E*[par@sup-start]\En+[fn*text-num]\E*[par@sup-end]
 .nr fn*open 0
+.\" Handle initialition tasks deferred until par module is set up.
+.de fn@init
+.ie t .als fn@mark-start par@sup-start
+.el .ds fn@mark-start [
+.ie t .als fn@mark-end par@sup-end
+.el .ds fn@mark-end ]
+.ds * \E*[fn@mark-start]\En+[fn*text-num]\E*[fn@mark-end]
+..
 .\" normal FS
+.\" FS-MARK is a user definable hook, which may be used to perform
+.\" any set-up actions, (e.g. planting an HREF link as the footnote
+.\" mark, in the document text); passed the same arguments as have
+.\" been passed to FS itself, unless redefined, it is a no-op.
 .de @FS
+.FS-MARK \\$@
 .ie \\n[.$] .fn*do-FS "\\$1" no
 .el \{\
 .	ie \\n[fn*text-num]>\\n[fn*note-num] .fn*do-FS \\n+[fn*note-num]
 .	el .fn*do-FS
 .\}
 ..
+.\" Default no-op fallback for FS-MARK
+.de FS-MARK
+..
 .\" Second argument of 'no' means don't embellish the first argument.
 .de fn*do-FS
-.if \\n[fn*open] .@error-recover nested FS
+.if \\n[fn*open] .@error-recover nested .FS
 .nr fn*open 1
 .if \\n[.u] \{\
 .	\" Ensure that the first line of the footnote is on the same page
@@ -675,11 +764,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .par@reset-env
 .fn*start-div
 .par@reset
+.fam \\*[fn@font-family]
 .ie \\n[.$] .FP \\$@
 .el .@LP
 ..
 .de @FE
-.ie !\\n[fn*open] .@error FE without FS
+.ie !\\n[fn*open] .@error .FE without .FS
 .el \{\
 .	nr fn*open 0
 .	br
@@ -813,26 +903,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .\" Keeps.
 .de KS
 .br
-.di kp*div
+.di kp@div
 ..
 .de KF
-.if !'\\n(.z'' .@error-recover KF while open diversion
-.di kp*fdiv
+.if !'\\n(.z'' .@error-recover .KF while diversion open
+.di kp@fdiv
 .ev k
 .par@reset-env
 .par@reset
 ..
 .de KE
-.ie '\\n(.z'kp*div' .kp*end
+.ie '\\n(.z'kp@div' .kp*end
 .el \{\
-.	ie '\\n(.z'kp*fdiv' .kp*fend
-.	el .@error KE without KS or KF
+.	ie '\\n(.z'kp@fdiv' .kp*fend
+.	el .@error .KE without .KS or .KF
 .\}
 ..
-.de @div-end!kp*div
+.de @div-end!kp@div
 .kp*end
 ..
-.de @div-end!kp*fdiv
+.de @div-end!kp@fdiv
 .kp*fend
 ..
 .de kp*need
@@ -845,9 +935,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .di
 .kp*need \\n[dn]
 .ev nf
-.kp*div
+.kp@div
 .ev
-.rm kp*div
+.rm kp@div
 ..
 .\" Floating keeps.
 .nr kp@head 0
@@ -860,12 +950,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .ie \\n[.t]-(\\n[.k]>0*1v)>\\n[dn] \{\
 .	br
 .	ev nf
-.	kp*fdiv
-.	rm kp*fdiv
+.	kp@fdiv
+.	rm kp@fdiv
 .	ev
 .\}
 .el \{\
-.	rn kp*fdiv kp*div!\\n[kp@tail]
+.	rn kp@fdiv kp@div!\\n[kp@tail]
 .	nr kp*ht!\\n[kp@tail] 0\\n[dn]
 .	nr kp@tail +1
 .\}
@@ -891,7 +981,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .		\" back the keep, so that if the last line of the
 .		\" last keep springs the bottom of page trap, a new
 .		\" page will not be started unnecessarily.
-.		rn kp*div!\\n[kp@head] kp*temp
+.		rn kp@div!\\n[kp@head] kp*temp
 .		nr kp@head +1
 .		ev nf
 .		kp*temp
@@ -908,6 +998,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .de DE
 .ds*end!\\n[\\n[.ev]:ds-type]
 .nr \\n[.ev]:ds-type 0
+.ns
 ..
 .de ds@auto-end
 .if \\n[\\n[.ev]:ds-type] \{\
@@ -920,7 +1011,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .el .ds*end!2
 ..
 .de ds*end!0
-.@error DE without DS, ID, CD, LD or BD
+.@error .DE without .DS, .ID, .CD, .LD, .RD, or .BD
 ..
 .de LD
 .br
@@ -962,10 +1053,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	rm ds*div
 .	ds*common-end
 .\}
-.el .@error-recover mismatched DE
+.el .@error-recover mismatched .DE
 ..
 .de DS
-.br
+.if '\\n(.z'ds*div' .@error-recover cannot begin display within display
+.nr ds*badarg 0
 .di ds*div
 .ie '\\$1'B' \{\
 .	LD
@@ -979,12 +1071,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .			ie '\\$1'R' .RD
 .			el \{\
 .				ie '\\$1'I' .ID \\$2
-.				el .ID \\$1
+.				el \{\
+.					ie '\\$1'' .ID
+.					el .nr ds*badarg 1
+.				\}
 .			\}
 .		\}
 .	\}
-.	nr \\n[.ev]:ds-type 3
+.	ie \\n[ds*badarg] \{\
+.		ds ds*msg unrecognized argument '\\$1' to .\\$0;\"
+.		as ds*msg " did you mean '.\\$0 I \\$1'?\"
+.		@error \\*[ds*msg]
+.		rm ds*msg
+.		di
+.	\}
+.	el .nr \\n[.ev]:ds-type 3
 .\}
+.rr ds*badarg
 ..
 .de ds@need
 .if '\\n(.z'' \{\
@@ -1005,7 +1108,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	rm ds*div
 .	ds*common-end
 .\}
-.el .@error-recover mismatched DE
+.el .@error-recover mismatched .DE
 ..
 .de ds*end!4
 .ie '\\n(.z'ds*div' \{\
@@ -1018,7 +1121,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	rm ds*div
 .	ds*common-end
 .\}
-.el .@error-recover mismatched DE
+.el .@error-recover mismatched .DE
 ..
 .\" ****************************
 .\" ******** module par ********
@@ -1028,7 +1131,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .de par@load-init
 .\" PS and VS might have been set on the command line
 .if !rPS .nr PS 10
-.if !rLL .nr LL 6i
+.if !rLL .nr LL 6.5i
 .ll \\n[LL]u
 .\" don't set LT so that it can be defaulted from LL
 .ie rLT .lt \\n[LT]u
@@ -1080,7 +1183,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .\" happens when the first page begins
 .de par@init
 .if !rLT .nr LT \\n[LL]
-.if !rFL .nr FL \\n[LL]*5/6
+.if !rFL .nr FL \\n[LL]*\\*[FR]
 .if !rVS \{\
 .	ie (\\n[PS] >= 1000) \
 .		nr VS (\\n[PS] + 2000)
@@ -1118,6 +1221,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .if !rFPD .nr FPD \\n[PD]/2
 .ev
 .if !dFAM .ds FAM \\n[.fam]
+.ds pg@titles-font-family \\*[FAM]
+.ds fn@font-family \\*[FAM]
 .nr par*adj \\n[.j]
 .par*env-init
 .ev h
@@ -1154,25 +1259,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .\" par@reset
 .de par@reset
 .br
-.if \\n[need_eo_tl]>0 .DEVTAG-EO-TL
-.nr need_eo_tl 0
-.if \\n[need_eo_h]>0 .DEVTAG-EO-H
-.nr need_eo_h 0
+.if \\n[s@devtag-needs-end-of-title] .DEVTAG-EO-TL
+.nr s@devtag-needs-end-of-title 0
+.if \\n[s@devtag-needs-end-of-heading] .DEVTAG-EO-H
+.nr s@devtag-needs-end-of-heading 0
 .ce 0
 .rj 0
 .ul 0
 .fi
-.ie \\n[pg@ncols]>1 \{\
-.	ll (u;\\n[\\n[.ev]:MCLL]-\\n[\\n[.ev]:ri]-\\n[\\n[.ev]:pri])
-.	lt \\n[\\n[.ev]:MCLT]u
-.\}
-.el \{\
-.	ll (u;\\n[\\n[.ev]:LL]-\\n[\\n[.ev]:ri]-\\n[\\n[.ev]:pri])
-.	lt \\n[\\n[.ev]:LT]u
-.\}
-.in (u;\\n[\\n[.ev]:li]+\\n[\\n[.ev]:pli])
 .ft 1
-.fam \\*[FAM]
+.ie '\\n[.ev]'fn' .fam \\*[fn@font-family]
+.el .fam \\*[FAM]
 .ie (\\n[\\n[.ev]:PS] >= 1000) \
 .	ps (\\n[\\n[.ev]:PS]z / 1000u)
 .el \
@@ -1182,13 +1279,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .el \
 .	par*vs \\n[\\n[.ev]:VS]
 .ls 1
+.if !'\\$1'' .nr \\n[.ev]:pli (n;\\$1)
+.if !'\\$2'' .nr \\n[.ev]:pri (n;\\$2)
+.ie \\n[pg@ncols]>1 \{\
+.	ll (u;\\n[\\n[.ev]:MCLL]-\\n[\\n[.ev]:ri]-\\n[\\n[.ev]:pri])
+.	lt \\n[\\n[.ev]:MCLT]u
+.\}
+.el \{\
+.	ll (u;\\n[\\n[.ev]:LL]-\\n[\\n[.ev]:ri]-\\n[\\n[.ev]:pri])
+.	lt \\n[\\n[.ev]:LT]u
+.\}
+.in (u;\\n[\\n[.ev]:li]+\\n[\\n[.ev]:pli])
 .TA
 .hy \\n[HY]
-..
-.de @RT
-.nr \\n[.ev]:pli 0
-.nr \\n[.ev]:pri 0
-.par@reset
 ..
 .\" This can be redefined by the user.
 .de TA
@@ -1201,17 +1304,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .
 .de par*start
 .ds@auto-end
-.nr \\n[.ev]:pli \\$1
-.nr \\n[.ev]:pri \\$2
-.par@reset
+.par@reset \\$1 \\$2
 .sp \\n[\\n[.ev]:PD]u
 .ne \\n[PORPHANS]v+\\n(.Vu
 ..
 .de par@finish
+.nr \\n[.ev]:ai \\n[\\n[.ev]:PI]
 .nr \\n[.ev]:pli 0
 .nr \\n[.ev]:pri 0
-.par@reset
+.par@reset 0 0
 ..
+.als @RT par@finish
 .\" normal LP
 .de @LP
 .par*start 0 0
@@ -1224,15 +1327,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ..
 .de @QP
 .nr \\n[.ev]:ai \\n[\\n[.ev]:PI]
-.par*start \\n[QI] \\n[QI]
+.par*start \\n[QI]u \\n[QI]u
 ..
 .de @XP
-.par*start \\n[\\n[.ev]:PI] 0
+.par*start \\n[\\n[.ev]:PI]u 0
 .ti -\\n[\\n[.ev]:PI]u
 ..
 .de @IP
-.if \\n[.$]>1 .nr \\n[.ev]:ai (n;\\$2)
-.par*start \\n[\\n[.ev]:ai] 0
+.ie \\n[.$]>1 \{\
+.par*start \\$2 0
+.nr \\n[.ev]:ai \\n[\\n[.ev]:pli]
+.\}
+.el .par*start \\n[\\n[.ev]:ai]u 0
 .if !'\\$1'' \{\
 .	\" Divert the label so as to freeze any spaces.
 .	di par*label
@@ -1264,13 +1370,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .nr par*saved-font \\n[.f]
 .nr par*saved-size \\n[.s]z
 .nr par*saved-ss \\n[.ss]
+.nr par*saved-sss \\n[.sss]
 .ds par*saved-fam \\n[.fam]
 .ev par
 .nf
 .TA
 .ft \\n[par*saved-font]
 .ps \\n[par*saved-size]u
-.ss \\n[par*saved-ss]
+.ss \\n[par*saved-ss] \\n[par*saved-sss]
 .fam \\*[par*saved-fam]
 ..
 .de par*pop-tag-env
@@ -1298,7 +1405,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	nr \\n[.ev]:pli \\n[\\n[.ev]:pli!\\n[\\n[.ev]:il]]
 .	nr \\n[.ev]:pri \\n[\\n[.ev]:pri!\\n[\\n[.ev]:il]]
 .\}
-.el .@error unbalanced \\$0
+.el .@error unbalanced .\\$0
 .ie '\\$0'QE' .par*start 0 0
 .el .par@reset
 ..
@@ -1355,7 +1462,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	lt +\\n[par*box-n]u
 .	par*box-draw \\n[.i]u \\n[.l]u-(\\n[.H]u==1n*1n)
 .\}
-.el .@error B2 without B1
+.el .@error .B2 without .B1
 .HTML-IMAGE-END
 ..
 .de par*box-mark-top
@@ -1425,7 +1532,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .  if 0\\$1>0 .nr sh*psincr (\\n[GROWPS]-0\\$1)*\\n[PSINCR]
 .  SH-NO-TAG
 .  DEVTAG-SH 1
-.  if '\*(.T'html' .nr need_eo_h 1
+.  if '\*(.T'html' .nr s@devtag-needs-end-of-heading 1
 ..
 .\" TL, AU, and AI are aliased to these in cov*ab-init.
 .de par@TL
@@ -1436,7 +1543,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .vs +3p
 .ce 9999
 .DEVTAG-TL
-.nr need_eo_tl 1
+.nr s@devtag-needs-end-of-title 1
 ..
 .de par@AU
 .par@finish
@@ -1451,56 +1558,75 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ..
 .\" In paragraph macros.
 .de NL
+.if \En[.$] .@warning arguments to .NL ignored
 .ie (\\n[\\n[.ev]:PS] >= 1000) \
 .	ps (\\n[\\n[.ev]:PS]z / 1000u)
 .el \
 .	ps \\n[\\n[.ev]:PS]
 ..
 .de SM
+.if \En[.$] .@warning arguments to .SM ignored
 .ps -2
 ..
 .de LG
+.if \En[.$] .@warning arguments to .LG ignored
 .ps +2
 ..
-.de R
-.ft R
-..
-.\" par*define-font-macro macro font
+.\" par*define-font-macro macro font apply-italic-corrections
 .de par*define-font-macro
 .de \\$1
+.ds par*lic \" empty
+.ds par*ic \" empty
+.if \\n[.$]>2 \{\
+.	as par*lic \,\"
+.	as par*ic \/\"
+.\}
+.if \En[.$]>3 .@warning excess arguments to .\\$1 ignored
 .ie \En[.$] \{\
 .	nr par*prev-font \En[.f]
-\&\E$3\f[\\$2]\E$1\f[\En[par*prev-font]]\E$2
+\&\E$3\E*[par*lic]\f[\\$2]\E$1\f[\En[par*prev-font]]\E*[par*ic]\E$2
 .\}
 .el .ft \\$2
 \\..
 ..
+.par*define-font-macro R R
 .par*define-font-macro B B
-.par*define-font-macro I I
-.par*define-font-macro BI BI
-.par*define-font-macro CW CR
+.par*define-font-macro I I yes
+.par*define-font-macro BI BI yes
+.ie n .par*define-font-macro CW R
+.el   .par*define-font-macro CW CR
 .\" underline a word
 .de UL
-\Z'\\$1'\v'.25m'\D'l \w'\\$1'u 0'\v'-.25m'\\$2
+.if \En[.$]>2 .@warning excess arguments to .UL ignored
+.	ie t .do nop \Z'\\$1'\v'.25m'\D'l \w'\\$1'u 0'\v'-.25m'\\$2
+.	el \(ul\\$1\(ul\\$2
 ..
 .\" box a word
 .de BX
-.nr par*bxw \w'\\$1'+.4m
-\Z'\v'.25m'\D'l 0 -1m'\D'l \\n[par*bxw]u 0'\D'l 0 1m'\D'l -\\n[par*bxw]u 0''\
-\Z'\h'.2m'\\$1'\
-\h'\\n[par*bxw]u'
+.if \En[.$]>1 .@warning excess arguments to .BX ignored
+.nr par*bxw \w'\\$1'
+.ie t \{\
+.nr par*bxw +.4m
+\Z'\v'.25m'\
+\D'l 0 -1m'\D'l \\n[par*bxw]u 0'\D'l 0 1m'\D'l -\\n[par*bxw]u 0''\
+\Z'\h'.2m'\\$1'\h'\\n[par*bxw]u'
+.\}
+.el \m[black]\M[white]\Z'\\$1'\h'\\n[par*bxw]u'\m[]\M[]
 ..
-.\" The first time UX is used, put a registered mark after it.
-.ds par*ux-rg \(rg
-.de UX
-\s[\\n[.s]*8u/10u]UNIX\s0\\$1\\*[par*ux-rg]
-.ds par*ux-rg
-..
+.\" superscript
 .ds par@sup-start \v'-.9m\s'\En[.s]*7u/10u'+.7m'
 .als { par@sup-start
 .ds par@sup-end \v'-.7m\s0+.9m'
 .als } par@sup-end
+.\" subscript
+.ds par@sub-start \v'+.3m\s'\En[.s]*7u/10u'-.1m'
+.als < par@sub-start
+.ds par@sub-end \v'+.1m\s0-.3m'
+.als > par@sub-end
 .\" footnote paragraphs
+.fn@init
+.\" FR is the ratio of footnote (horizontal) length to the line length
+.ds FR 11/12
 .\" FF is the footnote format
 .nr FF 0
 .\" This can be redefined. It gets a second argument of 'no' if the
@@ -1516,7 +1642,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ..
 .de par*fp!0
 .@PP
-\&\\*[par@sup-start]\\$1\\*[par@sup-end]\ \c
+\&\\*[fn@mark-start]\\$1\\*[fn@mark-end]\ \c
 ..
 .de par*fp!0-no
 .@PP
@@ -1585,8 +1711,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .			nr nh*hl 1
 .		\}
 .		el \{\
-.			if \\n[nh*hl]-\\n[nh*ohl]>1 \
-.				@warning .NH \\n[nh*ohl] followed by .NH \\n[nh*hl]
+.			if \\n[nh*hl]-\\n[nh*ohl]>1 \{\
+.				ds nh*msg .NH \\n[nh*ohl] followed by\"
+.				as nh*msg " .NH \\n[nh*hl]\"
+.				@warning \\*[nh*msg]
+.				rm nh*msg
+.			\}
 .		\}
 .	\}
 .	el .nr nh*hl 1
@@ -1606,7 +1736,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .nr sh*psincr (\\n[GROWPS]-\\n[nh*hl])*\\n[PSINCR]
 .SH-NO-TAG
 .DEVTAG-NH "\\$1"
-.  if '\*(.T'html' .nr need_eo_h 1
+.if '\*(.T'html' .nr s@devtag-needs-end-of-heading 1
 \\*[SN-STYLE]
 ..
 .\" ****************************
@@ -1626,17 +1756,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .ie '\\n(.z'toc*div' \{\
 .	if d toc*num .toc*end-entry
 .	ie \\n[.$] \{\
-.		ie '\\$1'no' .ds toc*num
+.		ie '\\$1'no' .ds toc*num \" empty
 .		el .ds toc*num "\\$1
 .	\}
-.	el .ds toc*num \\n[PN]
+.	el .ds toc*num \\n[%]\"
 .	br
 .	par@reset
 .	na
-.	ll -8n
 .	in (n;0\\$2)
 .\}
-.el .@error XA without XS
+.el .@error .XA without .XS
 ..
 .de XE
 .ie '\\n(.z'toc*div' \{\
@@ -1644,10 +1773,60 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	ev
 .	di
 .\}
-.el .@error XE without XS
+.el .@error .XE without .XS
+..
+.\" Rudimentary integration of TOC generation with SH and NH;
+.\" (called by XH and XN respectively, to capture heading text
+.\" for reuse as TOC entry); may be redefined, to achieve more
+.\" sophisticated TOC layout effects.
+.\"
+.\" No-op initializers are called by XH and XN respectively,
+.\" before XH-UPDATE-TOC is called; if XH-UPDATE-TOC has been
+.\" redefined, then it may also be necessary to redefine either,
+.\" or both of these, to perform any initialization specific
+.\" to use after SH and NH respectively.
+.de XH-INIT de
+.de XN-INIT
+..
+.de XH-UPDATE-TOC
+.\" .XH-UPDATE-TOC <outline-level> <text>
+.XS
+.in (\\$1u - 1u * 2n)
+.shift
+\&\\$*
+.XE
+..
+.\" Rudimentary integration hook, to be called (nominally)
+.\" after SH, but acceptable in any body-text context
+.de XH de
+.\" .XH <outline-level> <text>
+.rn XH-REPLACEMENT XH
+.XH \\$@
+.de XH-REPLACEMENT
+.XH-INIT
+.XH-UPDATE-TOC \\$@
+.shift
+\&\\$*
+..
+.\" Rudimentary integration hook, to be called after NH
+.de XN de
+.\" .XN <text>
+.ie \\n[nh*hl] .toc*xn-init \\$@
+.el \{\
+.	@error .XN is not allowed before .NH
+.	nop \&\\$*
+.\}
+.de toc*xn-init de
+.rn XN-REPLACEMENT XN
+.XN \\$@
+.rm \\$0
+.de XN-REPLACEMENT
+.XN-INIT
+.XH-UPDATE-TOC \\n[nh*hl] \\$@
+\&\\$*
 ..
 .de toc*end-entry
-\\a\\t\\*[toc*num]
+.if !'\\*[toc*num]'' \\a\\t\\*[toc*num]
 .br
 .rm toc*num
 ..
@@ -1665,9 +1844,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	ps
 .\}
 .nf
-.char \[toc*leader-char] .\h'1m'
-.lc \[toc*leader-char]
-.ta (u;\\n[.l]-\\n[.i]-\w'000') (u;\\n[.l]-\\n[.i])R
+.if !r TC-MARGIN .nr TC-MARGIN \w'000'
+.if !c \[TC-LEADER] .char \[TC-LEADER] .\h'1m'
+.ta (u;\\n[.l]-\\n[.i]-\\n[TC-MARGIN]) (u;\\n[.l]-\\n[.i])R
+.lc \[TC-LEADER]
 .sp 2
 .toc*div
 .par@reset
@@ -1687,6 +1867,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .de EN
 ..
 .de @EQ
+.if \\n[tbl@within-table] \
+.	@error .EQ is not allowed within a .TS/.TE table
 .br
 .ds eqn*num "\\$2
 .ie '\\$1'L' .nr eqn*type 0
@@ -1716,7 +1898,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ..
 .\" Note that geqn mark and lineup work correctly in centered equations.
 .de @EN
-.ie !'\\n(.z'eqn*div' .@error-recover mismatched EN
+.ie !'\\n(.z'eqn*div' .@error-recover mismatched .EN
 .el \{\
 .	br
 .	di
@@ -1724,13 +1906,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	if !'\\*[eqn*num]'' .nr eqn*have-num 1
 .	ie \\n[dl]:\\n[eqn*have-num] \{\
 .		sp \\n[DD]u
+.		ns
 .		par@reset
 .		ds eqn*tabs \\n[.tabs]
 .		nf
 .		ie \\n[dl] \{\
-.\"                     --fixme-- this really should not be necessary
-.\"                     and indicates that there is extra space creeping
-.\"                     into an equation when ps4html is enabled..
+.\"			XXX: This really should not be necessary and
+.\"			indicates that there is extra space creeping
+.\"			into an equation when ps4html is enabled.
 .			ie r ps4html .ds@need \\n[dn]u-1v+\n[.V]u+1i
 .			el .ds@need \\n[dn]u-1v+\n[.V]u
 .			chop eqn*div
@@ -1752,6 +1935,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .		\}
 .\".		if !'\*(.T'html' .sp \\n[DD]u
 .		sp \\n[DD]u
+.		ns
 .		ta \\*[eqn*tabs]
 .	\}
 .	el \{\
@@ -1777,16 +1961,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .\" ******** module tbl ********
 .\" ****************************
 .\" Tbl support.
+.nr tbl@within-table 0
 .nr tbl*have-header 0
 .\" This gets called if TS occurs before the first paragraph.
 .de TS
 .LP
-.\" cov*ab-init aliases TS to @TS
+.\" cov*ab-init, called by LP, aliases TS to @TS.
 \\*[TS]\\
 ..
 .de @TS
+.nr tbl@within-table 1
 .sp \\n[DD]u
-.if '\\$1'H' .di tbl*header-div
+.if '\\$1'H' \{\
+.	ds tbl*stem .TS H table inside\"
+.	ie '\\n[.z]'kp@div' .@warning \\*[tbl*stem] .KS/.KE keep
+.	el .if '\\n[.z]'kp@fdiv' \
+.		@warning \\*[tbl*stem] .KF/.KE floating keep
+.	rm tbl*stem
+.	di tbl*header-div
+.\}
 .if '\*(.T'html' \{\
 .	nr tbl*ll \\n[.l]
 .	ll 1000n
@@ -1811,8 +2004,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .	T#
 .	br
 .	di
-.	ie \\n[dn]+\\n[FM]+\\n[HM]+2v>=\\n[.p] \{\
-.		@error ridiculously long table header
+.	\" A table with repeating headings requires enough room for them
+.	\" and then at least one more vee for a row of data.
+.	ie \\n[dn]+1v>=(\\n[.p]-\\n[FM]-\\n[HM]) \{\
+.		ds tbl*err .TH repeating table heading(s) do not fit in
+.		as tbl*err " page area; formatting only once
+.		@error \\*[tbl*err]
+.		rm tbl*err
 .		ds@need \\n[dn]
 .		tbl*print-header
 .	\}
@@ -1833,13 +2031,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .ie '\\n(.z'tbl*header-div' .@error-recover .TS H but no .TH before .TE
 .el \{\
 .	nr tbl*have-header 0
-.       if !'\*(.T'html' .sp \\n[DD]u
+.	if !'\*(.T'html' \{\
+.		sp \\n[DD]u
+.		ns
+.	\}
 .\}
 .HTML-IMAGE-END
 .if '\*(.T'html' \
 .	ll \\n[tbl*ll]u
 .\" reset tabs
 .TA
+.nr tbl@within-table 0
 ..
 .de tbl@bottom-hook
 .if \\n[tbl*have-header] \{\
@@ -1853,20 +2055,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .\" ******** module pic ********
 .\" ****************************
 .\" Pic support.
-.\" PS height width
+.\" This gets called if PS occurs before the first paragraph.
 .de PS
+.LP
+.\" cov*ab-init, called by LP, aliases PS to @PS.
+\\*[PS]\\
+..
+.\" @PS height width
+.de @PS
 .br
 .sp \\n[DD]u
-.ie \\n[.$]<2 .@error bad arguments to PS (not preprocessed with pic?)
+.ie !\\n[.$]=2 \{\
+.	ds pic*msg .PS: expected 2 arguments, got \\n[.$]\"
+.	as pic*msg ; not preprocessed with pic?\"
+.	@error \\*[pic*msg]
+.	rm pic*msg
+.\}
 .el \{\
 .	ds@need (u;\\$1)+1v
 .	in +(u;\\n[.l]-\\n[.i]-\\$2/2>?0)
 .\}
 .HTML-IMAGE
 ..
-.de PE
+.de PF
 .HTML-IMAGE-END
 .par@reset
+..
+.de PE
+.PF
 .sp \\n[DD]u+.5m
 ..
 .\" ****************************
@@ -1882,10 +2098,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .ds U \(rq
 .ds - \(em
 .\" Characters
-.\" The idea of this definition is for the top of the 3 to be at the
-.\" x-height.
-.if !c\[yogh] .char \[yogh] \Z'\v'\w'x'*0-\En[rst]u'\s[\En[.s]*8u/10u]\
-\v'\w'3'*0+\En[rst]u'3\s0'\h'\w'\s[\En[.s]*8u/10u]3'u'
 .\" Accents
 .de acc*over-def
 .ds \\$1 \Z'\v'(u;\w'x'*0+\En[rst]-\En[.cht])'\
@@ -1923,6 +2135,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .acc*slash-def / /
 .char \[hooko] o\E*[hook]
 .ds q \[hooko]
+.\" The idea of this definition is for the top of the 3 to be at the
+.\" x-height.
+.if !c\[yogh] .char \[yogh] \Z'\v'\w'x'*0-\En[rst]u'\s[\En[.s]*8u/10u]\
+\v'\w'3'*0+\En[rst]u'3\s0'\h'\w'\s[\En[.s]*8u/10u]3'u'
 .ds 3 \[yogh]
 .ds D- \(-D\"			Icelandic uppercase eth
 .ds d- \(Sd\"			Icelandic lowercase eth
@@ -1954,41 +2170,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .\}
 ..
 .par@load-init
-.\" ****************************
-.\" ******** module bell ********
-.\" ****************************
-.\" Emulate Bell Labs localisms. Note, (a) they're not documented, and
-.\" (b) the .P1 and .UC macros collide with different ones in Berkeley
-.\" ms.  We hack around this by conditionalizing the behavior of P1; UC
-.\" was not defined by groff and will be a no-op if called Berkeley
-.\" style with no arguments, so there is no problem with hijacking it
-.\" here.
-.\"
-.\" What's done here is sufficient to give back the Guide to EQN (1976)
-.\" its section headings and restore some text that had gone missing as
-.\" macro arguments; no warranty express or implied is given as to how
-.\" well the typographic details these produce match the original Bell
-.\" Labs macros.
-.\"
-.\" P1 is now defined in module pg.
-.de SC
-.nr bell_localisms 1
-.NH 
-\\$*
-..
-.de UC
-.if r bell_localisms \f(CW\\$*\fP
-..
-.de P2
-.if r bell_localisms \{\
-.	ft
-.	DE
-.\}
-..
-.\" ====================================================================
-.\" Editor settings
-.\" ====================================================================
-.
 .\" Local Variables:
 .\" mode: nroff
 .\" fill-column: 72

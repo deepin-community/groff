@@ -1,6 +1,6 @@
 .\" dvi.tmac
 .\"
-.nr _C \n(.C
+.do nr *groff_dvi_tmac_C \n[.cp]
 .cp 0
 .
 .ftr CR CW
@@ -8,6 +8,7 @@
 .ftr CO CWI
 .ftr CI CWI
 .ftr CB CW
+.ftr CBI CWI
 .ftr TT CW
 .ftr H HR
 .
@@ -81,7 +82,16 @@
 .fchar \[=~] \v'.1m'\Z'\[eq]'\v'-.4m'\[ap]\v'.3m'
 .fchar \[tm] \v'-.3m'\s[\En[.s]/2u]TM\s0\v'.3m'
 .\" TC fonts contain real \[aq] glyphs
-.schar \[aq] '
+.fschar TR \[aq] \f[TRTC]\[aq]
+.fschar TI \[aq] \f[TITC]\[aq]
+.fschar TB \[aq] \f[TBTC]\[aq]
+.fschar TBI \[aq] \f[TBITC]\[aq]
+.fschar HR \[aq] \f[HRTC]\[aq]
+.fschar HI \[aq] \f[HITC]\[aq]
+.fschar HB \[aq] \f[HBTC]\[aq]
+.fschar HBI \[aq] \f[HBITC]\[aq]
+.fschar CW \[aq] \f[CWTC]\[aq]
+.fschar CWI \[aq] \f[CWITC]\[aq]
 .fchar \[bq] ,
 .fchar \[Bq] ,\h'\w'\[rq]'u-(2u*\w"'"u)',
 .fchar \[ho] \s[\En[.s]/2u]\v'.4m'c\v'-.4m'\s0
@@ -777,16 +787,13 @@ D\v'-.33m'\s0\v'.33m'
 .defcolor yellow3 rgb #cdcd00
 .defcolor yellow4 rgb #8b8b00
 .
-.cp \n(_C
-.
-.do ie '\[char97]'a' \
-.  do mso latin1.tmac
+.ie '\[char97]'a' \
+.  mso latin1.tmac
 .el \
-.  do mso cp1047.tmac
+.  mso cp1047.tmac
 .
-.\" ====================================================================
-.\" Editor settings
-.\" ====================================================================
+.cp \n[*groff_dvi_tmac_C]
+.do rr *groff_dvi_tmac_C
 .
 .\" Local Variables:
 .\" mode: nroff

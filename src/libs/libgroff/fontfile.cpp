@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -19,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lib.h"
 
-#include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
 #include "font.h"
@@ -41,12 +39,12 @@ const char *font::papersize = 0;
 int font::biggestfont = 0;
 int font::spare2 = 0;
 int font::sizescale = 1;
-int font::tcommand = 0;
-int font::pass_filenames = 0;
-int font::unscaled_charwidths = 0;
-int font::use_charnames_in_special = 0;
-int font::is_unicode = 0;
-const char *font::image_generator = NULL;
+bool font::has_tcommand = false;
+bool font::pass_filenames = false;
+bool font::use_unscaled_charwidths = false;
+bool font::use_charnames_in_special = false;
+bool font::is_unicode = false;
+const char *font::image_generator = 0;
 const char **font::font_name_table = 0;
 int *font::sizes = 0;
 const char *font::family = 0;
@@ -60,9 +58,23 @@ void font::command_line_font_dir(const char *dir)
 
 FILE *font::open_file(const char *nm, char **pathp)
 {
-  char *filename = new char[strlen(nm) + strlen(device) + 5];
-  sprintf(filename, "dev%s/%s", device, nm);
-  FILE *fp = font_path.open_file(filename, pathp);
-  a_delete filename;
+  FILE *fp = 0 /* nullptr */;
+  // Do not traverse user-specified directories; Savannah #61424.
+  if (0 /* nullptr */ == strchr(nm, '/')) {
+    // Allocate enough for nm + device + 'dev' '/' '\0'.
+    int expected_size = strlen(nm) + strlen(device) + 5;
+    char *filename = new char[expected_size];
+    const int actual_size = sprintf(filename, "dev%s/%s", device, nm);
+    expected_size--; // sprintf() doesn't count the null terminator.
+    if (actual_size == expected_size)
+      fp = font_path.open_file(filename, pathp);
+    delete[] filename;
+  }
   return fp;
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

@@ -2,7 +2,7 @@
 <!--
 This file is part of groff, the GNU roff type-setting system.
 
-Copyright (C) 2004-2018 Free Software Foundation, Inc.
+Copyright (C) 2004-2020 Free Software Foundation, Inc.
 Written by Peter Schaffter (peter@schaffter.ca).
 
 Permission is granted to copy, distribute and/or modify this document
@@ -64,8 +64,8 @@ PostScript (.ps).  She&#8217;s aimed at three kinds of users:
 </p>
 
 <ol style="margin-top: -.5em; margin-bottom: -.5em;">
-  <li>Typesetters who suspect groff might be &#8220;the right
-      tool for the job&#8221; but who are frustrated,
+  <li>Typesetters who suspect groff might be the right
+      tool for the job but who are frustrated,
       intimidated, or puzzled by groff&#8217;s terse,
       not-always-typographically-intuitive
       <a href="definitions.html#primitives">primitives</a>;
@@ -113,7 +113,7 @@ access to groff&#8217;s primitives in a way that&#8217;s consistent,
 sensible, and easy to use.  With them, you can create individual
 pages designed from the ground up.  Provided you have not signalled
 to mom that you want document processing (via the
-<kbd><a href="docprocessing.html#start">START</a></kbd>
+<a href="docprocessing.html#start">START</a>
 macro; see below), every typesetting macro is a literal command
 that remains in effect until you modify it or turn it off.  This
 means that if you want to create flyers, surveys, tabulated forms,
@@ -159,7 +159,7 @@ example, you can switch between draft-style and final-copy output.
 If you regularly make submissions to publishers and editors who
 insist on "typewritten, double-spaced," there&#8217;s a special
 macro&mdash;
-<a href="docprocessing.html#printstyle"><kbd>PRINTSTYLE TYPEWRITE</kbd></a>&mdash;
+<a href="docprocessing.html#printstyle">PRINTSTYLE <kbd>TYPEWRITE</kbd></a>&mdash;
 that changes typeset documents into ones that would make an
 old-school typing teacher proud.  Footnotes, endnotes, tables of
 contents, multiple columns, nested lists, recto/verso printing and
@@ -233,8 +233,8 @@ Mom does not try to be all things to all people.  In contrast to
 the normal groff philosophy, she does not try to produce output
 that looks good no matter where it&#8217;s displayed.  She&#8217;s
 designed for primarily for PDF or PostScript output, although
-with <a href="docprocessing.html#printstyle"><kbd>PRINTSTYLE
-TYPEWRITE</kbd></a>
+with
+<a href="docprocessing.html#printstyle">PRINTSTYLE <kbd>TYPEWRITE</kbd></a>
 she produces acceptable terminal copy.  No attempt is made to be
 compatible with older versions of troff.
 </p>
@@ -315,7 +315,7 @@ I&#8217;m more interested in getting mom users up and running.
 <p>
 Groff has ancillary programmes (pre-processors) for generating
 tables (<strong>tbl</strong>), diagrams (<strong>pic</strong>), and
-equations (<strong>eqn</strong>), which may be used in conjuction
+equations (<strong>eqn</strong>), which may be used in conjunction
 with mom.  The manuals describing their usage are found at:
 <br/>
 <span style="display:block; margin-top: .5em">
@@ -333,15 +333,6 @@ with mom.  The manuals describing their usage are found at:
 commented.  Each macro is preceded by a description of its
 arguments, function and usage, which may give you information in
 addition to what&#8217;s contained in this documentation.
-</p>
-</div>
-
-<div class="box-tip">
-<p class="tip-top" style="padding-bottom: 9px; text-indent: 0px;">
-<strong>Addendum:</strong> The main macro file, om.tmac, is stripped
-of comments when groff is built from sources. om.tmac in the sources
-themselves still contains the comments, as do the tarballs posted on
-mom&#8217;s homepage.
 </p>
 </div>
 
@@ -390,9 +381,9 @@ has ever read a manpage.  Briefly:
 Some macros don&#8217;t require an argument.  They simply start
 something.  When you need to turn them off, the same macro with
 any argument will do the trick.  That&#8217;s right: <em>any</em>
-argument (in caps, lowercase or a mixture thereof).  This permits
-choosing whatever works for you: <kbd>OFF, end, Quit, Q, X</kbd>,
-and so on.
+argument (in caps, lowercase, or a mixture thereof).  This permits
+choosing whatever works for you: <kbd>OFF</kbd>, <kbd>end</kbd>,
+<kbd>Quit</kbd>, <kbd>Q</kbd>, <kbd>X</kbd>, and so on.
 </p>
 
 <p>

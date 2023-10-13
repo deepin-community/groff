@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 2000-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2020 Free Software Foundation, Inc.
      Written by Gaius Mulley (gaius@glam.ac.uk).
 
 This file is part of groff.
@@ -21,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <signal.h>
 #include <ctype.h>
-#include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
 #include "errarg.h"
@@ -65,7 +63,6 @@ pushBackBuffer::pushBackBuffer (char *filename)
     sys_fatal("malloc");
   }
   stackPtr = 0;   /* index to push back stack        */
-  debug    = 0;
   verbose  = 0;
   eofFound = FALSE;
   lineNo   = 1;
@@ -331,3 +328,9 @@ char *pushBackBuffer::readString (void)
   }
   return( str );
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

@@ -1,17 +1,16 @@
-From eeaa9af80682a9547ee0d948c3d204092d1a698a Mon Sep 17 00:00:00 2001
+From 22b7d1355485e1aa9dd52317087d9abe5a9c44ce Mon Sep 17 00:00:00 2001
 From: Colin Watson <cjwatson@debian.org>
 Date: Thu, 2 Jan 2014 13:13:16 +0000
 Subject: Add GFDL references to manual pages licensed under GFDL
 
 Bug-Debian: https://bugs.debian.org/292229
 Forwarded: not-needed
-Last-Update: 2018-11-30
+Last-Update: 2023-07-08
 
 Patch-Name: doc-gfdl.patch
 ---
  contrib/hdtbl/groff_hdtbl.7.man | 3 +++
  contrib/pdfmark/pdfroff.1.man   | 3 +++
- man/ditroff.7.man               | 3 +++
  man/groff.7.man                 | 3 +++
  man/groff_diff.7.man            | 3 +++
  man/groff_out.5.man             | 3 +++
@@ -20,13 +19,13 @@ Patch-Name: doc-gfdl.patch
  src/roff/groff/groff.1.man      | 3 +++
  src/roff/troff/troff.1.man      | 3 +++
  tmac/groff_trace.7.man          | 3 +++
- 11 files changed, 33 insertions(+)
+ 10 files changed, 30 insertions(+)
 
 diff --git a/contrib/hdtbl/groff_hdtbl.7.man b/contrib/hdtbl/groff_hdtbl.7.man
-index 0ae39a36..e93347f6 100644
+index af5ab875f..4e0e8e926 100644
 --- a/contrib/hdtbl/groff_hdtbl.7.man
 +++ b/contrib/hdtbl/groff_hdtbl.7.man
-@@ -24,6 +24,9 @@ groff_hdtbl \- Heidelberger table macros for GNU roff
+@@ -20,6 +20,9 @@ groff_hdtbl \- Heidelberger table macros for GNU
  .\"
  .\" A copy of the Free Documentation License is included as a file
  .\" called FDL in the main directory of the groff source package.
@@ -35,12 +34,12 @@ index 0ae39a36..e93347f6 100644
 +.\" Debian package as /usr/share/doc/groff/copyright.
  .
  .
- .ig
+ .\" Save and disable compatibility mode (for, e.g., Solaris 10/11).
 diff --git a/contrib/pdfmark/pdfroff.1.man b/contrib/pdfmark/pdfroff.1.man
-index 95d7807c..16800924 100644
+index 029a1f459..e55d9176c 100644
 --- a/contrib/pdfmark/pdfroff.1.man
 +++ b/contrib/pdfmark/pdfroff.1.man
-@@ -27,6 +27,9 @@ pdfroff \- create PDF documents using groff
+@@ -20,6 +20,9 @@ pdfroff \- construct files in Portable Document Format using
  .\"
  .\" A copy of the Free Documentation License is included as a file
  .\" called FDL in the main directory of the groff source package.
@@ -49,26 +48,12 @@ index 95d7807c..16800924 100644
 +.\" Debian package as /usr/share/doc/groff/copyright.
  .
  .
- .\" ====================================================================
-diff --git a/man/ditroff.7.man b/man/ditroff.7.man
-index a55f9f53..48ac6cfe 100644
---- a/man/ditroff.7.man
-+++ b/man/ditroff.7.man
-@@ -19,6 +19,9 @@ ditroff \- classical device-independent roff
- .\"
- .\" A copy of the Free Documentation License is included as a file
- .\" called FDL in the main directory of the groff source package.
-+.\"
-+.\" A copy of the GNU Free Documentation License is also available in this
-+.\" Debian package as /usr/share/doc/groff/copyright.
- .
- .
- .\" ====================================================================
+ .\" Save and disable compatibility mode (for, e.g., Solaris 10/11).
 diff --git a/man/groff.7.man b/man/groff.7.man
-index 24f093fe..c9ee598a 100644
+index 3d4cad11b..f51c0a2e4 100644
 --- a/man/groff.7.man
 +++ b/man/groff.7.man
-@@ -22,6 +22,9 @@ groff \- a short reference for the GNU roff language
+@@ -22,6 +22,9 @@ language reference
  .\"
  .\" A copy of the Free Documentation License is included as a file
  .\" called FDL in the main directory of the groff source package.
@@ -77,12 +62,12 @@ index 24f093fe..c9ee598a 100644
 +.\" Debian package as /usr/share/doc/groff/copyright.
  .
  .
- .\" ====================================================================
+ .\" Save and disable compatibility mode (for, e.g., Solaris 10/11).
 diff --git a/man/groff_diff.7.man b/man/groff_diff.7.man
-index 39d17475..2842fe28 100644
+index 0d25cb6c0..bc6a45309 100644
 --- a/man/groff_diff.7.man
 +++ b/man/groff_diff.7.man
-@@ -29,6 +29,9 @@ groff_diff \- differences between GNU troff and classical troff
+@@ -23,6 +23,9 @@ and AT&T
  .\"
  .\" A copy of the Free Documentation License is included as a file
  .\" called FDL in the main directory of the groff source package.
@@ -91,12 +76,12 @@ index 39d17475..2842fe28 100644
 +.\" Debian package as /usr/share/doc/groff/copyright.
  .
  .
- .\" ====================================================================
+ .\" Save and disable compatibility mode (for, e.g., Solaris 10/11).
 diff --git a/man/groff_out.5.man b/man/groff_out.5.man
-index 6f1bd18c..4b99c403 100644
+index 9c1534e2e..f90b0e640 100644
 --- a/man/groff_out.5.man
 +++ b/man/groff_out.5.man
-@@ -29,6 +29,9 @@ groff_out \- groff intermediate output format
+@@ -22,6 +22,9 @@ intermediate output format
  .\"
  .\" A copy of the Free Documentation License is included as a file
  .\" called FDL in the main directory of the groff source package.
@@ -105,12 +90,12 @@ index 6f1bd18c..4b99c403 100644
 +.\" Debian package as /usr/share/doc/groff/copyright.
  .
  .
- .\" ====================================================================
+ .\" Save and disable compatibility mode (for, e.g., Solaris 10/11).
 diff --git a/man/groff_tmac.5.man b/man/groff_tmac.5.man
-index 750fd505..9dd19585 100644
+index fac78f52f..b28297f6f 100644
 --- a/man/groff_tmac.5.man
 +++ b/man/groff_tmac.5.man
-@@ -28,6 +28,9 @@ groff_tmac \- macro files in the roff typesetting system
+@@ -21,6 +21,9 @@ typesetting system
  .\"
  .\" A copy of the Free Documentation License is included as a file
  .\" called FDL in the main directory of the groff source package.
@@ -119,12 +104,12 @@ index 750fd505..9dd19585 100644
 +.\" Debian package as /usr/share/doc/groff/copyright.
  .
  .
- .ds Ellipsis \&.\|.\|.\&\"
+ .\" Save and disable compatibility mode (for, e.g., Solaris 10/11).
 diff --git a/man/roff.7.man b/man/roff.7.man
-index deff211c..49011651 100644
+index 2468a4b02..9272f8264 100644
 --- a/man/roff.7.man
 +++ b/man/roff.7.man
-@@ -27,6 +27,9 @@ roff \- concepts and history of roff typesetting
+@@ -25,6 +25,9 @@ typesetting
  .\"
  .\" A copy of the Free Documentation License is included as a file
  .\" called FDL in the main directory of the groff source package.
@@ -133,12 +118,12 @@ index deff211c..49011651 100644
 +.\" Debian package as /usr/share/doc/groff/copyright.
  .
  .
- .\" ====================================================================
+ .\" Save and disable compatibility mode (for, e.g., Solaris 10/11).
 diff --git a/src/roff/groff/groff.1.man b/src/roff/groff/groff.1.man
-index 165507e0..06701bb2 100644
+index c551326e8..ed6c7eae1 100644
 --- a/src/roff/groff/groff.1.man
 +++ b/src/roff/groff/groff.1.man
-@@ -26,6 +26,9 @@ groff \- front-end for the groff document formatting system
+@@ -21,6 +21,9 @@ document formatting system
  .\"
  .\" A copy of the Free Documentation License is included as a file
  .\" called FDL in the main directory of the groff source package.
@@ -147,12 +132,12 @@ index 165507e0..06701bb2 100644
 +.\" Debian package as /usr/share/doc/groff-base/copyright.
  .
  .
- .\" ====================================================================
+ .\" Save and disable compatibility mode (for, e.g., Solaris 10/11).
 diff --git a/src/roff/troff/troff.1.man b/src/roff/troff/troff.1.man
-index e4354d8b..5d5bbe45 100644
+index d83c4a515..01b46616c 100644
 --- a/src/roff/troff/troff.1.man
 +++ b/src/roff/troff/troff.1.man
-@@ -22,6 +22,9 @@
+@@ -22,6 +22,9 @@ typesetter and document formatter
  .\"
  .\" A copy of the Free Documentation License is included as a file
  .\" called FDL in the main directory of the groff source package.
@@ -161,12 +146,12 @@ index e4354d8b..5d5bbe45 100644
 +.\" Debian package as /usr/share/doc/groff-base/copyright.
  .
  .
- .\" ====================================================================
+ .\" Save and disable compatibility mode (for, e.g., Solaris 10/11).
 diff --git a/tmac/groff_trace.7.man b/tmac/groff_trace.7.man
-index 85c2952d..36b73c9d 100644
+index 63da8abb8..f3be31970 100644
 --- a/tmac/groff_trace.7.man
 +++ b/tmac/groff_trace.7.man
-@@ -27,6 +27,9 @@ groff_trace \- groff macro package trace.tmac
+@@ -21,6 +21,9 @@ documents
  .\"
  .\" A copy of the Free Documentation License is included as a file
  .\" called FDL in the main directory of the groff source package.
@@ -175,4 +160,4 @@ index 85c2952d..36b73c9d 100644
 +.\" Debian package as /usr/share/doc/groff/copyright.
  .
  .
- .\" ====================================================================
+ .\" Save and disable compatibility mode (for, e.g., Solaris 10/11).
