@@ -1,6 +1,4 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
-#
-# Last update: 13 Aug 2015
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # This file is part of 'groff'.
 #
@@ -46,21 +44,26 @@ $(DEVHTMLFONTSFILES): $(devhtml_srcdir)/R.proto
 	$(AM_V_GEN)$(MKDIR_P) `dirname $@` \
 	&& $(RM) $@ \
 	&& $(SHELL) $(GENFONTSSH) $(devhtml_srcdir)/R.proto \
-	     $(DEVHTMLRES) $(DEVHTMLCPI) `basename $@` > $@
+	  $(DEVHTMLRES) $(DEVHTMLCPI) `basename $@` >$@
 
 font/devhtml/DESC: $(devhtml_srcdir)/DESC.proto
 	$(AM_V_GEN)$(MKDIR_P) `dirname $@` \
 	&& $(SHELL) $(GENDESCSH) $(devhtml_srcdir)/DESC.proto \
-	     $(DEVHTMLRES) $(DEVHTMLCPI) $(DEVHTMLLPI) $(DEVHTMLFONTS) > $@ \
-	&& echo "image_generator $(GHOSTSCRIPT)" >> $@
+	  $(DEVHTMLRES) $(DEVHTMLCPI) $(DEVHTMLLPI) $(DEVHTMLFONTS) \
+	  > $@.tmp \
+	&& echo "image_generator $(GHOSTSCRIPT)" >>$@.tmp \
+	&& mv $@.tmp $@
+
+# HTML documents to be produced by troff should depend on this stamp
+# file to ensure that (post-)grohtml's device and font description files
+# are available.
+MOSTLYCLEANFILES += font/devhtml/stamp
+font/devhtml/stamp: font/devhtml/DESC $(DEVHTMLFONTSFILES)
+	$(AM_V_at)>$@
 
 
-########################################################################
-# Editor settings
-########################################################################
-#
 # Local Variables:
 # mode: makefile-automake
 # fill-column: 72
 # End:
-# vim: set filetype=automake textwidth=72:
+# vim: set autoindent filetype=automake textwidth=72:

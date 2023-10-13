@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.2.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -30,8 +31,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
 #ifndef YY_YY_SRC_PREPROC_PIC_PIC_HPP_INCLUDED
 # define YY_YY_SRC_PREPROC_PIC_PIC_HPP_INCLUDED
@@ -43,136 +45,145 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    LABEL = 258,
-    VARIABLE = 259,
-    NUMBER = 260,
-    TEXT = 261,
-    COMMAND_LINE = 262,
-    DELIMITED = 263,
-    ORDINAL = 264,
-    TH = 265,
-    LEFT_ARROW_HEAD = 266,
-    RIGHT_ARROW_HEAD = 267,
-    DOUBLE_ARROW_HEAD = 268,
-    LAST = 269,
-    BOX = 270,
-    CIRCLE = 271,
-    ELLIPSE = 272,
-    ARC = 273,
-    LINE = 274,
-    ARROW = 275,
-    MOVE = 276,
-    SPLINE = 277,
-    HEIGHT = 278,
-    RADIUS = 279,
-    FIGNAME = 280,
-    WIDTH = 281,
-    DIAMETER = 282,
-    UP = 283,
-    DOWN = 284,
-    RIGHT = 285,
-    LEFT = 286,
-    FROM = 287,
-    TO = 288,
-    AT = 289,
-    WITH = 290,
-    BY = 291,
-    THEN = 292,
-    SOLID = 293,
-    DOTTED = 294,
-    DASHED = 295,
-    CHOP = 296,
-    SAME = 297,
-    INVISIBLE = 298,
-    LJUST = 299,
-    RJUST = 300,
-    ABOVE = 301,
-    BELOW = 302,
-    OF = 303,
-    THE = 304,
-    WAY = 305,
-    BETWEEN = 306,
-    AND = 307,
-    HERE = 308,
-    DOT_N = 309,
-    DOT_E = 310,
-    DOT_W = 311,
-    DOT_S = 312,
-    DOT_NE = 313,
-    DOT_SE = 314,
-    DOT_NW = 315,
-    DOT_SW = 316,
-    DOT_C = 317,
-    DOT_START = 318,
-    DOT_END = 319,
-    DOT_X = 320,
-    DOT_Y = 321,
-    DOT_HT = 322,
-    DOT_WID = 323,
-    DOT_RAD = 324,
-    SIN = 325,
-    COS = 326,
-    ATAN2 = 327,
-    LOG = 328,
-    EXP = 329,
-    SQRT = 330,
-    K_MAX = 331,
-    K_MIN = 332,
-    INT = 333,
-    RAND = 334,
-    SRAND = 335,
-    COPY = 336,
-    THRU = 337,
-    TOP = 338,
-    BOTTOM = 339,
-    UPPER = 340,
-    LOWER = 341,
-    SH = 342,
-    PRINT = 343,
-    CW = 344,
-    CCW = 345,
-    FOR = 346,
-    DO = 347,
-    IF = 348,
-    ELSE = 349,
-    ANDAND = 350,
-    OROR = 351,
-    NOTEQUAL = 352,
-    EQUALEQUAL = 353,
-    LESSEQUAL = 354,
-    GREATEREQUAL = 355,
-    LEFT_CORNER = 356,
-    RIGHT_CORNER = 357,
-    NORTH = 358,
-    SOUTH = 359,
-    EAST = 360,
-    WEST = 361,
-    CENTER = 362,
-    END = 363,
-    START = 364,
-    RESET = 365,
-    UNTIL = 366,
-    PLOT = 367,
-    THICKNESS = 368,
-    FILL = 369,
-    COLORED = 370,
-    OUTLINED = 371,
-    SHADED = 372,
-    XSLANTED = 373,
-    YSLANTED = 374,
-    ALIGNED = 375,
-    SPRINTF = 376,
-    COMMAND = 377,
-    DEFINE = 378,
-    UNDEF = 379
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    LABEL = 258,                   /* LABEL  */
+    VARIABLE = 259,                /* VARIABLE  */
+    NUMBER = 260,                  /* NUMBER  */
+    TEXT = 261,                    /* TEXT  */
+    COMMAND_LINE = 262,            /* COMMAND_LINE  */
+    DELIMITED = 263,               /* DELIMITED  */
+    ORDINAL = 264,                 /* ORDINAL  */
+    TH = 265,                      /* TH  */
+    LEFT_ARROW_HEAD = 266,         /* LEFT_ARROW_HEAD  */
+    RIGHT_ARROW_HEAD = 267,        /* RIGHT_ARROW_HEAD  */
+    DOUBLE_ARROW_HEAD = 268,       /* DOUBLE_ARROW_HEAD  */
+    LAST = 269,                    /* LAST  */
+    BOX = 270,                     /* BOX  */
+    CIRCLE = 271,                  /* CIRCLE  */
+    ELLIPSE = 272,                 /* ELLIPSE  */
+    ARC = 273,                     /* ARC  */
+    LINE = 274,                    /* LINE  */
+    ARROW = 275,                   /* ARROW  */
+    MOVE = 276,                    /* MOVE  */
+    SPLINE = 277,                  /* SPLINE  */
+    HEIGHT = 278,                  /* HEIGHT  */
+    RADIUS = 279,                  /* RADIUS  */
+    FIGNAME = 280,                 /* FIGNAME  */
+    WIDTH = 281,                   /* WIDTH  */
+    DIAMETER = 282,                /* DIAMETER  */
+    UP = 283,                      /* UP  */
+    DOWN = 284,                    /* DOWN  */
+    RIGHT = 285,                   /* RIGHT  */
+    LEFT = 286,                    /* LEFT  */
+    FROM = 287,                    /* FROM  */
+    TO = 288,                      /* TO  */
+    AT = 289,                      /* AT  */
+    WITH = 290,                    /* WITH  */
+    BY = 291,                      /* BY  */
+    THEN = 292,                    /* THEN  */
+    SOLID = 293,                   /* SOLID  */
+    DOTTED = 294,                  /* DOTTED  */
+    DASHED = 295,                  /* DASHED  */
+    CHOP = 296,                    /* CHOP  */
+    SAME = 297,                    /* SAME  */
+    INVISIBLE = 298,               /* INVISIBLE  */
+    LJUST = 299,                   /* LJUST  */
+    RJUST = 300,                   /* RJUST  */
+    ABOVE = 301,                   /* ABOVE  */
+    BELOW = 302,                   /* BELOW  */
+    OF = 303,                      /* OF  */
+    THE = 304,                     /* THE  */
+    WAY = 305,                     /* WAY  */
+    BETWEEN = 306,                 /* BETWEEN  */
+    AND = 307,                     /* AND  */
+    HERE = 308,                    /* HERE  */
+    DOT_N = 309,                   /* DOT_N  */
+    DOT_E = 310,                   /* DOT_E  */
+    DOT_W = 311,                   /* DOT_W  */
+    DOT_S = 312,                   /* DOT_S  */
+    DOT_NE = 313,                  /* DOT_NE  */
+    DOT_SE = 314,                  /* DOT_SE  */
+    DOT_NW = 315,                  /* DOT_NW  */
+    DOT_SW = 316,                  /* DOT_SW  */
+    DOT_C = 317,                   /* DOT_C  */
+    DOT_START = 318,               /* DOT_START  */
+    DOT_END = 319,                 /* DOT_END  */
+    DOT_X = 320,                   /* DOT_X  */
+    DOT_Y = 321,                   /* DOT_Y  */
+    DOT_HT = 322,                  /* DOT_HT  */
+    DOT_WID = 323,                 /* DOT_WID  */
+    DOT_RAD = 324,                 /* DOT_RAD  */
+    SIN = 325,                     /* SIN  */
+    COS = 326,                     /* COS  */
+    ATAN2 = 327,                   /* ATAN2  */
+    LOG = 328,                     /* LOG  */
+    EXP = 329,                     /* EXP  */
+    SQRT = 330,                    /* SQRT  */
+    K_MAX = 331,                   /* K_MAX  */
+    K_MIN = 332,                   /* K_MIN  */
+    INT = 333,                     /* INT  */
+    RAND = 334,                    /* RAND  */
+    SRAND = 335,                   /* SRAND  */
+    COPY = 336,                    /* COPY  */
+    THRU = 337,                    /* THRU  */
+    TOP = 338,                     /* TOP  */
+    BOTTOM = 339,                  /* BOTTOM  */
+    UPPER = 340,                   /* UPPER  */
+    LOWER = 341,                   /* LOWER  */
+    SH = 342,                      /* SH  */
+    PRINT = 343,                   /* PRINT  */
+    CW = 344,                      /* CW  */
+    CCW = 345,                     /* CCW  */
+    FOR = 346,                     /* FOR  */
+    DO = 347,                      /* DO  */
+    IF = 348,                      /* IF  */
+    ELSE = 349,                    /* ELSE  */
+    ANDAND = 350,                  /* ANDAND  */
+    OROR = 351,                    /* OROR  */
+    NOTEQUAL = 352,                /* NOTEQUAL  */
+    EQUALEQUAL = 353,              /* EQUALEQUAL  */
+    LESSEQUAL = 354,               /* LESSEQUAL  */
+    GREATEREQUAL = 355,            /* GREATEREQUAL  */
+    LEFT_CORNER = 356,             /* LEFT_CORNER  */
+    RIGHT_CORNER = 357,            /* RIGHT_CORNER  */
+    NORTH = 358,                   /* NORTH  */
+    SOUTH = 359,                   /* SOUTH  */
+    EAST = 360,                    /* EAST  */
+    WEST = 361,                    /* WEST  */
+    CENTER = 362,                  /* CENTER  */
+    END = 363,                     /* END  */
+    START = 364,                   /* START  */
+    RESET = 365,                   /* RESET  */
+    UNTIL = 366,                   /* UNTIL  */
+    PLOT = 367,                    /* PLOT  */
+    THICKNESS = 368,               /* THICKNESS  */
+    FILL = 369,                    /* FILL  */
+    COLORED = 370,                 /* COLORED  */
+    OUTLINED = 371,                /* OUTLINED  */
+    SHADED = 372,                  /* SHADED  */
+    XSLANTED = 373,                /* XSLANTED  */
+    YSLANTED = 374,                /* YSLANTED  */
+    ALIGNED = 375,                 /* ALIGNED  */
+    SPRINTF = 376,                 /* SPRINTF  */
+    COMMAND = 377,                 /* COMMAND  */
+    DEFINE = 378,                  /* DEFINE  */
+    UNDEF = 379                    /* UNDEF  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define LABEL 258
 #define VARIABLE 259
 #define NUMBER 260
@@ -298,10 +309,9 @@ extern int yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 65 "../src/preproc/pic/pic.ypp" /* yacc.c:1906  */
+#line 65 "../src/preproc/pic/pic.ypp"
 
 	char *str;
 	int n;
@@ -320,9 +330,9 @@ union YYSTYPE
 	graphics_state state;
 	object_type obtype;
 
-#line 324 "src/preproc/pic/pic.hpp" /* yacc.c:1906  */
-};
+#line 334 "src/preproc/pic/pic.hpp"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -331,6 +341,8 @@ typedef union YYSTYPE YYSTYPE;
 
 extern YYSTYPE yylval;
 
+
 int yyparse (void);
+
 
 #endif /* !YY_YY_SRC_PREPROC_PIC_PIC_HPP_INCLUDED  */

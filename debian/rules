@@ -41,7 +41,7 @@ gtmp  = debian/groff
 include /usr/share/dpkg/architecture.mk
 
 confflags = \
-	--libdir=\$${prefix}/lib --with-appresdir=/etc/X11/app-defaults \
+	--libdir=\$${prefix}/lib --with-appdefdir=/etc/X11/app-defaults \
 	BASH_PROG=/bin/bash GREP=/bin/grep
 
 override_dh_autoreconf:
@@ -53,7 +53,7 @@ override_dh_auto_configure:
 ifneq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
 	$(buildflags_native) dh_auto_configure \
 		--builddirectory=debian/build-native -- \
-		$(confflags) --with-doc=no
+		$(confflags)
 endif
 	# Work around an unfortunate interaction between the
 	# non-recursive-gnulib-prefix-hack module and out-of-tree builds.
@@ -72,6 +72,10 @@ else
 endif
 
 override_dh_auto_build:
+	# Always rebuild documentation from source.
+	mkdir -p debian/doc-save
+	find doc \( -name \*.dvi -or -name \*.info -or -name \*.pdf \) \
+		-exec mv -f -t debian/doc-save '{}' +
 ifneq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
 	dh_auto_build --builddirectory=debian/build-native -- \
 		extratmacdirs=/usr/share/groff/tmac \
@@ -80,16 +84,13 @@ endif
 	GROFF_NO_SGR=1 dh_auto_build --builddirectory=debian/build -- \
 		extratmacdirs=/usr/share/groff/tmac \
 		docdir=\$${prefix}/share/doc/groff-base $(cross)
-	GROFF_NO_SGR=1 $(MAKE) -C debian/build $(cross) \
-		doc/meintro.txt doc/meref.txt doc/pic.txt
 
 override_dh_auto_install:
 	dh_auto_install -- \
 		docdir=\$${prefix}/share/doc/groff-base \
 		INSTALL_INFO=:
 
-override_dh_install:
-	dh_install
+execute_after_dh_install:
 	# Debian additions to *.local
 	cat debian/mandoc.local >> $(gbtmp)/etc/groff/man.local
 	cat debian/mandoc.local >> $(gbtmp)/etc/groff/mdoc.local
@@ -112,5 +113,7 @@ override_dh_installchangelogs:
 override_dh_compress:
 	dh_compress -X.mom
 
-override_dh_missing:
-	dh_missing --fail-missing
+execute_before_dh_auto_clean:
+	[ ! -d debian/doc-save ] || \
+		find debian/doc-save -type f -exec mv -f -t doc '{}' +
+	rm -rf debian/doc-save

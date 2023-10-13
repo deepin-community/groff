@@ -1,0 +1,47 @@
+From 43f8bc8009a33929db3f3bafadf17f606c1b850a Mon Sep 17 00:00:00 2001
+From: Colin Watson <cjwatson@debian.org>
+Date: Tue, 11 Jul 2023 17:33:14 +0100
+Subject: Enable OSC 8 hyperlinks for man pages
+
+The version of `less` in Debian stable supports these, provided that
+you're also using a suitable terminal emulator.
+
+Forwarded: no
+Last-Update: 2023-07-11
+
+Patch-Name: man-hyperlinks.patch
+---
+ tmac/man.local                              | 2 +-
+ tmac/tests/an_UE-breaks-before-long-URIs.sh | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tmac/man.local b/tmac/man.local
+index 5daa507b8..0bb667bd4 100644
+--- a/tmac/man.local
++++ b/tmac/man.local
+@@ -6,7 +6,7 @@
+ .\" output devices.
+ .if !'\*[.T]'html' \
+ .  if !r U \
+-.    nr U 0
++.    nr U 1
+ .\"
+ .\" "CW" is not a portable font name, but some man pages use it anyway.
+ .\" Uncomment this to suppress warnings produced by such pages.  This
+diff --git a/tmac/tests/an_UE-breaks-before-long-URIs.sh b/tmac/tests/an_UE-breaks-before-long-URIs.sh
+index 0b151fd8d..f39ceaea1 100755
+--- a/tmac/tests/an_UE-breaks-before-long-URIs.sh
++++ b/tmac/tests/an_UE-breaks-before-long-URIs.sh
+@@ -48,10 +48,10 @@ wail () {
+     fail=yes
+ }
+ 
+-output=$(printf "%s" "$input" | "$groff" -Tascii -P-cbou -man)
++output=$(printf "%s" "$input" | "$groff" -Tascii -P-cbou -rU0 -man)
+ echo "$output"
+ error=$(printf "%s" "$input" \
+-    | "$groff" -Tascii -P-cbou -man -ww -z 2>&1)
++    | "$groff" -Tascii -P-cbou -rU0 -man -ww -z 2>&1)
+ 
+ echo "testing that no diagnostic messages are produced" >&2
+ test -z "$error" || wail

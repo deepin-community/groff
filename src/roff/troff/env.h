@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -140,8 +139,6 @@ void title();
 void widow_control_request();
 #endif /* WIDOW_CONTROL */
 
-void do_divert(int append, int boxing);
-
 class environment {
   int dummy;			// dummy environment used for \w
   hunits prev_line_length;
@@ -281,6 +278,7 @@ public:
   hunits get_digit_width();
   int get_font() { return fontno; };	// .f
   int get_zoom();			// .zoom
+  int get_numbering_nodes();		// .nm
   font_family *get_family() { return family; }
   int get_bold();			// .b
   int get_adjust_mode();		// .j
@@ -313,6 +311,7 @@ public:
   hunits get_hyphenation_margin();
   int get_center_lines();
   int get_right_justify_lines();
+  int get_no_number_count();
   int get_prev_line_interrupted() { return prev_line_interrupted; }
   color *get_fill_color();
   color *get_glyph_color();
@@ -324,8 +323,8 @@ public:
   node *extract_output_line();
   void width_registers();
   void wrap_up_tab();
-  void set_font(int);
-  void set_font(symbol);
+  bool set_font(int);
+  bool set_font(symbol);
   void set_family(symbol);
   void set_size(int);
   void set_char_height(int);
@@ -414,3 +413,9 @@ extern symbol default_family;
 extern int translate_space_to_dummy;
 
 extern unsigned char hpf_code_table[];
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

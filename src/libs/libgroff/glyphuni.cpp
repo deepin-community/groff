@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* Copyright (C) 2002-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2020 Free Software Foundation, Inc.
      Written by Werner Lemberg <wl@gnu.org>
 
 This file is part of groff.
@@ -170,7 +170,7 @@ struct S {
   { "Fo", "00AB" },
   { "no", "00AC" },
   { "tno", "00AC" },
-  // The soft hypen U+00AD is meaningful only in the input file,
+  // The soft hyphen U+00AD is meaningful only in the input file,
   // not in the output.
   { "rg", "00AE" },
   { "a-", "00AF" },

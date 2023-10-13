@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -19,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lib.h"
 
-#include <stdlib.h>
 #include <assert.h>
+#include <stdlib.h>
 #include <errno.h>
 
 #include "posix.h"
@@ -142,7 +141,7 @@ const char *bmpattern::search(const char *buf, const char *end) const
 
 bmpattern::~bmpattern()
 {
-  a_delete pat;
+  delete[] pat;
 }
 
 inline int bmpattern::length() const
@@ -286,7 +285,7 @@ file_buffer::file_buffer()
 
 file_buffer::~file_buffer()
 {
-  a_delete buffer;
+  delete[] buffer;
 }
 
 const char *file_buffer::get_start() const
@@ -348,7 +347,7 @@ int file_buffer::load(int fd, const char *filename)
 	return 1;
       }
     }
-    a_delete buffer;
+    delete[] buffer;
     buffer = 0;
   }
   close(fd);
@@ -382,7 +381,7 @@ linear_searcher::linear_searcher(const char *query, int query_len,
   }
   assert(nkeys <= nk);
   if (nkeys == 0) {
-    a_delete keys;
+    delete[] keys;
     keys = 0;
   }
 }
@@ -391,7 +390,7 @@ linear_searcher::~linear_searcher()
 {
   for (int i = 0; i < nkeys; i++)
     delete keys[i];
-  a_delete keys;
+  delete[] keys;
 }
 
 int linear_searcher::search(const char *buffer, const char *bufend,
@@ -499,3 +498,9 @@ int linear_search_item_iterator::next(const linear_searcher &searcher,
   else
     return 0;
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

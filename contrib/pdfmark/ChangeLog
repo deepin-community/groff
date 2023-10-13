@@ -1,3 +1,237 @@
+2023-02-18  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* pdfmark.am (uninstall-pdfmark-hook): Simplify uninstallation.
+	Try to remove the configured `pdfdocdir` in the event it is
+	empty, but do not fail if it isn't.  (It can be a directory
+	shared with other groff components; we don't know in what order
+	the uninstall targets will serialize, but the last one run
+	should succeed.)
+
+2022-09-20  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* sanitize.tmac: Move comment to where escape sequences are
+	recognized.  Problem arose in commit 058b63ce3d, 2021-09-04.
+
+	troff:.../contrib/pdfmark/sanitize.tmac:162: warning: macro '\"'
+	not defined
+
+2022-05-20  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* pdfmark.am: Rename `BUILD_PDFDOC` to `USE_GROPDF`.
+
+2022-03-30  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* pdfmark.am: Eliminate `PDFMARK_TFLAG` and `PDFMARK_PFLAG` Make
+	macros; they were expanded in only one place.
+	(PDFROFF): Track rename of Make macro `TFLAG` to `MFLAG`.
+
+2022-03-30  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* cover.ms: Die horribly if `PSPIC` call fails.
+
+2022-03-26  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* pdfmark.am (PDFDOCFILES): Replace hard-coded "gnu.eps"
+	file name with expansion of `DOC_GNU_EPS`.
+	(contrib/pdfmark/pdfmark.pdf): Pass `-I` option to pdfroff(1) to
+	enable location of "gnu.eps" file.
+
+2021-10-24  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Adapt to accommodate global XH and XN implementations.
+
+	cf. <https://savannah.gnu.org/bugs/?58946#comment13>
+
+	* spdf.tmac (XH-INIT, XN-INIT, XH-UPDATE-TOC): Delete definitions;
+	the defaults, provided by s.tmac, are now sufficient.
+	(XH-REPLACEMENT, XN-REPLACEMENT): Define these, rather than...
+	(XH, XN): ...these, respectively.
+
+2021-10-02  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Make a minor layout adjustment.
+
+	* pdfmark.ms (Section 2.4.3): Add a vertical space reservation, to
+	avoid a widow line at the end of the paragraph explaining use of...
+	(PDFHREF.Y): ...this computed register, in the definition of...
+	(PDFBOOKMARK.VIEW): ...this.
+
+2021-10-02  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Clarify references to use of the -Tpdf option.
+
+	* pdfmark.ms (Section 2, Section 3.1): Add footnotes, indicating that
+	only "-Tps" and "-Tpdf" output formats are supported, and that "-Tpdf"
+	may avoid a separate step, to convert from PostScript to PDF.
+
+2021-10-02  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Work around misplacement of link "hot-spots" in footnotes.
+
+	* pdfmark.ms (pdfhref-nobreak): New document-local macro; used instead
+	of "pdfhref", this forces paragraph adjustment before placement of any
+	unbreakable link text, for which line-wrap may be required.  Currently
+	observed only within footnotes, without adjustment, the "hot-spot" for
+	the link may be placed 1v above its associated text.
+
+2021-10-02  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Link footnote reference marks to footnote text.
+
+	* pdfmark.ms (FP): Redefine locally; replace s.tmac default.
+	(FF): Do not redefine; our FP replacement macro does not use it.
+	[d FS-MARK] (FS-MARK): Redefine locally; map it to...
+	(pdf:fn.mark): ...this locally defined macro.
+	[!d FS-MARK] (@FS): Rename s.tmac implementation as...
+	(pdf:fn.record): ...this, then redefine @FS itself, to call...
+	(pdf:fn.mark, pdf:fn.record): ...these, in respective order.
+	(groff-1.19.1, GhostScript-8.14): Update footnote reference syntax.
+	(Ghostscript-8.14, MSYS): Emulate sentence space after footnote mark.
+	(*): Replace s.tmac string definition; make it equivalent to "\c",
+	after renaming its original implementation as...
+	(pdf:fn.index): ...this; synchronize references with changes to...
+	(pdf:fn.index.count): ...this new locally defined register; it is
+	auto-incremented by one, as each footnote is placed.
+
+2021-10-01  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Incorporate user-defined TOC leader style.
+
+	* pdfmark.ms: Make some comment tidy-up adjustments.
+	(TC-LEADER, TC-MARGIN): Define them, to take advantage of new
+	s.tmac features; cf. <https://savannah.gnu.org/bugs/?61157>.
+
+2021-09-18  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Factor a further unnecessary macro out of spdf.tmac
+
+	* spdf.tmac (XR): Remove it; relocate it to...
+	* pdfmark.ms (XR): ...here.
+
+2021-09-13  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Add comments to annotate locally-defined font change macros.
+
+	* pdfmark.ms (EM): Annotate this locally-defined emphasis macro...
+	(CWB, CWI, CWBI): ...these constant width font interpolation macros...
+	(=): ...and this locally-defined IP tag variant string.
+
+2021-09-13  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Update defunct internet URL references.
+
+	* pdfmark.ms (pdfmark-manual): Adobe moved the document (again);
+	update the document reference macro, to follow the URL relocation.
+	(www.mingw.org): The MinGW Project has relinquished this domain;
+	update the URL reference, to follow web-site relocation to...
+	(mingw.osdn.io): ...here.
+
+2021-09-13  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Factor document-specific bloat out of spdf.tmac
+
+	* spdf.tmac: Reorganize; add many comments.
+	(XN): Retained, but reimplemented, to serve as...
+	(XH, XN): ...both of these; add callback hooks for...
+	(XH-INIT, XN-INIT, XH-UPDATE-TOC): ...these; provide no-op stubs;
+	factor out TOC collection code, delegating to XH-UPDATE-TOC.
+	(opt*XN-N, opt*XN-S, opt*XN-X): Rename internal macros to...
+	(de spdf:XH-N, de spdf:XH-S, de spdf:XH-X): ...these, respectively.
+	(AN, @AN, IE, IS, LU, NN, PXREF, SAME-PAGE, XM): Delete; we do not
+	require these; if users do, they should define their own.
+	(pdf@toc): Delete internal macro; fold body into...
+	(TC): ...this.
+
+	* pdfmark.ms (XH-UPDATE-TOC): Implement callback; it is based on...
+	(XN): ...original implementation of this, factored out of spdf.tmac,
+	but with significant simplification, to remove unnecessary code.
+	(XNVS1, XNVS2, XNVS3): Tighten vertical spacing.
+
+2021-09-04  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Reduce potential for user-space exposure of "ms" internals.
+
+	* spdf.tmac (@NH): Append to s.tmac macro; assign...
+	(spdf:nh*hl): ...this new internal register; alias it to...
+	(.NH): ...this new public name, hence making it track...
+	(nh*hl): ...this s.tmac internal numeric register.
+	(XN): Use \n[.NH] instead of \n[nh*hl].
+
+2021-09-03  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Sanitize text for use in PDF document outlines.
+
+	* sanitize.tmac: New file; it implements...
+	(sanitize): ...this new macro; interprets its first argument as a
+	string name, and copies its remaining arguments to the named string,
+	discarding specific embedded troff escape sequences; currently...
+	(\F): ...only this is identified as "specifically discardable".
+
+	* pdfmark.am (TMACFILES): Add sanitize.tmac
+
+	* spdf.tmac (mso): Include sanitize.tmac
+	(xn*ref, xn*argc): Rename all occurrences...
+	(spdf:refname, spdf:argc): ...to these, respectively.
+	(XN): Stop inserting $* directly into PDF outlines; instead, use...
+	(spdf:bm.text): ...this new string; this is locally defined by...
+	(spdf:bm.define): ...this new macro; passed the original $* from
+	XN, this itself, is locally defined as a redirectable alias for...
+	(spdf:bm.basic): ...this new local macro; it simply copies $*,
+	passed from XN, to the string named by its first argument, (which is
+	always spdf:bm.text), so reproducing previous behaviour.
+	(opt*XN-S): New macro; defined for internal use only, it adds a "-S"
+	option to XN, such that, when specified, it temporarily redirects...
+	(spdf:bm.define): ...this macro mapping alias to...
+	(sanitize): ...this.
+
+	* pdfmark.ms (XN): Add "-S" option for all headings which include...
+	(\F[C]...\F[]): ...this escape sequence.
+
+2021-08-21  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Define, and use registered trade mark strings.
+
+	* pdfmark.ms (Adobe, Acrobat, Distiller, PostScript, Microsoft):
+	Define as strings.  Each expands to its own name, followed by the
+	registered trademark symbol, as a superscript, and optional trailing
+	punctuation, below the superscript.  Use each as required.
+
+2021-08-21  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Prefer "-ize" to "-ise" where etymology permits.
+
+	* pdfmark.ms: For all verbs, and their derivative nouns, for which
+	British English allows either "-ise" or "-ize" as ending, prefer the
+	"-ize" form of verb, and "-ization" form of noun, throughout.
+
+2021-08-20  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Correct a spelling error.
+
+	* pdfmark.ms (Section 2.5.3.1): Fix typo: s/exanple/example/.
+
+2021-08-20  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Space out section headings in pdfmark.ms source.
+
+	* pdfmark.ms (.NH): Precede each instance by one null request, to
+	improve readability.
+
+2021-08-18  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Refine pdfroff "missing ghostscript" diagnostic.
+
+	* pdfroff.sh [$GS = ":"]: Fix typo: s/connot/cannot/; refine text.
+
+2020-12-25  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* pdfmark.am (PDFROFF): Call pdfroff without
+	`--keep-temporary-files` option.  Temporary directories are
+	created with mktemp(1) and files with an embedded process
+	identifier, which frustrates reproducible builds.
+
+	See <https://savannah.gnu.org/bugs/?57218>.
+
 2018-02-28  Werner LEMBERG  <wl@gnu.org>
 
 	* pdfmark.am (pdfmark.pdf): Use $(GROFF_V).
@@ -435,14 +669,15 @@
 
 ________________________________________________________________________
 
-Copyright (C) 2004-2018 Free Software Foundation, Inc.
+Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.
 
 Local Variables:
-version-control: never
-coding: latin-1
+fill-column: 72
 mode: change-log
+version-control: never
 End:
+vim:set autoindent textwidth=72:

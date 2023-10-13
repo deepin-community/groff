@@ -1,4 +1,4 @@
-From e5cdd413e084538f8b9bf5e6cad8d3dc98ecc48e Mon Sep 17 00:00:00 2001
+From 8d089f72758f5abf62fe667cb6a7bef1b5d2e36b Mon Sep 17 00:00:00 2001
 From: Colin Watson <cjwatson@debian.org>
 Date: Thu, 2 Jan 2014 13:13:20 +0000
 Subject: Allow adding a version-independent directory to the macro path
@@ -19,10 +19,10 @@ Patch-Name: extratmacdirs.patch
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Makefile.am b/Makefile.am
-index d18c49b8..754a8fe7 100644
+index f7ab4107e..c4d09b7be 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -211,7 +211,7 @@ localtmacdir=$(dataprogramdir)/site-tmac
+@@ -207,7 +207,7 @@ localtmacdir=$(dataprogramdir)/site-tmac
  # directory will be always added.
  # `troffrc' and `troffrc-end' (and `eqnrc') are searched neither in the
  # current nor in the home directory.

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2018- Free Software Foundation, Inc.
+# Copyright (C) 2018-2020 Free Software Foundation, Inc.
 # 
 # This file is part of groff.
 # 
@@ -29,12 +29,23 @@ list="
   sample_docs.pdf
   slide-demo.pdf
   typesetting.pdf
+  copyright-chapter.pdf
+  copyright-default.pdf
   "
 
 if test "$have_urw_fonts" != "yes"; then
     echo "No URW fonts, mom examples cannot be correctly generated"
     exit 77
 fi
+
+for cmd in pdfinfo pdfimages
+do
+    if ! command -v $cmd >/dev/null
+    then
+        echo "cannot locate '$cmd' command; skipping" >&2
+        exit 77 # skip
+    fi
+done
 
 # $1: pdf file
 # $2: expected number of pages
@@ -70,8 +81,10 @@ check_number_pages "$examplesdir/letter.pdf" 1
 check_number_pages "$examplesdir/mom-pdf.pdf" 8
 check_number_pages "$examplesdir/mon_premier_doc.pdf" 5
 check_number_pages "$examplesdir/sample_docs.pdf" 12
-check_number_pages "$examplesdir/slide-demo.pdf" 27
+check_number_pages "$examplesdir/slide-demo.pdf" 33
 check_number_pages "$examplesdir/typesetting.pdf" 3
+check_number_pages "$examplesdir/copyright-chapter.pdf" 5
+check_number_pages "$examplesdir/copyright-default.pdf" 5
 
 check_has_images "$examplesdir/typesetting.pdf"
 check_has_images "$examplesdir/slide-demo.pdf"

@@ -1,8 +1,4 @@
-// -*- C++ -*-
-
-// <groff_src_dir>/src/libs/libdriver/input.cpp
-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
 
    Written by James Clark (jjc@jclark.com)
    Major rewrite 2001 by Bernd Warken <groff-bernd.warken-72@web.de>
@@ -135,7 +131,7 @@
      independence by scaling the intermediate output to the resolution
      of the postprocessor device if different from the one specified
      with 'x T', groff have not.  So implement full quasi device
-     indepedence, including the mapping of the strange classical
+     independence, including the mapping of the strange classical
      devices to the postprocessor device (seems to be reasonably
      easy).
    - The external, global pointer variables are not optimally handled.
@@ -509,7 +505,7 @@ IntArray::IntArray(const size_t n)
 
 IntArray::~IntArray(void)
 {
-  a_delete data;
+  delete[] data;
 }
 
 void
@@ -521,7 +517,7 @@ IntArray::append(IntArg x)
     data = new IntArg[num_allocated];
     for (size_t i = 0; i < num_stored; i++)
       data[i] = old_data[i];
-    a_delete old_data;
+    delete[] old_data;
   }
   data[num_stored] = x;
   num_stored++;
@@ -536,7 +532,7 @@ StringBuf::StringBuf(void)
 
 StringBuf::~StringBuf(void)
 {
-  a_delete data;
+  delete[] data;
 }
 
 void
@@ -548,7 +544,7 @@ StringBuf::append(const Char c)
     data = new Char[num_allocated];
     for (size_t i = 0; i < num_stored; i++)
       data[i] = old_data[i];
-    a_delete old_data;
+    delete[] old_data;
   }
   data[num_stored] = c;
   num_stored++;
@@ -801,7 +797,7 @@ get_integer_arg(void)
     error("integer argument too large");
     number = 0;
   }
-  a_delete s;
+  delete[] s;
   return (IntArg) number;
 }
 
@@ -853,7 +849,7 @@ get_possibly_integer_args()
 	x = 0;
       }
       args->append((IntArg) x);
-      a_delete s;
+      delete[] s;
     }
     // Here, c is not a digit.
     // Terminate on comment, end of line, or end of file, while
@@ -1456,7 +1452,7 @@ parse_x_command(void)
       IntArg n = get_integer_arg();
       char *name = get_string_arg();
       pr->load_font(n, name);
-      a_delete name;
+      delete[] name;
       skip_line_x();
       break;
     }
@@ -1467,7 +1463,7 @@ parse_x_command(void)
 	warning("empty argument for 'x F' command");
       else {
 	remember_source_filename(str_arg);
-	a_delete str_arg;
+	delete[] str_arg;
       }
       break;
     }
@@ -1507,7 +1503,7 @@ parse_x_command(void)
     {
       char *str_arg = get_string_arg();
       pr->special(str_arg, current_env, 'u');
-      a_delete str_arg;
+      delete[] str_arg;
       skip_line_x();
       break;
     }
@@ -1521,14 +1517,14 @@ parse_x_command(void)
 	pr->devtag(str_arg, current_env);
       else
 	pr->special(str_arg, current_env);
-      a_delete str_arg;
+      delete[] str_arg;
       break;
     }
   default:			// ignore unknown x commands, but warn
     warning("unknown command 'x %1'", subcmd);
     skip_line();
   }
-  a_delete subcmd_str;
+  delete[] subcmd_str;
   return stopped;
 }
 
@@ -1597,17 +1593,17 @@ do_file(const char *filename)
     str_arg = get_string_arg();
     if (str_arg[0] != 'T')
       fatal("the first command must be 'x T'");
-    a_delete str_arg;
+    delete[] str_arg;
     char *tmp_dev = get_string_arg();
     if (pr == 0) {		// note: 'pr' initialized after prologue
       device = tmp_dev;
-      if (!font::load_desc())
-	fatal("couldn't load DESC file, can't continue");
+      if (0 /* nullptr */ == font::load_desc())
+	fatal("cannot load description of '%1' device", tmp_dev);
     }
     else {
       if (device == 0 || strcmp(device, tmp_dev) != 0)
 	fatal("all files must use the same device");
-      a_delete tmp_dev;
+      delete[] tmp_dev;
     }
     skip_line_x();		// ignore further arguments
     current_env->size = 10 * font::sizescale;
@@ -1619,7 +1615,7 @@ do_file(const char *filename)
     str_arg = get_string_arg();
     if (str_arg[0] != 'r')
       fatal("the second command must be 'x res'");
-    a_delete str_arg;
+    delete[] str_arg;
     int_arg = get_integer_arg();
     EnvInt font_res = font::res;
     if (int_arg != font_res)
@@ -1639,7 +1635,7 @@ do_file(const char *filename)
     str_arg = get_string_arg();
     if (str_arg[0] != 'i')
       fatal("the third command must be 'x init'");
-    a_delete str_arg;
+    delete[] str_arg;
     skip_line_x();
   }
 
@@ -1716,7 +1712,7 @@ do_file(const char *filename)
 	  fatal_command(command);
 	char *str_arg = get_string_arg();
 	pr->set_special_char(str_arg, current_env);
-	a_delete str_arg;
+	delete[] str_arg;
 	break;
       }
     case 'D':			// drawing commands
@@ -1731,13 +1727,17 @@ do_file(const char *filename)
       {
 	char *str_arg = get_extended_arg();
 	remember_source_filename(str_arg);
-	a_delete str_arg;
+	delete[] str_arg;
 	break;
       }
     case 'h':			// h: relative horizontal move
+      if (npages <= 0)
+	fatal_command(command);
       current_env->hpos += (EnvInt) get_integer_arg();
       break;
     case 'H':			// H: absolute horizontal positioning
+      if (npages <= 0)
+	fatal_command(command);
       current_env->hpos = (EnvInt) get_integer_arg();
       break;
     case 'm':			// m: glyph color
@@ -1781,7 +1781,7 @@ do_file(const char *filename)
 	  pr->set_ascii_char((unsigned char) c, current_env, &w);
 	  current_env->hpos += w;
 	}
-	a_delete str_arg;
+	delete[] str_arg;
 	break;
       }
     case 'u':			// u: print spaced word
@@ -1797,13 +1797,17 @@ do_file(const char *filename)
 	  pr->set_ascii_char((unsigned char) c, current_env, &w);
 	  current_env->hpos += w + kern;
 	}
-	a_delete str_arg;
+	delete[] str_arg;
 	break;
       }
     case 'v':			// v: relative vertical move
+      if (npages <= 0)
+	fatal_command(command);
       current_env->vpos += (EnvInt) get_integer_arg();
       break;
     case 'V':			// V: absolute vertical positioning
+      if (npages <= 0)
+	fatal_command(command);
       current_env->vpos = (EnvInt) get_integer_arg();
       break;
     case 'w':			// w: inform about paddable space
@@ -1829,3 +1833,9 @@ do_file(const char *filename)
     warning("no final 'x stop' command");
   delete_current_env();
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

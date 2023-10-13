@@ -1,5 +1,5 @@
 // -*- C -*-
-/* Copyright (C) 2000-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2020 Free Software Foundation, Inc.
      Written by Gaius Mulley (gaius@glam.ac.uk).
 
 This file is part of groff.
@@ -30,7 +30,6 @@ class pushBackBuffer
  private:
   char       *charStack;
   int         stackPtr;   /* index to push back stack        */
-  int         debug;
   int         verbose;
   int         eofFound;
   char       *fileName;

@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -23,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
  *   http://partners.adobe.com/public/developer/en/ps/5001.DSC_Spec.pdf
  */
 
+#include "lib.h" // PI
 #include "driver.h"
 #include "stringclass.h"
 #include "cset.h"
@@ -371,7 +371,7 @@ ps_output &ps_output::put_symbol(const char *s)
 ps_output &ps_output::put_color(unsigned int c)
 {
   char buf[128];
-  sprintf(buf, "%.3g", double(c) / color::MAX_COLOR_VAL);
+  sprintf(buf, "%.3g", double(c) / double(color::MAX_COLOR_VAL));
   int len = strlen(buf);
   if (col > 0 && col + len + need_space > max_line_length) {
     putc('\n', fp);
@@ -432,7 +432,7 @@ ps_font::ps_font(const char *nm)
 ps_font::~ps_font()
 {
   free(encoding);
-  a_delete reencoded_name;
+  delete[] reencoded_name;
 }
 
 void ps_font::handle_unknown_font_command(const char *command, const char *arg,
@@ -480,7 +480,7 @@ subencoding::subencoding(font *f, unsigned int n, int ix, subencoding *s)
 
 subencoding::~subencoding()
 {
-  a_delete subfont;
+  delete[] subfont;
 }
 
 struct style {
@@ -615,11 +615,14 @@ ps_printer::ps_printer(double pl)
   if (linewidth < 0)
     linewidth = DEFAULT_LINEWIDTH;
   if (font::hor != 1)
-    fatal("horizontal resolution must be 1");
+    fatal("device horizontal motion quantum must be 1, got %1",
+	font::hor);
   if (font::vert != 1)
-    fatal("vertical resolution must be 1");
+    fatal("device vertical motion quantum must be 1, got %1",
+	font::vert);
   if (font::res % (font::sizescale*72) != 0)
-    fatal("res must be a multiple of 72*sizescale");
+    fatal("device resolution must be a multiple of 72*'sizescale', got"
+	" %1 ('sizescale'=%2)", font::res, font::sizescale);
   int r = font::res;
   int point = 0;
   while (r % 10 == 0) {
@@ -812,7 +815,7 @@ void ps_printer::define_encoding(const char *encoding, int encoding_index)
       out.put_literal_symbol(".notdef");
     else {
       out.put_literal_symbol(vec[i]);
-      a_delete vec[i];
+      delete[] vec[i];
     }
   }
   out.put_delimiter(']')
@@ -846,12 +849,12 @@ void ps_printer::encode_fonts()
       reencode_font((ps_font *)f->p);
     }
   }
-  a_delete done_encoding;
+  delete[] done_encoding;
 }
 
 void ps_printer::encode_subfont(subencoding *sub)
 {
-  assert(sub->glyphs != 0);
+  assert(sub != 0);
   out.put_literal_symbol(make_subencoding_name(sub->idx))
      .put_delimiter('[');
   for (int i = 0; i < 256; i++)
@@ -1258,13 +1261,14 @@ int ps_printer::media_width()
 {
   /*
    *  NOTE:
-   *  Although paper size is defined as real numbers, it seems to be
-   *  a common convention to round to the nearest postscript unit.
-   *  For example, a4 is really 595.276 by 841.89 but we use 595 by 842.
+   *  Although paper dimensions are defined as a pair of real numbers,
+   *  it seems to be a common convention to round to the nearest
+   *  PostScript unit.  For example, A4 is really 595.276 by 841.89 but
+   *  we use 595 by 842.
    *
    *  This is probably a good compromise, especially since the
-   *  Postscript definition specifies that media
-   *  matching should be done within a tolerance of 5 units.
+   *  PostScript definition specifies that media matching should be done
+   *  within a tolerance of 5 units.
    */
   return int(user_paper_width ? user_paper_width*72.0 + 0.5
 			      : font::paperwidth*72.0/font::res + 0.5);
@@ -1522,7 +1526,7 @@ void ps_printer::special(char *arg, const environment *env, char type)
   if (type != 'p')
     return;
   typedef void (ps_printer::*SPECIAL_PROCP)(char *, const environment *);
-  static struct {
+  static const struct {
     const char *name;
     SPECIAL_PROCP proc;
   } proc_table[] = {
@@ -1693,7 +1697,7 @@ void ps_printer::do_import(char *arg, const environment *env)
     p = end;
   }
   if (csalpha(*p) && (p[1] == '\0' || p[1] == ' ' || p[1] == '\n')) {
-    error("scaling indicators not allowed in arguments for X import command");
+    error("scaling units not allowed in arguments for X import command");
     return;
   }
   while (*p == ' ' || *p == '\n')
@@ -1824,7 +1828,7 @@ int main(int argc, char **argv)
     case 'p':
       if (!font::scan_papersize(optarg, 0,
 				&user_paper_length, &user_paper_width))
-	error("invalid custom paper size '%1' ignored", optarg);
+	error("ignoring invalid custom paper format '%1'", optarg);
       break;
     case 'P':
       env = "GROPS_PROLOGUE";
@@ -1840,7 +1844,7 @@ int main(int argc, char **argv)
       break;
     case 'w':
       if (sscanf(optarg, "%d", &linewidth) != 1 || linewidth < 0) {
-	error("bad linewidth '%1'", optarg);
+	error("invalid line width '%1' ignored", optarg);
 	linewidth = -1;
       }
       break;
@@ -1869,7 +1873,22 @@ int main(int argc, char **argv)
 static void usage(FILE *stream)
 {
   fprintf(stream,
-"usage: %s [-glmv] [-b n] [-c n] [-w n] [-I dir] [-P prologue]\n"
-"       [-F dir] [files ...]\n",
-    program_name);
+"usage: %s [-glm] [-b brokenness-flags] [-c num-copies]"
+" [-F font-directory] [-I inclusion-directory] [-p paper-format]"
+" [-P prologue-file] [-w rule-thickness] [file ...]\n"
+"usage: %s {-v | --version}\n"
+"usage: %s --help\n",
+	  program_name, program_name, program_name);
+  if (stdout == stream)
+    fputs(
+"\n"
+"Translate the output of troff(1) into PostScript.  See the grops(1)\n"
+"manual page.\n",
+	  stream);
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

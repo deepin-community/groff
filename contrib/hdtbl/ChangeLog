@@ -1,3 +1,83 @@
+2022-06-21  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* hdtbl.am (HDTBLPROCESSEDEXAMPLEFILES): Add dependency on
+	grops.
+
+2022-05-01  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* hdtbl.am (HDTBLPROCESSEDEXAMPLEFILES): Add dependency on devps
+	stamp file since the files' target rule generates PostScript
+	with groff.
+
+2022-04-12  Ingo Schwarze <schwarze@openbsd.org>
+
+	Delete the harmful, ill-designed, buggy, and essentially
+	unmaintained and untested --with-doc option of the configure
+	script.  See the NEWS file for more details on the rationale.
+
+	* hdtbl.am: Delete two BUILD_EXAMPLES conditionals.
+
+2022-03-30  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* hdtbl.am: Eliminate `HDTBL_TFLAG` and `HDTBL_PFLAG` Make
+	macros; they were expanded in only one place.
+	(HDTBLGROFF): Track rename of Make macro `TFLAG` to `MFLAG`.
+
+2022-03-30  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* examples/mixed_pickles.ms: Die horribly if `PSPIC` call fails.
+
+2022-03-26  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* hdtbl.am (nodist_hdtblexample_DATA,
+	HDTBLPROCESSEDEXAMPLEFILES): Replace hard-coded "gnu.eps" file
+	name with expansion of `DOC_GNU_EPS`.
+	(HDTBLPROCESSEDEXAMPLEFILES): Pass `-I` option to `HDTBLGROFF`
+	to enable location of "gnu.eps" file (for "mixedpickles.roff"
+	document).
+
+2021-10-21  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* hdtbl.am:
+	(hdtbl_test_template): Pull file name into a new variable.
+	(EXTRA_DIST, contrib/hdtbl/examples/test-hdtbl.sh): Use it.
+	(contrib/hdtbl/examples/test-hdtbl.sh): Build more quietly;
+	prefix rule with `$(AM_V_GEN)`.  Also run `chmod` conditionally.
+
+2021-07-11  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	* hdtbl.am: Remove unnecessary Make variable.
+	(hdtbl_builddir): Delete.
+	(HDTBL_TFLAG): Remove `-M$(hdtbl_builddir)` option; it's no
+	longer needed for hdtbl example document generation needed now
+	that hdtbl is no longer stripped.
+
+2021-07-01  G. Branden Robinson <g.branden.robinson@gmail.com>
+
+	Skip the stripper, part 2/3 ("hdtbl").
+
+	* hdmisc.tmac-u: Rename to...
+	* hdmisc.tmac: ...this.
+
+	* hdtbl.tmac-u: Rename to...
+	* hdtbl.tmac: ...this.
+
+	* hdtbl.am (HDSTRIPFILES): Rename to...
+	(HDTBLTMACFILES): ...this.
+	(hdtbltmac_DATA): Rename to...
+	(dist_hdtbltmac_DATA): ...this.
+	(MOSTLYCLEANFILES): Drop $(HDTBLSTRIPFILES).
+	($(HDTBLSTRIPFILES)): Drop target.
+
+2018-12-26  Ingo Schwarze  <schwarze@openbsd.org>
+
+	A missing prerequisite could cause parallel builds to fail.
+
+	* hdtbl.am (HDTBLPROCESSEDEXAMPLEFILES): requires eqn
+	because the .roff.ps target runs HDTBLGROFF =
+	GROFFBIN ... HDTBL_PFLAG = groff ... -t -p -e -U
+	which includes -e.
+
 2018-12-06  Ingo Schwarze  <schwarze@openbsd.org>
 
 	* examples/fonts_n.in, examples/fonts_x.in:
@@ -453,14 +533,16 @@
 
 ________________________________________________________________________
 
-Copyright 2006-2018 Free Software Foundation, Inc.
+Copyright 2006-2020 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.
 
 Local Variables:
-version-control: never
-mode: change-log
 coding: latin-1
+fill-column: 72
+mode: change-log
+version-control: never
 End:
+vim:set autoindent textwidth=72:

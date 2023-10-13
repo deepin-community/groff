@@ -1,17 +1,17 @@
-# Copyright (C) 2006-2018 Free Software Foundation, Inc.
-#      Written by Werner Lemberg (wl@gnu.org)
+# Copyright (C) 2006-2020 Free Software Foundation, Inc.
+#      Written by Werner Lemberg <wl@gnu.org>
 #      Automake migration by Bertrand Garrigues
-#
+#        <bertrand.garrigues@laposte.net>
 #
 # This file is part of groff.
 #
 # groff is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free
-# Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# groff is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# groff is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
@@ -19,26 +19,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 hdtbl_srcdir = $(top_srcdir)/contrib/hdtbl
-hdtbl_builddir = $(top_builddir)/contrib/hdtbl
 
 man7_MANS += contrib/hdtbl/groff_hdtbl.7
 
 # Groff command used to generate .ps files
-HDTBL_TFLAG = -M$(hdtbl_srcdir) -M$(hdtbl_builddir)
-HDTBL_PFLAG=-t -p -e -U
 HDTBLGROFF = \
   GROFF_COMMAND_PREFIX= \
   GROFF_BIN_PATH="$(GROFF_BIN_PATH)" \
-  $(GROFFBIN) $(FFLAG) $(TFLAG) $(HDTBL_TFLAG) $(HDTBL_PFLAG)
+  $(GROFFBIN) $(FFLAG) $(MFLAG) -M$(hdtbl_srcdir) -t -p -e -U
 
-# Files installed in $(tmacdir).
-# These files are generated with 'strip.sed' from their unstripped source file
-# equivalent (e.g. hdtbl.tmac is generated from hdtbl.tmac-u)
-HDTBLSTRIPFILES = \
+HDTBLTMACFILES = \
   contrib/hdtbl/hdtbl.tmac \
   contrib/hdtbl/hdmisc.tmac
 hdtbltmacdir = $(tmacdir)
-hdtbltmac_DATA = $(HDTBLSTRIPFILES)
+dist_hdtbltmac_DATA = $(HDTBLTMACFILES)
+
+hdtbl_test_template = contrib/hdtbl/examples/test-hdtbl.sh.in
 
 # Files installed in $(exampledir)/hdtbl.  HDTBLEXAMPLEFILES are
 # located in the source tree, while HDTBLPROCESSEDEXAMPLEFILES are
@@ -51,7 +47,7 @@ HDTBLGENFILES = \
 EXTRA_DIST += \
   contrib/hdtbl/examples/fonts_n.in \
   contrib/hdtbl/examples/fonts_x.in \
-  contrib/hdtbl/examples/test-hdtbl.sh.in
+  $(hdtbl_test_template)
 
 HDTBLEXAMPLEFILES = \
   contrib/hdtbl/examples/common.roff \
@@ -79,61 +75,52 @@ HDTBLPROCESSEDEXAMPLEFILES = \
   contrib/hdtbl/examples/short_reference.ps
 
 hdtblexampledir = $(exampledir)/hdtbl
-
-if BUILD_EXAMPLES
 dist_hdtblexample_DATA = $(HDTBLEXAMPLEFILES)
 nodist_hdtblexample_DATA = \
   $(HDTBLGENFILES) \
   $(HDTBLPROCESSEDEXAMPLEFILES) \
-  gnu.eps
-else
-EXTRA_DIST += $(HDTBLEXAMPLEFILES) 
-endif
-$(hdtblexample_DATA): $(HDTBLSTRIPFILES)
+  $(DOC_GNU_EPS)
 
-MOSTLYCLEANFILES += $(HDTBLGENFILES) $(HDTBLPROCESSEDEXAMPLEFILES) \
-  $(HDTBLSTRIPFILES)
+$(hdtblexample_DATA): $(HDTBLTMACFILES)
+
+MOSTLYCLEANFILES += $(HDTBLGENFILES) $(HDTBLPROCESSEDEXAMPLEFILES)
 
 EXTRA_DIST += \
   contrib/hdtbl/ChangeLog \
   contrib/hdtbl/TODO \
-  contrib/hdtbl/groff_hdtbl.7.man \
-  contrib/hdtbl/hdtbl.tmac-u \
-  contrib/hdtbl/hdmisc.tmac-u
+  contrib/hdtbl/groff_hdtbl.7.man
 
-if BUILD_EXAMPLES
 hdtbl_TESTS = contrib/hdtbl/examples/test-hdtbl.sh
 TESTS += $(hdtbl_TESTS)
-contrib/hdtbl/examples/test-hdtbl.sh: $(top_builddir)/config.status \
-	$(HDTBLPROCESSEDEXAMPLEFILES) $(top_srcdir)/contrib/hdtbl/examples/test-hdtbl.sh.in
-	sed -e "s|[@]abs_top_builddir[@]|$(abs_top_builddir)|g" \
-	    -e "s|[@]GHOSTSCRIPT[@]|$(GHOSTSCRIPT)|g" \
-	    	$(top_srcdir)/contrib/hdtbl/examples/test-hdtbl.sh.in > $@
-	chmod +x $@
+contrib/hdtbl/examples/test-hdtbl.sh: \
+  $(top_builddir)/config.status \
+  $(HDTBLPROCESSEDEXAMPLEFILES) \
+  $(top_srcdir)/$(hdtbl_test_template)
+	$(AM_V_GEN)sed \
+	  -e "s|[@]abs_top_builddir[@]|$(abs_top_builddir)|g" \
+	  -e "s|[@]GHOSTSCRIPT[@]|$(GHOSTSCRIPT)|g" \
+	  $(top_srcdir)/$(hdtbl_test_template) > $@ \
+	&& chmod +x $@
 MOSTLYCLEANFILES += $(hdtbl_TESTS)
-endif
 
 # Rule to generate ps and roff files
 SUFFIXES += .roff .in .ps
 
 .roff.ps:
 	$(GROFF_V)$(MKDIR_P) `dirname $@` \
-	&& $(HDTBLGROFF) -Tps \
+	&& $(HDTBLGROFF) -I $(doc_builddir) -I $(doc_srcdir) -Tps \
 	     -dfontpath=$(top_srcdir)/font \
 	     -dsopath=$(hdtbl_srcdir)/ \
 	     -mhdtbl $< >$@
+
 .in.roff:
 	$(AM_V_GEN)$(MKDIR_P) `dirname $@` \
 	&& sed -e "s|[@]fontdir[@]|$(fontdir)|" \
 	       -e "s|[@]EGREP[@]|$(EGREP)|" $< >$@
 
 
-$(HDTBLPROCESSEDEXAMPLEFILES): gnu.eps groff troff pic tbl \
-  contrib/hdtbl/examples/common.roff
-
-$(HDTBLSTRIPFILES): $(top_srcdir)/tmac/strip.sed
-	@$(MKDIR_P) `dirname $@`
-	sed -f $(top_srcdir)/tmac/strip.sed $(hdtbl_srcdir)/`basename $@`-u > $@;
+$(HDTBLPROCESSEDEXAMPLEFILES): $(DOC_GNU_EPS) groff troff eqn pic tbl \
+  grops font/devps/stamp contrib/hdtbl/examples/common.roff
 
 uninstall_groffdirs: uninstall-hdtbl-hook
 uninstall-hdtbl-hook:
@@ -142,12 +129,8 @@ uninstall-hdtbl-hook:
 	fi
 
 
-########################################################################
-# Editor settings
-########################################################################
-#
 # Local Variables:
 # mode: makefile-automake
 # fill-column: 72
 # End:
-# vim: set filetype=automake textwidth=72:
+# vim: set autoindent filetype=automake textwidth=72:

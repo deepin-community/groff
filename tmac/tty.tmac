@@ -1,13 +1,10 @@
 .\" tty.tmac
 .\"
-.nr _C \n(.C
+.do nr *groff_tty_tmac_C \n[.cp]
 .cp 0
 .
 .nroff
 .ta T 0.8i
-.
-.\" Don't warn about non-existent fonts.
-.warn \n[.warn]-(\n[.warn]/131072%2*131072)
 .
 .po 0
 .
@@ -67,9 +64,11 @@
 .fchar \[.i] i
 .fchar \[.j] j
 .fchar \[bq] ,
-.
-.if '\*[.T]'utf8' \
-.  mso unicode.tmac
+.fchar \[fm] \[aq]
+.fchar \[sd] \[dq]
+.fchar \[bs] \~
+.fchar \[radicalex] \[rn]
+.fchar \[sqrtex] \[rn]
 .
 .\" color definitions
 .defcolor black rgb #000000
@@ -81,21 +80,18 @@
 .defcolor cyan rgb #00ffff
 .defcolor white rgb #ffffff
 .
-.cp \n[_C]
-.
 .ie '\*(.T'cp1047' \
-.  do mso cp1047.tmac
+.  mso cp1047.tmac
 .el \
 .  if !'\*(.T'ascii' \
-.    do mso latin1.tmac
+.    mso latin1.tmac
 .
 .\" If you want the character definitions in tty-char.tmac to be loaded
 .\" automatically, remove the '\"' from the next line.
-.\"do mso tty-char.tmac
+.\"mso tty-char.tmac
 .
-.\" ====================================================================
-.\" Editor settings
-.\" ====================================================================
+.cp \n[*groff_tty_tmac_C]
+.do rr *groff_tty_tmac_C
 .
 .\" Local Variables:
 .\" mode: nroff

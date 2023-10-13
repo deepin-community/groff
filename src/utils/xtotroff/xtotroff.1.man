@@ -1,13 +1,15 @@
-.TH XTOTROFF @MAN1EXT@ "@MDATE@" "groff @VERSION@"
-.SH NAME
-xtotroff \- convert X font metrics into GNU troff font metrics
+.TH xtotroff @MAN1EXT@ "@MDATE@" "groff @VERSION@"
+.SH Name
+xtotroff \- convert X font metrics into
+.I groff
+font metrics
 .
 .
 .\" ====================================================================
 .\" Legal Terms
 .\" ====================================================================
 .\"
-.\" Copyright (C) 2004-2018 Free Software Foundation, Inc.
+.\" Copyright (C) 2004-2022 Free Software Foundation, Inc.
 .\"
 .\" Permission is granted to make and distribute verbatim copies of this
 .\" manual provided the copyright notice and this permission notice are
@@ -25,125 +27,211 @@ xtotroff \- convert X font metrics into GNU troff font metrics
 .\" instead of in the original English.
 .
 .
+.\" Save and disable compatibility mode (for, e.g., Solaris 10/11).
+.do nr *groff_xtotroff_1_man_C \n[.cp]
+.cp 0
+.
+.\" Define fallback for groff 1.23's MR macro if the system lacks it.
+.nr do-fallback 0
+.if !\n(.f           .nr do-fallback 1 \" mandoc
+.if  \n(.g .if !d MR .nr do-fallback 1 \" older groff
+.if !\n(.g           .nr do-fallback 1 \" non-groff *roff
+.if \n[do-fallback]  \{\
+.  de MR
+.    ie \\n(.$=1 \
+.      I \%\\$1
+.    el \
+.      IR \%\\$1 (\\$2)\\$3
+.  .
+.\}
+.rr do-fallback
+.
+.
 .\" ====================================================================
-.SH SYNOPSIS
+.SH Synopsis
 .\" ====================================================================
 .
 .SY xtotroff
-.OP \-r resolution
-.OP \-s point-size
+.RB [ \-d\~\c
+.IR destination-directory ]
+.RB [ \-r\~\c
+.IR resolution ]
+.RB [ \-s\~\c
+.IR type-size ]
 .I font-map
 .YS
+.
 .
 .SY xtotroff
 .B \-\-help
 .YS
 .
+.
 .SY xtotroff
 .B \-v
+.
 .SY xtotroff
 .B \-\-version
 .YS
 .
 .
 .\" ====================================================================
-.SH DESCRIPTION
+.SH Description
 .\" ====================================================================
 .
 .I xtotroff
-takes a
-.IR font-map ,
-which maps
-.IR groff (@MAN1EXT@)
-fonts to X11 fonts,
-creates GNU
-.IR troff (@MAN1EXT@)
-metric files for all fonts listed.
+uses
+.I font-map
+to create
+.MR groff @MAN1EXT@
+font description files from X11 fonts.
 .
 Each line in
 .I font-map
-consists of a
+consists of a series of lines of paired
 .I groff
-font name and an X font name as a X Logical Font Description (XLFD)
-pattern,
-separated by whitespace.
+font names and X font names as X Logical Font Description (XLFD)
+patterns,
+with the pair members separated by spaces and/or tabs.
 .
-Example:
+For example,
+an input
+.I font-map
+file consisting of the line
 .
-.
-.PP
 .RS
 .EX
 TB \-adobe\-times\-bold\-r\-normal\-\-*\-*\-*\-*\-p\-*\-iso8859\-1
 .EE
 .RE
 .
+maps the XLFD on the right to the
+.I groff
+font name
+.BR TB ,
+conventionally \[lq]Times bold\[rq].
+.
 .
 .PP
-The wildcards in the patterns are filled with the arguments to the
+.I xtotroff
+opens a connection to the running X server to query its font catalog,
+and aborts if it cannot.
+.
+If necessary,
+the wildcards in the XLFD patterns are populated with the arguments to
+the
 .B \-r
 and
 .B \-s
-switches.
+options.
 .
 If a font name is still ambiguous,
 .I xtotroff
 aborts.
 .
+For each successful mapping,
+.I xtotroff
+creates a
+.I groff
+font description file in the current working directory
+(or that specified by the
+.B -d
+option)
+named for each
+.I groff
+font,
+and reports the mapping to the standard output stream.
+.
 .
 .\" ====================================================================
-.SH OPTIONS
+.SH Options
 .\" ====================================================================
 .
-Whitespace is permitted between a command-line option and its argument.
-.
-.
-.TP
 .B \-\-help
-Display a usage message and exit.
+displays a usage message,
+while
+.B \-v
+and
+.B \-\-version
+show version information;
+all exit afterward.
 .
 .
 .TP
-.BI \-r resolution
+.BI \-d\~ destination-directory
+Write font descriptions to
+.I destination-directory
+rather than the current working directory.
+.
+.
+.TP
+.BI \-r\~ resolution
 Set the resolution for all font patterns in
 .IR font-map .
 .
-The value is used for both the horizontal and vertical resolution.
+The value is used for both the horizontal and vertical motion quanta.
 .
-If not specified, a resolution of 75dpi is assumed.
+If not specified,
+a resolution of 75dpi is assumed.
 .
 .
 .TP
-.BI \-s point-size
-Set the point size for all font patterns in
+.BI \-s\~ type-size
+Set the type size in points for all font patterns in
 .IR font-map .
 .
-If not specified, a size of 10pt is assumed.
+If not specified,
+a size of 10 points is assumed.
 .
+.
+.\" ====================================================================
+.SH Files
+.\" ====================================================================
 .
 .TP
-.B \-v
-.TQ
-.B \-\-version
-Display version information and exit.
+.I @FONTDIR@/\:\%FontMap\-X11
+is the font mapping file used to produce the pre-generated font
+description files,
+supplied with
+.IR groff ,
+of X11 core fonts corresponding to the 13 base Type\~1 fonts for
+PostScript level 1.
 .
 .
 .\" ====================================================================
-.SH BUGS
+.SH Bugs
 .\" ====================================================================
-The only supported font encodings are \(lqiso8859\-1\(rq and
-\(lqadobe\-fontspecific\(rq.
+.
+The only supported font encodings are \[lq]iso8859\-1\[rq] and
+\%\[lq]adobe\-\:fontspecific\[rq].
 .
 .
 .\" ====================================================================
-.SH "SEE ALSO"
+.SH "See also"
 .\" ====================================================================
-.IR groff (@MAN1EXT@),
-.IR gxditview (@MAN1EXT@),
-.IR troff (@MAN1EXT@)
+.
+.UR https://\:www\:.x\:.org/\:releases/\:X11R7.6/\:doc/\:xorg\-docs/\
+\:specs/\:XLFD/xlfd\:.html
+\[lq]X Logical Font Description Conventions\[rq]
+.UE ,
+by Jim Flowers and Stephen Gildea.
+.
+.
+.PP
+.MR X 7 ,
+.MR groff @MAN1EXT@ ,
+.MR gxditview @MAN1EXT@ ,
+.MR troff @MAN1EXT@ ,
+.MR groff_font @MAN5EXT@
+.
+.
+.\" Restore compatibility mode (for, e.g., Solaris 10/11).
+.cp \n[*groff_xtotroff_1_man_C]
+.do rr *groff_xtotroff_1_man_C
 .
 .
 .\" Local Variables:
+.\" fill-column: 72
 .\" mode: nroff
 .\" End:
-.\" vim: set filetype=groff:
+.\" vim: set filetype=groff textwidth=72:

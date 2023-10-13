@@ -1,0 +1,468 @@
+From 56d2f35b18a8e6502c6aa842c07b3d27fe9f6f7f Mon Sep 17 00:00:00 2001
+From: Colin Watson <cjwatson@debian.org>
+Date: Sun, 9 Jul 2023 13:23:21 +0100
+Subject: Display time from SOURCE_DATE_EPOCH in UTC.
+
+The semantics imposed in 1.23.0 are unsuitable for use with
+reproducible-builds harnesses, since those specifically want to vary the
+TZ environment variable to shake out other problems in build systems.
+However, my patch that Debian has been carrying for a while is
+unsuitable for general use, since most people expect the time displayed
+in output to use local time.
+
+A viable compromise seems to be to force UTC _only_ when
+SOURCE_DATE_EPOCH is set.  That will keep reproducible-builds harnesses
+working with no extra effort, while also preserving the expected
+behaviour for typical users of groff that don't go out of their way to
+set that environment variable.
+
+As a bonus, this corrects the behaviour of gropdf when the local offset
+from UTC is not a whole number of hours.
+
+* src/include/curtime.h (current_time): Return a `struct tm *`.
+  Document behaviour.
+* src/libs/libgroff/curtime.cpp (current_time): If SOURCE_DATE_EPOCH is
+  set, return the overridden time after passing it through `gmtime`.
+  Otherwise, pass the current time through `localtime`.
+
+* src/devices/grohtml/post-html.cpp (html_printer::do_file_components,
+  html_printer::~html_printer):
+* src/devices/grops/ps.cpp (ps_printer::~ps_printer):
+* src/roff/troff/input.cpp (init_registers): Adjust to new
+  `current_time` signature.
+
+* src/devices/gropdf/gropdf.pl: If SOURCE_DATE_EPOCH is set, return the
+  overridden time after passing it through `gmtime`.  Otherwise, pass
+  the current time through `localtime`.
+  (PDFDate): Fix output in the case where the local offset from UTC is
+  not a whole number of hours.  (Previously, the minutes offset field
+  was always set to zero.)
+
+* doc/groff.texi (Environment):
+* src/devices/grohtml/grohtml.1.man (Environment):
+* src/devices/gropdf/gropdf.1.man (Environment):
+* src/devices/grops/grops.1.man (Environment):
+* src/roff/groff/groff.1.man (Environment):
+* src/roff/troff/troff.1.man (Environment): Update.
+
+Origin: upstream, https://git.savannah.gnu.org/cgit/groff.git/commit/?id=d7bbfb04ea25a82a8597cdef6ebb391cb78ab47c
+Last-Update: 2023-07-11
+
+Patch-Name: source-date-epoch-utc.patch
+---
+ doc/groff.texi                    | 13 +++++++------
+ src/devices/grohtml/grohtml.1.man | 12 +++++++-----
+ src/devices/grohtml/post-html.cpp | 16 ++++------------
+ src/devices/gropdf/gropdf.1.man   | 10 +++++-----
+ src/devices/gropdf/gropdf.pl      | 16 ++++++++++++++--
+ src/devices/grops/grops.1.man     | 12 +++++++-----
+ src/devices/grops/ps.cpp          |  9 ++-------
+ src/include/curtime.h             | 19 +++++++++++--------
+ src/libs/libgroff/curtime.cpp     | 23 +++++++++++++----------
+ src/roff/groff/groff.1.man        | 12 +++++++-----
+ src/roff/troff/input.cpp          | 24 +++++++++---------------
+ src/roff/troff/troff.1.man        | 12 +++++++-----
+ 12 files changed, 93 insertions(+), 85 deletions(-)
+
+diff --git a/doc/groff.texi b/doc/groff.texi
+index 2a6635e9d..bcea4f3e7 100644
+--- a/doc/groff.texi
++++ b/doc/groff.texi
+@@ -1389,15 +1389,16 @@ overrides @env{GROFF_TYPESETTER}.
+ @tindex SOURCE_DATE_EPOCH@r{, environment variable}
+ A timestamp (expressed as seconds since the Unix epoch) to use as the
+ output creation timestamp in place of the current time.  The time is
+-converted to human-readable form using @cite{localtime@r{(3)}} when the
+-formatter starts up and stored in registers usable by documents and
+-macro packages (@pxref{Built-in Registers}).
++converted to human-readable form using @cite{gmtime@r{(3)}} and
++@cite{asctime@r{(3)}} when the formatter starts up and stored in
++registers usable by documents and macro packages (@pxref{Built-in
++Registers}).
+ 
+ @item TZ
+ @tindex TZ@r{, environment variable}
+-The time zone to use when converting the current time (or value of
+-@env{SOURCE_DATE_EPOCH}) to human-readable form; see
+-@cite{tzset@r{(3)}}.
++The time zone to use when converting the current time to human-readable
++form; see @cite{tzset@r{(3)}}.  If @env{SOURCE_DATE_EPOCH} is used, it
++is always converted to human-readable form using UTC.
+ @end table
+ 
+ MS-DOS and MS-Windows ports of @code{groff} use semicolons, rather than
+diff --git a/src/devices/grohtml/grohtml.1.man b/src/devices/grohtml/grohtml.1.man
+index 2243b474c..8a55c93dd 100644
+--- a/src/devices/grohtml/grohtml.1.man
++++ b/src/devices/grohtml/grohtml.1.man
+@@ -616,18 +616,20 @@ A timestamp
+ to use as the output creation timestamp in place of the current time.
+ .
+ The time is converted to human-readable form using
+-.MR ctime 3
++.MR gmtime 3
++and
++.MR asctime 3 ,
+ and recorded in an HTML comment.
+ .
+ .
+ .TP
+ .I TZ
+-The time zone to use when converting the current time
+-(or value of
+-.IR SOURCE_DATE_EPOCH )
+-to human-readable form;
++The time zone to use when converting the current time to human-readable form;
+ see
+ .MR tzset 3 .
++If
++.I SOURCE_DATE_EPOCH
++is used, it is always converted to human-readable form using UTC.
+ .
+ .
+ .\" ====================================================================
+diff --git a/src/devices/grohtml/post-html.cpp b/src/devices/grohtml/post-html.cpp
+index 4e02b5cfa..b42720da1 100644
+--- a/src/devices/grohtml/post-html.cpp
++++ b/src/devices/grohtml/post-html.cpp
+@@ -5081,11 +5081,7 @@ void html_printer::do_file_components (void)
+     fclose(file_list.get_file());
+     file_list.move_next();
+     if (file_list.is_new_output_file()) {
+-#ifdef LONG_FOR_TIME_T
+-      long t;
+-#else
+-      time_t t;
+-#endif
++      struct tm *t;
+ 
+       if (fragment_no > 1)
+ 	write_navigation(top, prev, next, current);
+@@ -5115,7 +5111,7 @@ void html_printer::do_file_components (void)
+       if (do_write_date_comment) {
+ 	t = current_time();
+ 	html.begin_comment("CreationDate: ")
+-	  .put_string(ctime(&t), strlen(ctime(&t))-1)
++	  .put_string(asctime(t), strlen(asctime(t))-1)
+ 	  .end_comment();
+       }
+ 
+@@ -5215,11 +5211,7 @@ void html_printer::writeHeadMetaStyle (void)
+ 
+ html_printer::~html_printer()
+ {
+-#ifdef LONG_FOR_TIME_T
+-  long t;
+-#else
+-  time_t t;
+-#endif
++  struct tm *t;
+ 
+   if (current_paragraph)
+     current_paragraph->flush_text();
+@@ -5240,7 +5232,7 @@ html_printer::~html_printer()
+   if (do_write_date_comment) {
+     t = current_time();
+     html.begin_comment("CreationDate: ")
+-      .put_string(ctime(&t), strlen(ctime(&t))-1)
++      .put_string(asctime(t), strlen(asctime(t))-1)
+       .end_comment();
+   }
+ 
+diff --git a/src/devices/gropdf/gropdf.1.man b/src/devices/gropdf/gropdf.1.man
+index d1d39bbe0..20a957e68 100644
+--- a/src/devices/gropdf/gropdf.1.man
++++ b/src/devices/gropdf/gropdf.1.man
+@@ -1673,18 +1673,18 @@ A timestamp
+ to use as the output creation timestamp in place of the current time.
+ .
+ The time is converted to human-readable form using Perl's
+-.I \%localtime()
++.I \%gmtime()
+ function and recorded in a PDF comment.
+ .
+ .
+ .TP
+ .I TZ
+-The time zone to use when converting the current time
+-(or value of
+-.IR SOURCE_DATE_EPOCH )
+-to human-readable form;
++The time zone to use when converting the current time to human-readable form;
+ see
+ .MR tzset 3 .
++If
++.I SOURCE_DATE_EPOCH
++is used, it is always converted to human-readable form using UTC.
+ .
+ .
+ .\" ====================================================================
+diff --git a/src/devices/gropdf/gropdf.pl b/src/devices/gropdf/gropdf.pl
+index c65a1051f..0e1b612a5 100644
+--- a/src/devices/gropdf/gropdf.pl
++++ b/src/devices/gropdf/gropdf.pl
+@@ -23,6 +23,7 @@
+ use strict;
+ use warnings;
+ use Getopt::Long qw(:config bundling);
++use POSIX qw(mktime);
+ 
+ use constant
+ {
+@@ -343,7 +344,12 @@ for $papersz ( split(" ", lc($possiblesizes).' #duff#') )
+     # If we get here, $papersz was invalid, so try the next one.
+ }
+ 
+-my (@dt)=localtime($ENV{SOURCE_DATE_EPOCH} || time);
++my @dt;
++if ($ENV{SOURCE_DATE_EPOCH}) {
++    @dt=gmtime($ENV{SOURCE_DATE_EPOCH});
++} else {
++    @dt=localtime;
++}
+ my $dt=PDFDate(\@dt);
+ 
+ my %info=('Creator' => "(groff version $cfg{GROFF_VERSION})",
+@@ -628,7 +634,13 @@ sub GetObj
+ sub PDFDate
+ {
+     my $dt=shift;
+-    return(sprintf("D:%04d%02d%02d%02d%02d%02d%+03d'00'",$dt->[5]+1900,$dt->[4]+1,$dt->[3],$dt->[2],$dt->[1],$dt->[0],( localtime time() + 3600*( 12 - (gmtime)[2] ) )[2] - 12));
++    my $offset;
++    if ($ENV{SOURCE_DATE_EPOCH}) {
++	$offset=0;
++    } else {
++	$offset=mktime((localtime $dt)[0..5]) - mktime((gmtime $dt)[0..5]);
++    }
++    return(sprintf("D:%04d%02d%02d%02d%02d%02d%+03d'%+03d'",$dt->[5]+1900,$dt->[4]+1,$dt->[3],$dt->[2],$dt->[1],$dt->[0],int($offset/3600),int(($offset%3600)/60)));
+ }
+ 
+ sub ToPoints
+diff --git a/src/devices/grops/grops.1.man b/src/devices/grops/grops.1.man
+index d0ec21d0b..53014ee1b 100644
+--- a/src/devices/grops/grops.1.man
++++ b/src/devices/grops/grops.1.man
+@@ -1696,18 +1696,20 @@ A timestamp
+ to use as the output creation timestamp in place of the current time.
+ .
+ The time is converted to human-readable form using
+-.MR ctime 3
++.MR gmtime 3
++and
++.MR asctime 3 ,
+ and recorded in a PostScript comment.
+ .
+ .
+ .TP
+ .I TZ
+-The time zone to use when converting the current time
+-(or value of
+-.IR SOURCE_DATE_EPOCH )
+-to human-readable form;
++The time zone to use when converting the current time to human-readable form;
+ see
+ .MR tzset 3 .
++If
++.I SOURCE_DATE_EPOCH
++is used, it is always converted to human-readable form using UTC.
+ .
+ .
+ .\" ====================================================================
+diff --git a/src/devices/grops/ps.cpp b/src/devices/grops/ps.cpp
+index 807945f97..59e6e253d 100644
+--- a/src/devices/grops/ps.cpp
++++ b/src/devices/grops/ps.cpp
+@@ -1390,13 +1390,8 @@ ps_printer::~ps_printer()
+      .end_comment();
+   {
+     fputs("%%CreationDate: ", out.get_file());
+-#ifdef LONG_FOR_TIME_T
+-    long
+-#else
+-    time_t
+-#endif
+-    t = current_time();
+-    fputs(ctime(&t), out.get_file());
++    struct tm *t = current_time();
++    fputs(asctime(t), out.get_file());
+   }
+   for (font_pointer_list *f = font_list; f; f = f->next) {
+     ps_font *psf = (ps_font *)(f->p);
+diff --git a/src/include/curtime.h b/src/include/curtime.h
+index 5d3a24a7b..ebd2efb80 100644
+--- a/src/include/curtime.h
++++ b/src/include/curtime.h
+@@ -15,13 +15,16 @@ for more details.
+ The GNU General Public License version 2 (GPL2) is available in the
+ internet at <http://www.gnu.org/licenses/gpl-2.0.txt>. */
+ 
+-#ifndef LONG_FOR_TIME_T
+ #include <time.h>
+-#endif
+ 
+-#ifdef LONG_FOR_TIME_T
+-long
+-#else
+-time_t
+-#endif
+-current_time();
++// Get the current time in broken-down time representation.  If the
++// SOURCE_DATE_EPOCH environment variable is set, then it is used instead of
++// the real time from the system clock; in this case, the user is clearly
++// trying to arrange for some kind of reproducible build, so express the
++// time in UTC.  Otherwise, use the real time from the system clock, and
++// express it relative to the user's time zone.
++//
++// In either case, as with gmtime() and localtime(), the return value points
++// to a statically-allocated struct which might be overwritten by later
++// calls.
++struct tm *current_time();
+diff --git a/src/libs/libgroff/curtime.cpp b/src/libs/libgroff/curtime.cpp
+index 34dbc5ca9..277755cab 100644
+--- a/src/libs/libgroff/curtime.cpp
++++ b/src/libs/libgroff/curtime.cpp
+@@ -15,9 +15,7 @@ for more details.
+ The GNU General Public License version 2 (GPL2) is available in the
+ internet at <http://www.gnu.org/licenses/gpl-2.0.txt>. */
+ 
+-#ifdef HAVE_CONFIG_H
+-#include <config.h>
+-#endif
++#include "lib.h"
+ 
+ #include <errno.h>
+ #include <limits.h>
+@@ -25,16 +23,18 @@ internet at <http://www.gnu.org/licenses/gpl-2.0.txt>. */
+ #include <string.h>
+ #include <time.h>
+ 
++#include "curtime.h"
+ #include "errarg.h"
+ #include "error.h"
+ 
++struct tm *current_time()
++{
+ #ifdef LONG_FOR_TIME_T
+-long
++  long
+ #else
+-time_t
++  time_t
+ #endif
+-current_time()
+-{
++    t;
+   char *source_date_epoch = getenv("SOURCE_DATE_EPOCH");
+ 
+   if (source_date_epoch) {
+@@ -49,7 +49,10 @@ current_time()
+       fatal("$SOURCE_DATE_EPOCH: no digits found: '%1'", endptr);
+     if (*endptr != '\0')
+       fatal("$SOURCE_DATE_EPOCH: trailing garbage: '%1'", endptr);
+-    return epoch;
+-  } else
+-    return time(0);
++    t = epoch;
++    return gmtime(&t);
++  } else {
++    t = time(0);
++    return localtime(&t);
++  }
+ }
+diff --git a/src/roff/groff/groff.1.man b/src/roff/groff/groff.1.man
+index 75687440e..348036cdf 100644
+--- a/src/roff/groff/groff.1.man
++++ b/src/roff/groff/groff.1.man
+@@ -1879,19 +1879,21 @@ A time stamp
+ to use as the output creation time stamp in place of the current time.
+ .
+ The time is converted to human-readable form using
+-.MR localtime 3
++.MR gmtime 3
++and
++.MR asctime 3
+ when the formatter starts up and stored in registers usable by documents
+ and macro packages.
+ .
+ .
+ .TP
+ .I TZ
+-The time zone to use when converting the current time
+-(or value of
+-.IR SOURCE_DATE_EPOCH )
+-to human-readable form;
++The time zone to use when converting the current time to human-readable form;
+ see
+ .MR tzset 3 .
++If
++.I SOURCE_DATE_EPOCH
++is used, it is always converted to human-readable form using UTC.
+ .
+ .
+ .\" ====================================================================
+diff --git a/src/roff/troff/input.cpp b/src/roff/troff/input.cpp
+index 292ee7389..f03338335 100644
+--- a/src/roff/troff/input.cpp
++++ b/src/roff/troff/input.cpp
+@@ -8297,21 +8297,15 @@ void warn_request()
+ 
+ static void init_registers()
+ {
+-#ifdef LONG_FOR_TIME_T
+-  long
+-#else /* not LONG_FOR_TIME_T */
+-  time_t
+-#endif /* not LONG_FOR_TIME_T */
+-    t = current_time();
+-  struct tm *tt = localtime(&t);
+-  set_number_reg("seconds", int(tt->tm_sec));
+-  set_number_reg("minutes", int(tt->tm_min));
+-  set_number_reg("hours", int(tt->tm_hour));
+-  set_number_reg("dw", int(tt->tm_wday + 1));
+-  set_number_reg("dy", int(tt->tm_mday));
+-  set_number_reg("mo", int(tt->tm_mon + 1));
+-  set_number_reg("year", int(1900 + tt->tm_year));
+-  set_number_reg("yr", int(tt->tm_year));
++  struct tm *t = current_time();
++  set_number_reg("seconds", int(t->tm_sec));
++  set_number_reg("minutes", int(t->tm_min));
++  set_number_reg("hours", int(t->tm_hour));
++  set_number_reg("dw", int(t->tm_wday + 1));
++  set_number_reg("dy", int(t->tm_mday));
++  set_number_reg("mo", int(t->tm_mon + 1));
++  set_number_reg("year", int(1900 + t->tm_year));
++  set_number_reg("yr", int(t->tm_year));
+   set_number_reg("$$", getpid());
+   register_dictionary.define(".A",
+ 			       new readonly_text_register(ascii_output_flag
+diff --git a/src/roff/troff/troff.1.man b/src/roff/troff/troff.1.man
+index 01b46616c..4fbb962b1 100644
+--- a/src/roff/troff/troff.1.man
++++ b/src/roff/troff/troff.1.man
+@@ -868,19 +868,21 @@ A timestamp
+ to use as the output creation timestamp in place of the current time.
+ .
+ The time is converted to human-readable form using
+-.MR localtime 3
++.MR gmtime 3
++and
++.MR asctime 3
+ when the formatter starts up and stored in registers usable by documents
+ and macro packages.
+ .
+ .
+ .TP
+ .I TZ
+-The timezone to use when converting the current time
+-(or value of
+-.IR SOURCE_DATE_EPOCH )
+-to human-readable form;
++The time zone to use when converting the current time to human-readable form;
+ see
+ .MR tzset 3 .
++If
++.I SOURCE_DATE_EPOCH
++is used, it is always converted to human-readable form using UTC.
+ .
+ .
+ .\" ====================================================================

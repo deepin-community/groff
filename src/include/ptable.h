@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -20,14 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #include <assert.h>
 #include <string.h>
 
-// name2(a,b) concatenates two C identifiers.
-#ifdef TRADITIONAL_CPP
-# define name2(a,b) a/**/b
-#else /* not TRADITIONAL_CPP */
-# define name2(a,b) name2x(a,b)
-# define name2x(a,b) a ## b
-#endif /* not TRADITIONAL_CPP */
-
 // 'class PTABLE(T)' is the type of a hash table mapping a string
 // (const char *) to an object of type T.
 //
@@ -39,9 +30,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 //
 // Nowadays one would use templates for this; this code predates the addition
 // of templates to C++.
-#define PTABLE(T) name2(T,_ptable)
-#define PASSOC(T) name2(T,_passoc)
-#define PTABLE_ITERATOR(T) name2(T,_ptable_iterator)
+#define PTABLE(T) T ## _ptable
+#define PASSOC(T) T ## _passoc
+#define PTABLE_ITERATOR(T) T ## _ptable_iterator
 
 // itable.h declares this too
 #ifndef NEXT_PTABLE_SIZE_DEFINED
@@ -136,9 +127,9 @@ PTABLE(T)::~PTABLE(T)()							      \
     free(v[i].key);							      \
     /* XXX leak, because we don't know whether */			      \
     /* 'free', 'delete', or 'delete[]' should be used */		      \
-    /* a_delete v[i].val; */						      \
+    /* delete[] v[i].val; */						      \
   }									      \
-  a_delete v;								      \
+  delete[] v;								      \
 }									      \
 									      \
 const char *PTABLE(T)::define(const char *key, T *val)			      \
@@ -152,7 +143,7 @@ const char *PTABLE(T)::define(const char *key, T *val)			      \
     if (strcmp(v[n].key, key) == 0) {					      \
       /* XXX leak, because we don't know whether */			      \
       /* 'free', 'delete', or 'delete[]' should be used */		      \
-      /* a_delete v[n].val; */						      \
+      /* delete[] v[n].val; */						      \
       v[n].val = val;							      \
       return v[n].key;							      \
     }									      \
@@ -181,7 +172,7 @@ const char *PTABLE(T)::define(const char *key, T *val)			      \
 	 v[n].key != 0;							      \
 	 n = (n == 0 ? size - 1 : n - 1))				      \
       ;									      \
-    a_delete oldv;							      \
+    delete[] oldv;							      \
   }									      \
   char *temp = (char*)malloc(strlen(key)+1);				      \
   strcpy(temp, key);							      \
@@ -235,4 +226,8 @@ int PTABLE_ITERATOR(T)::next(const char **keyp, T **valp)		      \
   return 0;								      \
 }
 
-// end of ptable.h
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -258,7 +257,7 @@ static struct builtin_def troff_defs[] = {
   { "vec", "accent { vec_def }" },
   { "dyad_def", "up 52 size -5 { \\(<> }" },
   { "dyad", "accent { dyad_def }" },
-  { "...", "type \"inner\" vcenter { . . . }" },
+  { "...", "type \"inner\" { . . . }" },
 };
 
 /* equivalent definitions for MathML mode */
@@ -402,8 +401,9 @@ file_input::file_input(FILE *f, const char *fn, input *p)
 
 file_input::~file_input()
 {
-  a_delete filename;
-  fclose(fp);
+  if (fclose(fp) < 0)
+    fatal("unable to close '%1': %2", filename, strerror(errno));
+  delete[] filename;
 }
 
 int file_input::read_line()
@@ -420,7 +420,7 @@ int file_input::read_line()
       }
       if (c == EOF)
 	break;
-      else if (invalid_input_char(c))
+      else if (is_invalid_input_char(c))
 	lex_error("invalid input character code %1", c);
       else {
 	line += char(c);
@@ -542,8 +542,8 @@ argument_macro_input::argument_macro_input(const char *body, int ac,
 argument_macro_input::~argument_macro_input()
 {
   for (int i = 0; i < argc; i++)
-    a_delete argv[i];
-  a_delete s;
+    delete[] argv[i];
+  delete[] s;
 }
 
 int argument_macro_input::get()
@@ -690,7 +690,7 @@ void add_quoted_context(const string &s)
 
 void init_lex(const char *str, const char *filename, int lineno)
 {
- while (current_input != 0) {
+  while (current_input != 0) {
     input *tem = current_input;
     current_input = current_input->next;
     delete tem;
@@ -702,30 +702,36 @@ void init_lex(const char *str, const char *filename, int lineno)
 
 void get_delimited_text()
 {
-  char *filename;
+  char *filename, *last_seen_filename;
   int lineno;
   int got_location = get_location(&filename, &lineno);
+  // `filename` gets invalidated if we iterate off the end of the file.
+  last_seen_filename = strdup(filename);
   int start = get_char();
   while (start == ' ' || start == '\t' || start == '\n')
     start = get_char();
   token_buffer.clear();
   if (start == EOF) {
+    current_lineno = 0;
     if (got_location)
-      error_with_file_and_line(filename, lineno,
+      error_with_file_and_line(last_seen_filename, lineno,
 			       "end of input while defining macro");
     else
       error("end of input while defining macro");
+    free(last_seen_filename);
     return;
   }
   for (;;) {
     int c = get_char();
     if (c == EOF) {
+      current_lineno = 0;
       if (got_location)
-	error_with_file_and_line(filename, lineno,
+	error_with_file_and_line(last_seen_filename, lineno,
 				 "end of input while defining macro");
       else
 	error("end of input while defining macro");
       add_context(start + token_buffer);
+      free(last_seen_filename);
       return;
     }
     if (c == start)
@@ -733,6 +739,7 @@ void get_delimited_text()
     token_buffer += char(c);
   }
   add_context(start + token_buffer + start);
+  free(last_seen_filename);
 }
 
 void interpolate_macro_with_args(const char *body)
@@ -1079,7 +1086,7 @@ void do_delim()
       end_delim_saved = end_delim;
       start_delim = end_delim = '\0';
     }
-    else if (c == 'o' && d == 'n' && !compatible_flag) {
+    else if (c == 'o' && d == 'n') {
       start_delim = start_delim_saved;
       end_delim = end_delim_saved;
     }
@@ -1222,3 +1229,8 @@ void yyerror(const char *s)
   show_context();
 }
 
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

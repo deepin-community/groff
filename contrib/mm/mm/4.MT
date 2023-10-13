@@ -1,15 +1,14 @@
-.\" -*- nroff -*-
 .ig
 
-Copyright (C) 1991-2018 Free Software Foundation, Inc.
-mgm is written by Jörgen Hägg <jh@axis.com>
+Copyright (C) 1991-2020 Free Software Foundation, Inc.
+mm is written by Jörgen Hägg <jh@axis.com>
 
-mgm is free software; you can redistribute it and/or modify it under
+mm is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
 Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-mgm is distributed in the hope that it will be useful, but WITHOUT ANY
+mm is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
@@ -17,7 +16,7 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-Please submit bug reports with examples at
+Please submit bug reports using groff's 'BUG-REPORT' file to
 http://savannah.gnu.org/bugs/?group=groff.
 ..
 .
@@ -25,7 +24,7 @@ http://savannah.gnu.org/bugs/?group=groff.
 .\" Cover sheet. Memorandum type 4
 .\"------------
 .de cov@print-title
-.if !d cov*title .@error title (.TL) not defined!
+.if !d cov*title .@error title not defined; call TL and AU before MT
 .MOVE 2.8c
 .S +2
 .ad c
@@ -39,6 +38,8 @@ http://savannah.gnu.org/bugs/?group=groff.
 ..
 .\"------------
 .de cov@print-authors
+.\" The following diagnostic might be unreachable.
+.if !r cov*au .@error no authors defined; call AU before MT
 .SP 0.5
 .I
 .S +1
@@ -101,4 +102,9 @@ http://savannah.gnu.org/bugs/?group=groff.
 .cov@print-firm
 .cov@print-abstract
 ..
-
+.
+.\" Local Variables:
+.\" mode: nroff
+.\" fill-column: 72
+.\" End:
+.\" vim: set filetype=groff textwidth=72:

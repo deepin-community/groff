@@ -1,16 +1,14 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
-#
-# Latest update: 22 Aug 2015
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # This file is part of groff.
 #
 # groff is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free
-# Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# groff is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# groff is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
@@ -47,28 +45,35 @@ eqn_SOURCES = \
 PREFIXMAN1 += src/preproc/eqn/eqn.1 src/preproc/eqn/neqn.1
 EXTRA_DIST += \
   src/preproc/eqn/TODO \
-  src/preproc/eqn/neqn.sh \
   src/preproc/eqn/eqn.1.man \
-  src/preproc/eqn/neqn.1.man
+  src/preproc/eqn/neqn.1.man \
+  src/preproc/eqn/neqn.sh
 
+# Since eqn_CPPFLAGS was set, all .o files have an 'eqn-' prefix.
 src/preproc/eqn/eqn-lex.$(OBJEXT): src/preproc/eqn/eqn.hpp
-CLEANFILES += \
+
+MAINTAINERCLEANFILES += \
   src/preproc/eqn/eqn.hpp \
   src/preproc/eqn/eqn.cpp \
   src/preproc/eqn/eqn.output
 
 neqn: $(top_srcdir)/src/preproc/eqn/neqn.sh $(SH_DEPS_SED_SCRIPT)
-	$(AM_V_GEN)$(RM) $@ \
-	&& sed -e 's/[@]g[@]/$(g)/g' \
+	$(AM_V_GEN)sed -e 's/[@]g[@]/$(g)/g' \
 	       -f $(SH_DEPS_SED_SCRIPT) \
 	       -e $(SH_SCRIPT_SED_CMD) \
 	       $(top_srcdir)/src/preproc/eqn/neqn.sh \
-	       >$@ \
-	&& chmod +x $@
+	       >$@.tmp \
+	&& chmod +x $@.tmp \
+	&& mv $@.tmp $@
+
+eqn_TESTS = \
+  src/preproc/eqn/tests/diagnostics-report-correct-line-numbers.sh
+TESTS += $(eqn_TESTS)
+EXTRA_DIST += $(eqn_TESTS)
 
 
-########################################################################
-### Emacs settings
 # Local Variables:
+# fill-column: 72
 # mode: makefile-automake
 # End:
+# vim: set autoindent filetype=automake textwidth=72:

@@ -2,7 +2,7 @@
 <!--
 This file is part of groff, the GNU roff type-setting system.
 
-Copyright (C) 2004-2018 Free Software Foundation, Inc.
+Copyright (C) 2004-2020 Free Software Foundation, Inc.
 Written by Peter Schaffter (peter@schaffter.ca).
 
 Permission is granted to copy, distribute and/or modify this document
@@ -64,7 +64,7 @@ nearly indispensable) routines to simplify typesetting.
   <li class="list-head-goodies text-color"><a href="#underscore">UNDERSCORE</a> <span class="normal-smaller">&ndash; single underscore</span>
   <ul class="sublist sub">
     <li class="list-head-goodies text-color"><a href="#underscore-weight">Controlling the weight of underscores</a></li>
-    <li class="list-head-goodies text-color"><a href="#underscore-color">Colorizing underscores</a></li>
+    <li class="list-head-goodies text-color"><a href="#underscore-color">Colourising underscores</a></li>
   </ul></li>
   <li class="list-head-goodies text-color"><a href="#underscore2">UNDERSCORE2</a> <span class="normal-smaller">&ndash; double underscore</span></li>
   <li class="list-head-goodies text-color"><a href="#underline">UNDERLINE</a>
@@ -159,12 +159,6 @@ The second is the &#8220;official&#8221; name by which the macro is
 normally invoked.  After ALIAS, either can be used.
 </p>
 
-<p>
-Note that in ALIAS, you do NOT include the period (dot) that
-precedes the macro when it&#8217;s a
-<a href="definitions.html#controllines">control line</a>.
-</p>
-
 <div class="box-tip">
 <p class="tip">
 <span class="tip">Tip:</span>
@@ -218,7 +212,7 @@ the top of your documents, please.
 <p class="tip">
 <span class="experts">Experts:</span>
 ALIAS is an alias of <kbd>.als</kbd>.  You can use either, or mix
-'n' match with impunity.
+&#8217;n&#8217; match with impunity.
 </p>
 </div>
 
@@ -275,7 +269,7 @@ when you&#8217;re in one of the
 <a href="definitions.html#filled">fill modes</a>
 (<a href="typesetting.html#justify">JUSTIFY</a>
 or
-<a href="typesetting.html#quad">QUAD L | R | C | J</a>).
+<a href="typesetting.html#quad">QUAD&nbsp;L&nbsp;|&nbsp;R&nbsp;|&nbsp;C&nbsp;|&nbsp;J</a>).
 The same applies to tabs
 (<a href="typesetting.html#tab-set">typesetting</a>
 or
@@ -289,7 +283,7 @@ disappearing into a black hole.
 <!-- -TRAP- -->
 
 <div class="macro-id-overline">
-<h3 id="trap" class="macro-id">Suspend/re-invoke traps</h3>
+<h3 id="trap" class="macro-id">Suspend / re-invoke traps</h3>
 </div>
 
 <div class="box-macro-args">
@@ -313,7 +307,7 @@ happens, surround just the offending macros and input lines with
     ...
     .TRAP
 </span>
-TRAP is a toggle, therefore any argument turns it off (ie suspends
+TRAP is a toggle, therefore any argument turns it off (i.e., suspends
 the trap), and no argument turns it (back) on.
 </p>
 
@@ -345,7 +339,7 @@ quoting styles.)
 
 <p>
 Typographically, there is a difference between the inch-mark and
-quotation marks&mdash;a BIG difference.  Sadly, typewriters and computer
+quotation marks&mdash;a big difference.  Sadly, typewriters and computer
 keyboards supply only one: the inch-mark.  While using inches for
 doublequotes is, and always has been, acceptable in typewriter-style
 copy, it has never been, and, God willing, never will be acceptable in
@@ -359,7 +353,7 @@ And you don&#8217;t want to look like an amateur, do you?
 If you invoke SMARTQUOTES with one of the optional arguments
 (<kbd>,,</kbd> or <kbd>&gt;&gt;</kbd>
 or <kbd>&lt;&lt;</kbd>) you can use
-<kbd>&quot;</kbd> (ie the inch-mark/doublequotes key)
+<kbd>&quot;</kbd> (i.e. the inch-mark/doublequotes key)
 as &#8220;cheap&#8221; open-and close-quotes when inputting text in
 a language other than English, and have mom convert them, on output,
 into the chosen open-and close-quote style.
@@ -414,16 +408,16 @@ output the correct quotes.
 
 <p>
 Turn SMARTQUOTES off by passing it any argument not in the argument
-list (e.g. OFF, QUIT, X, etc.)
+list (e.g. <kbd>OFF</kbd>, <kbd>QUIT</kbd>, <kbd>X</kbd>, etc)
 </p>
 
 <p>
 If you&#8217;re using the
 <a href="docprocessing.html#docprocessing">document processing macros</a>
 with
-<a href="docprocessing.html#printstyle">PRINTSTYLE TYPESET</a>,
-SMARTQUOTES is on by default (in the Anglo-American style); with
-<a href="docprocessing.html#printstyle">PRINTSTYLE TYPEWRITE</a>,
+<a href="docprocessing.html#printstyle">PRINTSTYLE&nbsp;TYPESET</a>,
+smartquotes are on by default (in the Anglo-American style); with
+<a href="docprocessing.html#printstyle">PRINTSTYLE&nbsp;TYPEWRITE</a>,
 it&#8217;s off by default (and should probably stay that way).
 </p>
 
@@ -432,7 +426,7 @@ Finally, if you&#8217;re fussy about the kerning of quote marks in
 relation to the text they surround, or have special quoting needs,
 you have to enter quote marks by hand using groff&#8217;s native
 <a href="definitions.html#inlines">inline escapes</a>
-for special characters (see <kbd>man groff-char</kbd>
+for special characters (see <kbd>man&nbsp;groff-char</kbd>
 for a complete list of special characters).  Entering quote marks
 this way allows you to use mom&#8217;s
 <a href="inlines.html#inline-kerning-mom">inline kerning escapes</a>
@@ -461,8 +455,8 @@ single quotes:
 Whether or not you have SMARTQUOTES turned on, get into the habit of
 entering the foot-and inch-marks, when you need them, with the
 <a href="definitions.html#inlines">inline escapes</a>
-<kbd>\*[FOOT]</kbd> and
-<kbd>\*[INCH]</kbd>, instead of
+<kbd><span class="nobr">\*[FOOT]</span></kbd> and
+<kbd><span class="nobr">\*[INCH]</span></kbd>, instead of
 <kbd>'</kbd> and <kbd>"</kbd>.
 </p>
 </div>
@@ -482,8 +476,8 @@ CAPS converts all lower case letters to upper case.
 Primarily, it&#8217;s a support macro used by the
 <a href="docprocessing.html#docprocessing">document processing macros</a>,
 but you may find it helpful on occasion. CAPS is a toggle, therefore
-no argument turns it on, any argument (OFF, QUIT, X, etc.) turns
-it off.
+no argument turns it on, any argument (<kbd>OFF</kbd>,
+<kbd>QUIT</kbd>, <kbd>X</kbd>, etc) turns it off.
 <br/>
 <span class="pre-in-pp">
   .CAPS
@@ -498,7 +492,7 @@ produces, on output
 </span>
 If you wish to capitalise a section of type inline, use the
 <a href="definitions.html#inlines">inline escapes</a>,
-<a href="inlines.html#uc-lc"><kbd>\*[UC]...\*[LC]</kbd></a>
+<a href="inlines.html#uc-lc"><kbd><span class="nobr">\*[UC]...\*[LC]</span></kbd></a>
 like this:
 <br/>
 <span class="pre-in-pp">
@@ -523,6 +517,21 @@ The above produces, on output
 not
 <span class="pre-in-pp">
   \*[UC]All work and no play makes Jack a dull boy\*[LC].
+</span>
+Conversely, an initial period must come <em>before</em>
+<kbd>\*[UC]</kbd>, or be preceded by <kbd>\&amp;</kbd>, like this:
+<br/>
+<span class="pre-in-pp">
+  .\*[UC]start\*[LC] is used to begin document processing.
+</span>
+or
+<span class="pre-in-pp">
+  \*[UC]\&amp;.start\*[LC] is used to begin document processing.
+</span>
+Upon output, either will produce
+<br/>
+<span class="pre-in-pp">
+  START is used to begin document processing.
 </span>
 </p>
 </div>
@@ -555,7 +564,7 @@ this:
 </span>
 Once a string is defined, you can call it any time with the
 <a href="definitions.html#inlines">inline escape</a>
-<kbd>\*[&lt;stringname&gt;]</kbd>.  Using the example
+<kbd><span class="nobr">\*[&lt;name&gt;]</span></kbd>.  Using the example
 string above
 <br/>
 <span class="pre-in-pp">
@@ -588,8 +597,8 @@ in order to avoid spaces you can&#8217;t see, like this
 <div class="box-tip">
 <p class="tip">
 <span class="experts">Experts:</span>
-STRING is an alias for
-<b>ds</b>.  You can use either, or mix 'n' match with impunity.
+STRING is an alias for <b>ds</b>.  You can use either, or mix
+&#8217;n&#8217; match with impunity.
 </p>
 </div>
 
@@ -634,7 +643,7 @@ escape character to its default.
 <div class="box-tip">
 <p class="tip">
 <span class="experts">Experts:</span>
-ESC_CHAR is an alias of <kbd>.ec</kbd>.  Mix 'n' match
+ESC_CHAR is an alias of <kbd>.ec</kbd>.  Mix &#8217;n&#8217; match
 the two with impunity.
 </p>
 </div>
@@ -658,8 +667,10 @@ or
 depth of type at the current point size, invoke <kbd
 class="bold">.SIZESPECS</kbd>, which takes no argument.
 The dimensions are stored in the string registers
-<b>\*[$CAP_HEIGHT]</b>, <b>\*[$X_HEIGHT]</b> and
-<b>\*[$DESCENDER]</b>, respectively, in
+<b><span class="nobr">\*[$CAP_HEIGHT]</span></b>,
+<b><span class="nobr">\*[$X_HEIGHT]</span></b>,
+and
+<b><span class="nobr">\*[$DESCENDER]</span></b>, respectively, in
 <a href="definitions.html#units">machine units</a>
 to which the
 <a href="definitions.html#unitofmeasure">unit of measure</a>,
@@ -685,11 +696,11 @@ would do the trick.
 </div>
 
 <div class="box-macro-args">
-Macro: <b>UNDERSCORE</b> <kbd class="macro-args">[ &lt;distance below baseline&gt; ] &quot;&lt;string&gt;&quot;</kbd>
+Macro: <b>UNDERSCORE</b> <kbd class="macro-args">[ &lt;distance below baseline&gt; ] [ PREFIX &lt;prefix&gt; ] [ SUFFIX &lt;suffix&gt; ] &quot;&lt;string&gt;&quot;</kbd>
 </div>
 
 <p class="requires">
-&bull;&nbsp;Optional argument requires a <a href="definitions.html#unitofmeasure">unit of measure</a>
+&bull;&nbsp;&lt;distance below baseline&gt; requires a <a href="definitions.html#unitofmeasure">unit of measure</a>
 </p>
 
 <p>
@@ -699,7 +710,7 @@ required
 The string must be enclosed in double-quotes, like this:
 <br/>
 <span class="pre-in-pp">
-  .UNDERSCORE "Unmonitored monopolies breed high prices and poor products."&nbsp;
+  .UNDERSCORE "Unmonitored monopolies breed high prices and poor products"
 </span>
 If you wish to change the distance of the rule from the baseline,
 use the optional argument
@@ -707,10 +718,31 @@ use the optional argument
 (with a unit of measure).
 <br/>
 <span class="pre-in-pp">
-  .UNDERSCORE 3p "Unmonitored monopolies breed high prices and poor products."&nbsp;
+  .UNDERSCORE 3p "Unmonitored monopolies breed high prices and poor products"
 </span>
-The above places upper edge of the underscore 3 points below the
+The above places the upper edge of the underscore 3 points below the
 <a href="definitions.html#baseline">baseline</a>.
+</p>
+
+<div class="box-tip">
+<p class="tip">
+<span class="note">Tip:</span>
+UNDERSCORE can also be used for strikethrough effects by supplying a
+negative value to the distance argument.
+</p>
+</div>
+
+<p>
+<kbd>PREFIX</kbd> and <kbd>SUFFIX</kbd> allow you to add
+non-underscored punctuation (or other glyphs) to the beginning
+and/or end of the underscored string.  If the argument to either
+<kbd>PREFIX</kbd> or <kbd>SUFFIX</kbd> contains spaces, surround the
+argument with double-quotes.  For example, the following underscores
+the text string but not the surrounding punctuation.
+<br/>
+<span class="pre-in-pp">
+  .UNDERSCORE PREFIX ( SUFFIX .) "Unmonitored monopolies breed high prices and poor products"
+</span>
 </p>
 
 <div class="box-tip">
@@ -766,14 +798,14 @@ UNDERSCORE_WEIGHT also sets the weight of
 </p>
 </div>
 
-<h3 id="underscore-color" class="docs">Colorizing underscored text</h3>
+<h3 id="underscore-color" class="docs">Colourising underscored text</h3>
 <p>
 If you want underscored text to be in a different colour from the
 text around it, use the
 <a href="color.html#color">COLOR</a>
-macro, rather than the
-<a href="color.html#color-inline">inline escape for changing color</a>.
-In other words, assuming your prevailing text color is black and
+macro rather than the
+<a href="color.html#color-inline">inline escape for changing colour</a>.
+In other words, assuming your prevailing text colour is black and
 you want underscored text in red
 <br/>
 <span class="pre-in-pp">
@@ -786,9 +818,10 @@ rather than
 <span class="pre-in-pp">
   .UNDERSCORE "\*[red]text to underscore\*[black]"
 </span>
-The latter will render the text in red, and the underscore in black.
-You can use this to create truly rainbow effects if you want, e.g.
-text in red, underscore in blue, and prevailing type in black:
+The latter will render the text in red but the underscore in black.
+You can, of course, use this to create rainbow effects if that's
+what you want, e.g. text in red, underscore in blue, and prevailing
+type in black:
 <br/>
 <span class="pre-in-pp">
   .UNDERSCORE "\*[red]text to underscore\*[blue]"
@@ -803,11 +836,14 @@ text in red, underscore in blue, and prevailing type in black:
 </div>
 
 <div class="box-macro-args">
-Macro: <b>UNDERSCORE2</b> <kbd class="macro-args">[ &lt;distance below baseline&gt; [ &lt;distance between rules&gt; ] ] &quot;&lt;string&gt;&quot;</kbd>
+Macro: <b>UNDERSCORE2</b> <kbd class="macro-args">[ &lt;distance below baseline&gt; [ &lt;distance between rules&gt; ]  [ PREFIX &lt;prefix&gt; ] [ SUFFIX &lt;suffix&gt; ]  &quot;&lt;string&gt;&quot;</kbd>
 </div>
 
 <p class="requires">
-&bull;&nbsp;Optional arguments require a <a href="definitions.html#unitofmeasure">unit of measure</a>
+&bull;&nbsp;&lt;distance below baseline&gt;
+and
+&lt;distance between rules&gt;
+require a <a href="definitions.html#unitofmeasure">unit of measure</a>
 </p>
 
 <p>
@@ -817,7 +853,7 @@ the required
 The string must be enclosed in double-quotes, like this:
 <br/>
 <span class="pre-in-pp">
-  .UNDERSCORE2 "Unmonitored monopolies breed high prices and poor products."
+  .UNDERSCORE2 "Unmonitored monopolies breed high prices and poor products"
 </span>
 The default distance between the two rules is 2 points, measured
 from the bottom edge of the upper rule to the top edge of the lower
@@ -829,10 +865,10 @@ If you wish to change the distance of the double underscore from the
 <a href="definitions.html#baseline">baseline</a>,
 use the optional argument
 <kbd>&lt;distance&nbsp;below&nbsp;baseline&gt;</kbd>
-(with a unit of measure), e.g.,
+(with a unit of measure), e.g.
 <br/>
 <span class="pre-in-pp">
-  .UNDERSCORE2 3p "Unmonitored monopolies breed high prices and poor products."
+  .UNDERSCORE2 3p "Unmonitored monopolies breed high prices and poor products"
 </span>
 which places the upper edge of the first rule of the double
 underscore 3 points below the baseline.
@@ -842,17 +878,35 @@ underscore 3 points below the baseline.
 If you wish to change the distance between the two rules as well,
 use the second optional argument
 <kbd>&lt;distance&nbsp;between&nbsp;rules&gt;</kbd>
-(with a unit of measure).  Be aware that you must give a value for
-the first optional argument if you want to use the second.  The
-distance between the two rules is measured from the bottom edge of
-the upper rule to the top edge of the lower one.
+(with a unit of measure).  The distance between the two rules
+is measured from the bottom edge of the upper rule to the top
+edge of the lower one.  Be aware that you must give a value for
+<kbd>&lt;distance&nbsp;below&nbsp;baseline&gt;</kbd> if you want to
+use <kbd>&lt;distance&nbsp;between&nbsp;rules&gt;</kbd>.
 </p>
 
 <p>
+<kbd>PREFIX</kbd> and <kbd>SUFFIX</kbd> allow you to add
+non-underscored punctuation (or other glyphs) to the beginning
+and/or end of the double-underscored string.  If the argument to
+either <kbd>PREFIX</kbd> or <kbd>SUFFIX</kbd> contains spaces,
+surround the argument with double-quotes.  For example, the
+following double-underscores the text string but not the surrounding
+punctuation.
+<br/>
+<span class="pre-in-pp">
+  .UNDERSCORE2 PREFIX ( SUFFIX .) "Unmonitored monopolies breed high prices and poor products"
+</span>
 The weight (thickness) of double underscores may be controlled with
 the macro
 <a href="#underscore-weight">UNDERSCORE_WEIGHT</a>
 (q.v).
+</p>
+
+<p>
+See
+<a href="#underscore-color">here</a>
+for advice on colourising double-underscored text.
 </p>
 
 <div class="box-tip">
@@ -884,22 +938,38 @@ Macro: <b>UNDERLINE</b> <kbd class="macro-args">toggle</kbd>
 The distinction between underscoring and underlining is that
 underscoring is suitable for occasional effects (a word here,
 a phrase there), whereas underlining underlines whole passages
-of type.  Furthermore, you cannot colorize underlining, and
-there&#8217;s a special macro
-<a href="#underline-specs">UNDERLINE_SPECS</a>
+of type.  Furthermore, you cannot colourise underlining.
+There&#8217;s a special macro,
+<a href="#underline-specs">UNDERLINE_SPECS</a>,
 to control the weight and distance from the baseline of the
-underline.  Lastly, files that use UNDERLINE must be processed with
+underline.
+</p>
+
+<p>
+Lastly, files that use UNDERLINE must be processed with
 <br/>
 <span class="pre-in-pp">
   pdfmom -Tps filename.mom | ps2pdf - filename.pdf
 </span>
-since groff's native pdf driver does not recognize UNDERLINE.
+since groff&#8217;s pdf driver does not recognize UNDERLINE.
 </p>
 
 <p>
-UNDERLINE is a toggle macro, therefore you invoke it by itself (ie
+Note that
+<a href="docprocessing.html#printstyle">PRINTSTYLE&nbsp;TYPEWRITE</a>
+uses UNDERLINE to underline italics
+and pseudo-italics (<a href="typesetting.html#slant-inline">SLANT</a>)
+by default.  The default may be changed (see
+<a href="docprocessing.html#printstyle-italics">Underlining of italics</a>)
+but if it's what you want, you must process your document as shown
+above.
+</p>
+
+<p>
+UNDERLINE is a toggle macro, therefore you invoke it by itself (i.e.
 with no argument) to initiate underlining, and with any argument
-(<kbd>OFF, QUIT, X,</kbd> etc) to turn it off.
+(<kbd>OFF</kbd>, <kbd>QUIT</kbd>, <kbd>END</kbd>, <kbd>X</kbd>, etc)
+to turn it off.
 </p>
 
 <div class="box-tip">
@@ -908,13 +978,13 @@ with no argument) to initiate underlining, and with any argument
 Underlining may also be turned on and off
 <a href="definitions.html#inlines">inline</a>
 with the escapes
-<kbd><a href="#ul">\*[UL]...\*[ULX]</a></kbd>.
+<a href="#ul"><kbd><span class="nobr">\*[UL]...\*[ULX]</span></kbd></a>.
 </p>
 
 <p class="tip-bottom">
 <span class="additional-note">Additional note:</span>
 In document processing, neither <kbd>.UNDERLINE</kbd> nor
-<kbd>\*[UL]</kbd> persist past the current document element tag.
+<kbd><span class="nobr">\*[UL]</span></kbd> persist past the current document element tag.
 For example, if you turn underlining on in a paragraph
 (<kbd><a href="docelement.html#pp">.PP</a></kbd>),
 your next paragraph will not be underlined.
@@ -945,8 +1015,8 @@ mom&#8217;s default is 1-1/4 points (1.25p).
 The macro pair,
 <kbd><a href="#underline">.UNDERLINE</a></kbd> /
 <kbd>.UNDERLINE&nbsp;OFF</kbd>, and the inline escapes,
-<kbd>\*[UL]</kbd> / <kbd>\*[ULX]</kbd>, are functionally identical,
-hence, in
+<span class="nobr"><kbd>\*[UL]</kbd> / <kbd>\*[ULX]</kbd></span>, are
+functionally identical, hence, in
 <a href="definitions.html#filled">fill</a>
 modes
 <br/>
@@ -1044,7 +1114,7 @@ The following uses the Date/Signature example, above, but adds
 rules into the whitespace through the use of string tabs and
 mom&#8217;s
 <a href="definitions.html#inlines">inline escape</a>
-<kbd><a href="inlines.html#inline-rule-mom">\*[RULE]</a></kbd>.
+<a href="inlines.html#inline-rule-mom"><kbd><span class="nobr">\*[RULE]</span></kbd></a>.
 <br/>
 <span class="pre-in-pp">
   .LL 30P
@@ -1161,7 +1231,7 @@ Whenever you want to fill a line or tab with
 <a href="definitions.html#leader">leaders</a>,
 use the
 <a href="definitions.html#inlines">inline escape</a>
-<kbd>\*[LEADER]</kbd>.  The remainder of the line or
+<kbd><span class="nobr">\*[LEADER]</span></kbd>.  The remainder of the line or
 tab will be filled with the leader character. Mom&#8217;s default
 leader character is a period (dot), but you can change it to any
 character you like with
@@ -1221,7 +1291,7 @@ LEADER_CHARACTER takes one argument: a single character you would
 like to be used for
 <a href="definitions.html#leader">leaders</a>.
 (See
-<kbd><a href="#leader">\*[LEADER]</a></kbd>
+<a href="#leader"><kbd><span class="nobr">\*[LEADER]</span></kbd></a>
 for an explanation of how to fill lines with leaders.)
 </p>
 
@@ -1316,17 +1386,31 @@ When using the
 <a href="docelement.html#pp">PP</a>,
 DROPCAP only works
 </p>
-<ul style="margin-top: -1em; margin-bottom: 0;">
-  <li>with initial paragraphs (ie at the start of the document,
+<ul style="margin-top: -1em; margin-bottom: -.5em;">
+  <li>with initial paragraphs (i.e. at the start of the document,
       or after
-      <a href="docelement.html#head">HEAD</a>),</li>
+      <a href="docelement.html#heading">HEADING</a>),</li>
   <li>when <kbd>.DROPCAP</kbd> comes immediately after <kbd>.PP</kbd>,</li>
   <li>the
       <a href="docprocessing.html#printstyle">PRINTSTYLE</a>
       is TYPESET.</li>
 </ul>
-<p class="tip-bottom">
+<p>
 If these conditions aren&#8217;t met, DROPCAP is silently ignored.
+</p>
+
+<p class="tip-bottom" style="margin-top: -1em;">
+<span class="additional-note">Additional note:</span>
+If you have dropcaps after
+<a href="docelement.html#heading">HEADING</a>s,
+you must increase the <kbd>NEEDS</kbd> argument to
+<a href="docelement.html#heading-style">HEADING_STYLE</a>
+to match the number of dropcap lines.  For example, assuming
+dropcaps that are three lines tall:
+<br/>
+<span class="pre-in-pp">
+  .HEADING_STYLE 1 NEEDS 3
+</span>
 </p>
 </div>
 
@@ -1451,9 +1535,10 @@ Inlines: <kbd>\*[SUP]...\*[SUPX]</kbd>
 <p>
 Superscripts are accomplished
 <a href="definitions.html#inlines">inline</a>.
-Whenever you need one, typically for numerals, all you need to do is
-surround the superscript with the inlines above. <kbd>\*[SUP]</kbd>
-begins superscripting; <kbd>\*[SUPX]</kbd> turns it off.
+Whenever you need one, typically for numerals, all you need
+to do is surround the superscript with the inlines above.
+<kbd><span class="nobr">\*[SUP]</span></kbd> begins superscripting;
+<kbd><span class="nobr">\*[SUPX]</span></kbd> turns it off.
 </p>
 
 <p id="cond-or-ext-sup">
@@ -1464,8 +1549,8 @@ or
 and you want your superscripts to be equivalently pseudo-condensed
 or -extended, use
 <br/>
-<kbd>\*[CONDSUP]...\*[CONDSUPX]</kbd> or
-<kbd>\*[EXTSUP]...\*[EXTSUPX]</kbd>.
+<kbd><span class="nobr">\*[CONDSUP]...\*[CONDSUPX]</span></kbd> or
+<kbd><span class="nobr">\*[EXTSUP]...\*[EXTSUPX]</span></kbd>.
 </p>
 
 <p>
@@ -1528,8 +1613,9 @@ left-quadded
 </p>
 
 <p>
-Whenever you want to centre a block of type on the page, surround it with
-<kbd>.CENTER_BLOCK/.CENTER_BLOCK OFF</kbd> (or QUIT, X, etc.).
+Whenever you want to centre a block of type on the page, surround it
+with <kbd>.CENTER_BLOCK/.CENTER_BLOCK OFF</kbd> (or <kbd>QUIT</kbd>,
+<kbd>X</kbd>, etc).
 </p>
 
 <div class="macro-id-overline">
@@ -1537,67 +1623,149 @@ Whenever you want to centre a block of type on the page, surround it with
 </div>
 <br/>
 <div class="box-macro-args">
-Macro: <b>LEFT_HANG</b> <kbd class="macro-args">&lt;character&gt;</kbd>
+Macro: <b>LEFT_HANG</b> <kbd class="macro-args">&lt;character&gt; [ &lt;gutter&gt;</kbd> ]
 </div>
+<p class="requires">
+&bull;&nbsp;left-hung characters
+</p>
 
 <div class="box-macro-args" style="margin-top: 1em">
 Inline: <b>\*[HANG <kbd class="macro-args">&lt;character&gt;</kbd>]</b>
 </div>
-
-
-<p>
-LEFT_HANG hangs its argument to the left of the left margin.
-If enclosed in double-quotes, the argument may contain local
-horizontal motions.
+<p class="requires">
+&bull;&nbsp;right-hung characters
 </p>
 
 <p>
-Input text after LEFT_HANG must begin by repeating the text of the
-argument, including horizontal motions.  If the hung character is
-a left double-quote, <kbd>\[lq]</kbd> must be used in the argument
-and the usual keyboard double-quote (<kbd>"</kbd>) used for the
-input text so as not to confuse SMARTQUOTES.
+Hung characters, frequently punctuation, fall outside the left or
+right margin.  Their purpose is usually to fine-tune justification.
+Consider the following:
+</p>
+
+<table style="margin-left: 3%; margin-right: 6%; text-align: justify">
+<tr>
+<td style="padding-right: 1em">
+&#8220;Play the man, Master Ridley; we
+shall this day light such a candle,
+by God's grace, in England, as I
+trust shall never be put out.&#8221;
+</td>
+<td>
+&nbsp;&nbsp;
+</td>
+<td style="margin-right: 0; padding-right: 0">
+&#8220;
+<br/>
+<br/>
+<br/>
+<br/>
+</td>
+<td style="margin-left: 0; padding-left: 0">
+Play the man, Master Ridley; we
+shall this day light such a candle,
+by God's grace, in England, as I
+trust shall never be put out.&#8221;</td>
+</tr>
+</table>
+
+<p>
+In the right hand example, the opening double-quote hangs outside
+the left margin, creating a uniform left margin for the text.
+</p>
+
+<h4 class="docs">Left hung characters</h4>
+
+<p>
+LEFT_HANG hangs its first argument, the character to be hung, to
+the left of the left margin.  The optional second argument lets you
+specify an amount of space to insert between the hung character and
+the text.
 </p>
 
 <p>
+Input text after LEFT_HANG must begin with the character to be hung
+PLUS a
+<a href="inlines.html#inline-horizontal-mom">horizontal motion</a>
+corresponding to <kbd>&lt;gutter&gt;</kbd> if one was given.
+If the hung character is a left double-quote, <kbd>\[lq]</kbd>
+must be used as the argument to LEFT_HANG and the usual keyboard
+double-quote (<kbd>"</kbd>) entered as the input text so as not to
+confuse
+<a href="goodies.html#smartquotes">SMARTQUOTES</a>
 The following example demonstrates:
-<br>
+<br/>
 <span class="pre-in-pp">
-  .LEFT_HANG "\[lq]\*[FU3]"
-  "\*[FU3]This line will have its opening double-quote
-  plus three kern units of space hung outside the
-  left margin."
+  .LEFT_HANG \[lq] 1p
+  "\*[FWD 1p]This line will have its opening double-quote
+  plus one point of space hung outside the left margin."
 </span>
 </p>
 
 <p style="margin-top: -1em">
-The <kbd>\*[HANG]</kbd> inline escape hangs its single-character
-argument, typically a punctuation mark, outside the right margin of
-justified copy, like this:
-<br>
-<span class="pre-in-pp">
+Note that what follows LEFT_HANG must be an input line and therefore
+it cannot be used to left-hang a
+<a href="docelement.html#heading">HEADING</a>
+character.
+</p>
+
+<div class="box-tip">
+<p class="tip">
+<span class="important">Important:</span>
+Versions of mom lower than 2.5_a that included LEFT_HANG required
+that the character and its gutter be entered as a single,
+concatenated argument, using horizontal motions to establish the
+gutter
+(e.g.
+<a href="inlines.html#inline-horizontal-mom">FWD</a>,
+<a href="inlines.html#inline-horizontal-mom">BCK</a>).
+Documents created with versions prior to 2.5_a may have to be
+updated.
+</p>
+</div>
+
+<h4 class="docs">Right hung characters</h4>
+
+<p>
+The <kbd>\*[HANG&nbsp;c]</kbd> inline escape hangs its argument outside
+the right margin of justified or quad right copy.  The argument may
+be a single character, or a single character preceded by a
+horizontal motion, effectively establishing a gutter between the
+right margin and the hung character:
+<br/>
+<span class="pre-in-pp" style="margin-bottom: .25em">
   This line will have its closing period hung outside
-  the right margin\*[HANG .]
+  the right margin with a one point gutter\*[HANG \*[FWD 1p].]
 </span>
-For the exceptionally fussy, <kbd>\*[HANG]</kbd> may also be used
-with centred text to centre the text visually without taking the
-hung punctuation into account.
-</p>
-
-<p>
 If the hung character is a right double-quote, <kbd>"\[rq]"</kbd>
-must be used as the argument (that is, the <kbd>\[rq]</kbd> character surrounded
-by double-quotes).  The double-quotes are required for all special
-characters of the form <kbd>\[xx]</kbd>.
+must be used as the argument (that is, the <kbd>\[rq]</kbd>
+character surrounded by double-quotes).  The double-quotes are
+required for all special characters of the form
+<kbd style="whitespace: nowrap">\[name]</kbd>.
+Horizontal motion, if any, must fall inside the double-quotes:
+<br/>
+<span class="pre-in-pp">
+   ...and they all lived happily ever after.\*[HANG "\*[FWD 1p]\[rq]"]
+</span>
 </p>
 
 <p>
-If the hung character is a hyphen, <kbd>\*[HANG&nbsp;-]</kbd> must
-come at the end of an
+If the hung character is a hyphen,
+<kbd style="whitespace: nowrap"><span class="nobr">\*[HANG&nbsp;-]</span></kbd>
+must come at the end of an
 <a href="definitions.html#inputline">input line</a>.
-All other characters may be used mid-line if groff breaks the line
-naturally at the point the hung character is introduced.
+This restriction does not apply to other characters, which may come
+anywhere in an input line provided that, on output, the line breaks
+at the point you introduced the hung character.
 </p>
+
+<p>
+For the exceptionally fussy, <kbd>\*[HANG]</kbd> may also be used to
+improve visual centring; when text is centred, <kbd
+style="whitespace: nowrap">\*[HANG&nbsp;c]</kbd>
+hangs the character to the right of the centred line instead of the
+margin.
+</p>
+
 <div class="rule-long"><hr/></div>
 
 <!-- Navigation links -->

@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -20,13 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lib.h"
 
+#include <assert.h>
 #include <ctype.h>
-#include <time.h>
+#include <errno.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <errno.h>
+#include <time.h>
 
-#include "assert.h"
 #include "color.h"
 #include "device.h"
 #include "searchpath.h"
@@ -42,7 +42,7 @@ extern int suppress_output_flag;
 extern int color_flag;
 extern int is_html;
 
-extern int tcommand_flag;
+extern bool device_has_tcommand;
 extern int vresolution;
 extern int hresolution;
 extern int sizescale;
@@ -89,3 +89,9 @@ int output_warning(warning_type, const char *,
 		   const errarg & = empty_errarg,
 		   const errarg & = empty_errarg,
 		   const errarg & = empty_errarg);
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

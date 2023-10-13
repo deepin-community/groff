@@ -1,0 +1,9 @@
+/*.debhelper*
+/*.substvars
+/autoreconf.*
+/build
+/doc-save
+/files
+/groff
+/groff-base
+/tmp

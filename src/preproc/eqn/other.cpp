@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -16,6 +16,10 @@ for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <stdlib.h>
 
@@ -649,7 +653,7 @@ void hmotion_box::output()
     p->output();
   }
   else if (output_format == mathml) {
-    printf("<merror>eqn horizontal motion cannot be expessed "
+    printf("<merror>eqn horizontal motion cannot be expressed "
 	   "in MathML</merror>");
     p->output();
   }

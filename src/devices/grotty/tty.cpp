@@ -1,6 +1,6 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2021 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
+     OSC 8 support by G. Branden Robinson
 
 This file is part of groff.
 
@@ -43,19 +43,19 @@ extern "C" const char *Version_string;
 // A character of the output device fits in a 32-bit word.
 typedef unsigned int output_character;
 
-static int horizontal_tab_flag = 0;
-static int form_feed_flag = 0;
-static int bold_flag_option = 1;
-static int bold_flag;
-static int underline_flag_option = 1;
-static int underline_flag;
-static int overstrike_flag = 1;
-static int draw_flag = 1;
-static int italic_flag_option = 0;
-static int italic_flag;
-static int reverse_flag_option = 0;
-static int reverse_flag;
-static int old_drawing_scheme = 0;
+static bool want_horizontal_tabs = false;
+static bool want_form_feeds = false;
+static bool want_emboldening_by_overstriking = true;
+static bool do_bold;
+static bool want_italics_by_underlining = true;
+static bool do_underline;
+static bool want_glyph_composition_by_overstriking = true;
+static bool allow_drawing_commands = true;
+static bool want_sgr_italics = false;
+static bool do_sgr_italics;
+static bool want_reverse_video_for_italics = false;
+static bool do_reverse_video;
+static bool use_overstriking_drawing_scheme = false;
 
 static void update_options();
 static void usage(FILE *stream);
@@ -80,8 +80,12 @@ static unsigned char bold_underline_mode;
 
 #ifndef IS_EBCDIC_HOST
 #define CSI "\033["
+#define OSC8 "\033]8"
+#define ST "\033\\"
 #else
 #define CSI "\047["
+#define OSC8 "\047]8"
+#define ST "\047\\"
 #endif
 
 // SGR handling (ISO 6429)
@@ -123,9 +127,9 @@ tty_font *tty_font::load_tty_font(const char *s)
   long n;
   if (num != 0 && (n = strtol(num, 0, 0)) != 0)
     f->mode = (unsigned char)(n & (BOLD_MODE|UNDERLINE_MODE));
-  if (!underline_flag)
+  if (!do_underline)
     f->mode &= ~UNDERLINE_MODE;
-  if (!bold_flag)
+  if (!do_bold)
     f->mode &= ~BOLD_MODE;
   if ((f->mode & (BOLD_MODE|UNDERLINE_MODE)) == (BOLD_MODE|UNDERLINE_MODE))
     f->mode = (unsigned char)((f->mode & ~(BOLD_MODE|UNDERLINE_MODE))
@@ -174,21 +178,23 @@ class tty_printer : public printer {
   int cached_vpos;
   schar curr_fore_idx;
   schar curr_back_idx;
-  int is_underline;
-  int is_bold;
-  int cu_flag;
+  bool is_underlining;
+  bool is_boldfacing;
+  bool is_continuously_underlining;
   PTABLE(schar) tty_colors;
   void make_underline(int);
   void make_bold(output_character, int);
   schar color_to_idx(color *);
   void add_char(output_character, int, int, int, color *, color *,
 		unsigned char);
+  void simple_add_char(const output_character, const environment *);
   char *make_rgb_string(unsigned int, unsigned int, unsigned int);
-  int tty_color(unsigned int, unsigned int, unsigned int, schar *,
-		schar = DEFAULT_COLOR_IDX);
+  bool tty_color(unsigned int, unsigned int, unsigned int, schar *,
+		 schar = DEFAULT_COLOR_IDX);
   void line(int, int, int, int, color *, color *);
   void draw_line(int *, int, const environment *);
   void draw_polygon(int *, int, const environment *);
+  void special_link(const char *, const environment *);
 public:
   tty_printer();
   ~tty_printer();
@@ -226,22 +232,22 @@ char *tty_printer::make_rgb_string(unsigned int r,
   return s;
 }
 
-int tty_printer::tty_color(unsigned int r,
-			   unsigned int g,
-			   unsigned int b, schar *idx, schar value)
+bool tty_printer::tty_color(unsigned int r,
+			    unsigned int g,
+			    unsigned int b, schar *idx, schar value)
 {
-  int unknown_color = 0;
+  bool is_known_color = true;
   char *s = make_rgb_string(r, g, b);
   schar *i = tty_colors.lookup(s);
   if (!i) {
-    unknown_color = 1;
+    is_known_color = false;
     i = new schar[1];
     *i = value;
     tty_colors.define(s, i);
   }
   *idx = *i;
-  a_delete s;
-  return unknown_color;
+  delete[] s;
+  return is_known_color;
 }
 
 tty_printer::tty_printer() : cached_v(0)
@@ -268,17 +274,17 @@ tty_printer::tty_printer() : cached_v(0)
   lines = new tty_glyph *[nlines];
   for (int i = 0; i < nlines; i++)
     lines[i] = 0;
-  cu_flag = 0;
+  is_continuously_underlining = false;
 }
 
 tty_printer::~tty_printer()
 {
-  a_delete lines;
+  delete[] lines;
 }
 
 void tty_printer::make_underline(int w)
 {
-  if (old_drawing_scheme) {
+  if (use_overstriking_drawing_scheme) {
     if (!w)
       warning("can't underline zero-width character");
     else {
@@ -287,21 +293,21 @@ void tty_printer::make_underline(int w)
     }
   }
   else {
-    if (!is_underline) {
-      if (italic_flag)
+    if (!is_underlining) {
+      if (do_sgr_italics)
 	putstring(SGR_ITALIC);
-      else if (reverse_flag)
+      else if (do_reverse_video)
 	putstring(SGR_REVERSE);
       else
 	putstring(SGR_UNDERLINE);
     }
-    is_underline = 1;
+    is_underlining = true;
   }
 }
 
 void tty_printer::make_bold(output_character c, int w)
 {
-  if (old_drawing_scheme) {
+  if (use_overstriking_drawing_scheme) {
     if (!w)
       warning("can't print zero-width character in bold");
     else {
@@ -310,9 +316,9 @@ void tty_printer::make_bold(output_character c, int w)
     }
   }
   else {
-    if (!is_bold)
+    if (!is_boldfacing)
       putstring(SGR_BOLD);
-    is_bold = 1;
+    is_boldfacing = true;
   }
 }
 
@@ -323,10 +329,10 @@ schar tty_printer::color_to_idx(color *col)
   unsigned int r, g, b;
   col->get_rgb(&r, &g, &b);
   schar idx;
-  if (tty_color(r, g, b, &idx)) {
+  if (!tty_color(r, g, b, &idx)) {
     char *s = col->print_color();
-    error("Unknown color (%1) mapped to default", s);
-    a_delete s;
+    error("unrecognized color '%1' mapped to default", s);
+    delete[] s;
   }
   return idx;
 }
@@ -335,7 +341,7 @@ void tty_printer::set_char(glyph *g, font *f, const environment *env,
 			   int w, const char *)
 {
   if (w % font::hor != 0)
-    fatal("width of character not a multiple of horizontal resolution");
+    fatal("glyph width is not a multiple of horizontal motion quantum");
   add_char(f->get_code(g), w,
 	   env->hpos, env->vpos,
 	   env->col, env->fill,
@@ -350,7 +356,7 @@ void tty_printer::add_char(output_character c, int w,
 #if 0
   // This is too expensive.
   if (h % font::hor != 0)
-    fatal("horizontal position not a multiple of horizontal resolution");
+    fatal("horizontal position not a multiple of horizontal motion quantum");
 #endif
   int hpos = h / font::hor;
   if (hpos < SHRT_MIN || hpos > SHRT_MAX) {
@@ -362,7 +368,8 @@ void tty_printer::add_char(output_character c, int w,
     vpos = cached_vpos;
   else {
     if (v % font::vert != 0)
-      fatal("vertical position not a multiple of vertical resolution");
+      fatal("vertical position not a multiple of vertical motion"
+	    " quantum");
     vpos = v / font::vert;
     if (vpos > nlines) {
       tty_glyph **old_lines = lines;
@@ -370,13 +377,13 @@ void tty_printer::add_char(output_character c, int w,
       memcpy(lines, old_lines, nlines * sizeof(tty_glyph *));
       for (int i = nlines; i <= vpos; i++)
 	lines[i] = 0;
-      a_delete old_lines;
+      delete[] old_lines;
       nlines = vpos + 1;
     }
     // Note that the first output line corresponds to groff
     // position font::vert.
     if (vpos <= 0) {
-      error("character above first line discarded");
+      error("output above first line discarded");
       return;
     }
     cached_v = v;
@@ -402,6 +409,12 @@ void tty_printer::add_char(output_character c, int w,
       break;
   g->next = *pp;
   *pp = g;
+}
+
+void tty_printer::simple_add_char(const output_character c,
+				  const environment *env)
+{
+  add_char(c, 0, env->hpos, env->vpos, env->col, env->fill, 0);
 }
 
 void tty_printer::special(char *arg, const environment *env, char type)
@@ -433,16 +446,80 @@ void tty_printer::special(char *arg, const environment *env, char type)
     error("empty X command ignored");
     return;
   }
-  if (strncmp(command, "sgr", p - command) == 0) {
-    for (; *p == ' ' || *p == '\n'; p++)
-      ;
-    int n;
-    if (*p != '\0' && sscanf(p, "%d", &n) == 1 && n == 0)
-      old_drawing_scheme = 1;
-    else
-      old_drawing_scheme = 0;
-    update_options();
+  if (strncmp(command, "link", p - command) == 0)
+    special_link(p, env);
+  else
+    warning("unrecognized X command '%1' ignored", command);
+}
+
+// Produce an OSC 8 hyperlink.  Given ditroff input of the form:
+//   x X tty: link [URI[ KEY=VALUE] ...]
+// produce "OSC 8 [;KEY=VALUE];[URI] ST".  KEY/VALUE pairs can be
+// repeated arbitrarily and are separated by colons.  Omission of the
+// URI ends the hyperlink that was begun by specifying it.  See
+// <https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda>.
+void tty_printer::special_link(const char *arg, const environment *env)
+{
+  static bool is_link_active = false;
+  if (use_overstriking_drawing_scheme)
+    return;
+  for (const char *s = OSC8; *s != '\0'; s++)
+    simple_add_char(*s, env);
+  simple_add_char(';', env);
+  char c = *arg;
+  if ('\0' == c || '\n' == c) {
+    simple_add_char(';', env);
+    if (!is_link_active)
+      warning("ending hyperlink when none was started");
+    is_link_active = false;
   }
+  else {
+    // Our caller ensures that we see white space after 'link'.
+    assert(c == ' ' || c == '\t');
+    if (is_link_active) {
+      warning("new hyperlink started without ending previous one;"
+	      " recovering");
+      simple_add_char(';', env);
+	for (const char *s = ST OSC8; *s != '\0'; s++)
+	  simple_add_char(*s, env);
+	simple_add_char(';', env);
+    }
+    is_link_active = true;
+    do
+      c = *arg++;
+    while (c == ' ' || c == '\t');
+    arg--;
+    // The first argument is the URI.
+    const char *uri = arg;
+    do
+      c = *arg++;
+    while (c != '\0' && c != ' ' && c != '\t');
+    arg--;
+    ptrdiff_t uri_len = arg - uri;
+    // Any remaining arguments are "key=value" pairs.
+    const char *pair = 0;
+    bool done = false;
+    do {
+      if (pair != 0)
+	simple_add_char(':', env);
+      pair = arg;
+      bool in_pair = true;
+      do {
+	c = *arg++;
+	if ('\0' == c)
+	  done = true;
+	else if (' ' == c || '\t' == c)
+	  in_pair = false;
+	else
+	  simple_add_char(c, env);
+      } while (!done && in_pair);
+    } while (!done);
+    simple_add_char(';', env);
+    for (size_t i = uri_len; i > 0; i--)
+      simple_add_char(*uri++, env);
+  }
+  for (const char *s = ST; *s != '\0'; s++)
+    simple_add_char(*s, env);
 }
 
 void tty_printer::change_color(const environment * const env)
@@ -457,12 +534,14 @@ void tty_printer::change_fill_color(const environment * const env)
 
 void tty_printer::draw(int code, int *p, int np, const environment *env)
 {
-  if (!draw_flag)
+  if (!allow_drawing_commands)
     return;
   if (code == 'l')
     draw_line(p, np, env);
-  if (code == 'p')
+  else if (code == 'p')
     draw_polygon(p, np, env);
+  else
+    warning("ignoring unsupported drawing command '%1'", char(code));
 }
 
 void tty_printer::draw_polygon(int *p, int np, const environment *env)
@@ -512,6 +591,23 @@ void tty_printer::draw_line(int *p, int np, const environment *env)
 void tty_printer::line(int hpos, int vpos, int dx, int dy,
 		       color *col, color *fill)
 {
+  // XXX: zero-length lines get drawn as '+' crossings in nroff, even
+  // when there is no crossing, but they nevertheless occur frequently
+  // in input.  Does tbl produce them?
+#if 0
+  if (0 == dx)
+    fatal("cannot draw zero-length horizontal line");
+  if (0 == dy)
+    fatal("cannot draw zero-length vertical line");
+#endif
+  if ((dx != 0) && (dy != 0))
+    warning("cannot draw diagonal line");
+  if (dx % font::hor != 0)
+    fatal("length of horizontal line %1 is not a multiple of horizontal"
+	" motion quantum %2", dx, font::hor);
+  if (dy % font::vert != 0)
+    fatal("length of vertical line %1 is not a multiple of vertical"
+	" motion quantum %2", dy, font::vert);
   if (dx == 0) {
     // vertical line
     int v = vpos;
@@ -598,12 +694,12 @@ void tty_printer::put_color(schar color_index, int back)
   if (color_index == DEFAULT_COLOR_IDX) {
     putstring(SGR_DEFAULT);
     // set bold and underline again
-    if (is_bold)
+    if (is_boldfacing)
       putstring(SGR_BOLD);
-    if (is_underline) {
-      if (italic_flag)
+    if (is_underlining) {
+      if (do_sgr_italics)
 	putstring(SGR_ITALIC);
-      else if (reverse_flag)
+      else if (do_reverse_video)
 	putstring(SGR_REVERSE);
       else
 	putstring(SGR_UNDERLINE);
@@ -640,7 +736,8 @@ static output_character crossings[4*4] = {
 void tty_printer::end_page(int page_length)
 {
   if (page_length % font::vert != 0)
-    error("vertical position at end of page not multiple of vertical resolution");
+    error("vertical position at end of page not multiple of vertical"
+	  " motion quantum");
   int lines_per_page = page_length / font::vert;
   int last_line;
   for (last_line = nlines; last_line > 0; last_line--)
@@ -673,12 +770,12 @@ void tty_printer::end_page(int page_length)
     tty_glyph *nextp;
     curr_fore_idx = DEFAULT_COLOR_IDX;
     curr_back_idx = DEFAULT_COLOR_IDX;
-    is_underline = 0;
-    is_bold = 0;
+    is_underlining = false;
+    is_boldfacing = false;
     for (p = g; p; delete p, p = nextp) {
       nextp = p->next;
       if (p->mode & CU_MODE) {
-	cu_flag = (p->code != 0);
+	is_continuously_underlining = (p->code != 0);
 	continue;
       }
       if (nextp && p->hpos == nextp->hpos) {
@@ -696,7 +793,7 @@ void tty_printer::end_page(int page_length)
 	  nextp->code = p->code;
 	  continue;
 	}
-	if (!overstrike_flag)
+	if (!want_glyph_composition_by_overstriking)
 	  continue;
       }
       if (hpos > p->hpos) {
@@ -706,44 +803,45 @@ void tty_printer::end_page(int page_length)
 	} while (hpos > p->hpos);
       }
       else {
-	if (horizontal_tab_flag) {
+	if (want_horizontal_tabs) {
 	  for (;;) {
 	    int next_tab_pos = ((hpos + TAB_WIDTH) / TAB_WIDTH) * TAB_WIDTH;
 	    if (next_tab_pos > p->hpos)
 	      break;
-	    if (cu_flag)
+	    if (is_continuously_underlining)
 	      make_underline(p->w);
-	    else if (!old_drawing_scheme && is_underline) {
-	      if (italic_flag)
+	    else if (!use_overstriking_drawing_scheme
+		     && is_underlining) {
+	      if (do_sgr_italics)
 		putstring(SGR_NO_ITALIC);
-	      else if (reverse_flag)
+	      else if (do_reverse_video)
 		putstring(SGR_NO_REVERSE);
 	      else
 		putstring(SGR_NO_UNDERLINE);
-	      is_underline = 0;
+	      is_underlining = false;
 	    }
 	    putchar('\t');
 	    hpos = next_tab_pos;
 	  }
 	}
 	for (; hpos < p->hpos; hpos++) {
-	  if (cu_flag)
+	  if (is_continuously_underlining)
 	    make_underline(p->w);
-	  else if (!old_drawing_scheme && is_underline) {
-	    if (italic_flag)
+	  else if (!use_overstriking_drawing_scheme && is_underlining) {
+	    if (do_sgr_italics)
 	      putstring(SGR_NO_ITALIC);
-	    else if (reverse_flag)
+	    else if (do_reverse_video)
 	      putstring(SGR_NO_REVERSE);
 	    else
 	      putstring(SGR_NO_UNDERLINE);
-	    is_underline = 0;
+	    is_underlining = false;
 	  }
 	  putchar(' ');
 	}
       }
       assert(hpos == p->hpos);
       if (p->mode & COLOR_CHANGE) {
-	if (!old_drawing_scheme) {
+	if (!use_overstriking_drawing_scheme) {
 	  if (p->fore_color_idx != curr_fore_idx) {
 	    put_color(p->fore_color_idx, 0);
 	    curr_fore_idx = p->fore_color_idx;
@@ -757,22 +855,22 @@ void tty_printer::end_page(int page_length)
       }
       if (p->mode & UNDERLINE_MODE)
 	make_underline(p->w);
-      else if (!old_drawing_scheme && is_underline) {
-	if (italic_flag)
+      else if (!use_overstriking_drawing_scheme && is_underlining) {
+	if (do_sgr_italics)
 	  putstring(SGR_NO_ITALIC);
-	else if (reverse_flag)
+	else if (do_reverse_video)
 	  putstring(SGR_NO_REVERSE);
 	else
 	  putstring(SGR_NO_UNDERLINE);
-	is_underline = 0;
+	is_underlining = false;
       }
       if (p->mode & BOLD_MODE)
 	make_bold(p->code, p->w);
-      else if (!old_drawing_scheme && is_bold) {
+      else if (!use_overstriking_drawing_scheme && is_boldfacing) {
 	putstring(SGR_NO_BOLD);
-	is_bold = 0;
+	is_boldfacing = false;
       }
-      if (!old_drawing_scheme) {
+      if (!use_overstriking_drawing_scheme) {
 	if (p->fore_color_idx != curr_fore_idx) {
 	  put_color(p->fore_color_idx, 0);
 	  curr_fore_idx = p->fore_color_idx;
@@ -785,14 +883,14 @@ void tty_printer::end_page(int page_length)
       put_char(p->code);
       hpos += p->w / font::hor;
     }
-    if (!old_drawing_scheme
-	&& (is_bold || is_underline
+    if (!use_overstriking_drawing_scheme
+	&& (is_boldfacing || is_underlining
 	    || curr_fore_idx != DEFAULT_COLOR_IDX
 	    || curr_back_idx != DEFAULT_COLOR_IDX))
       putstring(SGR_DEFAULT);
     putchar('\n');
   }
-  if (form_feed_flag) {
+  if (want_form_feeds) {
     if (last_line < lines_per_page)
       putchar('\f');
   }
@@ -814,19 +912,19 @@ printer *make_printer()
 
 static void update_options()
 {
-  if (old_drawing_scheme) {
-    italic_flag = 0;
-    reverse_flag = 0;
+  if (use_overstriking_drawing_scheme) {
+    do_sgr_italics = false;
+    do_reverse_video = false;
     bold_underline_mode = bold_underline_mode_option;
-    bold_flag = bold_flag_option;
-    underline_flag = underline_flag_option;
+    do_bold = want_emboldening_by_overstriking;
+    do_underline = want_italics_by_underlining;
   }
   else {
-    italic_flag = italic_flag_option;
-    reverse_flag = reverse_flag_option;
+    do_sgr_italics = want_sgr_italics;
+    do_reverse_video = want_reverse_video_for_italics;
     bold_underline_mode = BOLD_MODE|UNDERLINE_MODE;
-    bold_flag = 1;
-    underline_flag = 1;
+    do_bold = true;
+    do_underline = true;
   }
 }
 
@@ -835,7 +933,7 @@ int main(int argc, char **argv)
   program_name = argv[0];
   static char stderr_buf[BUFSIZ];
   if (getenv("GROFF_NO_SGR"))
-    old_drawing_scheme = 1;
+    use_overstriking_drawing_scheme = true;
   setbuf(stderr, stderr_buf);
   setlocale(LC_CTYPE, "");
   int c;
@@ -849,34 +947,34 @@ int main(int argc, char **argv)
     switch(c) {
     case 'v':
       printf("GNU grotty (groff) version %s\n", Version_string);
-      exit(0);
+      exit(EXIT_SUCCESS);
       break;
     case 'i':
       // Use italic font instead of underlining.
-      italic_flag_option = 1;
+      want_sgr_italics = true;
       break;
     case 'I':
       // ignore include search path
       break;
     case 'b':
       // Do not embolden by overstriking.
-      bold_flag_option = 0;
+      want_emboldening_by_overstriking = false;
       break;
     case 'c':
       // Use old scheme for emboldening and underline.
-      old_drawing_scheme = 1;
+      use_overstriking_drawing_scheme = true;
       break;
     case 'u':
       // Do not underline.
-      underline_flag_option = 0;
+      want_italics_by_underlining = false;
       break;
     case 'o':
       // Do not overstrike (other than emboldening and underlining).
-      overstrike_flag = 0;
+      want_glyph_composition_by_overstriking = false;
       break;
     case 'r':
       // Use reverse mode instead of underlining.
-      reverse_flag_option = 1;
+      want_reverse_video_for_italics = true;
       break;
     case 'B':
       // Do bold-underlining as bold.
@@ -888,28 +986,27 @@ int main(int argc, char **argv)
       break;
     case 'h':
       // Use horizontal tabs.
-      horizontal_tab_flag = 1;
+      want_horizontal_tabs = true;
       break;
     case 'f':
-      form_feed_flag = 1;
+      want_form_feeds = true;
       break;
     case 'F':
       font::command_line_font_dir(optarg);
       break;
     case 'd':
       // Ignore \D commands.
-      draw_flag = 0;
+      allow_drawing_commands = false;
       break;
     case CHAR_MAX + 1: // --help
       usage(stdout);
-      exit(0);
       break;
     case '?':
       usage(stderr);
-      exit(1);
+      exit(EXIT_FAILURE);
       break;
     default:
-      assert(0);
+      assert(0 == "unhandled getopt_long return value");
     }
   update_options();
   if (optind >= argc)
@@ -923,6 +1020,24 @@ int main(int argc, char **argv)
 
 static void usage(FILE *stream)
 {
-  fprintf(stream, "usage: %s [-bBcdfhioruUv] [-F dir] [files ...]\n",
-	  program_name);
+  fprintf(stream,
+"usage: %s [-bBcdfhioruU] [-F font-directory] [file ...]\n"
+"usage: %s {-v | --version}\n"
+"usage: %s --help\n",
+	  program_name, program_name, program_name);
+  if (stdout == stream) {
+    fputs(
+"\n"
+"Translate the output of troff(1) into a form suitable for\n"
+"typewriter‐like devices, including terminal emulators.  See the\n"
+"grotty(1) manual page.\n",
+	  stream);
+    exit(EXIT_SUCCESS);
+  }
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

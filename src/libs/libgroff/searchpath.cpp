@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -19,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lib.h"
 
-#include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "searchpath.h"
 #include "nonposix.h"
@@ -67,7 +66,7 @@ search_path::search_path(const char *envvar, const char *standard,
 search_path::~search_path()
 {
   // dirs is always allocated
-  a_delete dirs;
+  delete[] dirs;
 }
 
 void search_path::command_line_dir(const char *s)
@@ -89,7 +88,7 @@ void search_path::command_line_dir(const char *s)
     p += init_len;
   }
   *p++ = '\0';
-  a_delete old;
+  delete[] old;
 }
 
 FILE *search_path::open_file(const char *name, char **pathp)
@@ -121,19 +120,23 @@ FILE *search_path::open_file(const char *name, char **pathp)
     fprintf(stderr, "origpath '%s'\n", origpath);
 #endif
     char *path = relocate(origpath);
-    a_delete origpath;
+    delete[] origpath;
 #if 0
     fprintf(stderr, "trying '%s'\n", path);
 #endif
     FILE *fp = fopen(path, "r");
+    int err = errno;
     if (fp) {
       if (pathp)
 	*pathp = path;
-      else
+      else {
 	free(path);
+	errno = err;
+      }
       return fp;
     }
     free(path);
+    errno = err;
     if (*end == '\0')
       break;
     p = end + 1;
@@ -178,25 +181,25 @@ FILE *search_path::open_file_cautious(const char *name, char **pathp,
     fprintf(stderr, "origpath '%s'\n", origpath);
 #endif
     char *path = relocate(origpath);
-    a_delete origpath;
+    delete[] origpath;
 #if 0
     fprintf(stderr, "trying '%s'\n", path);
 #endif
     FILE *fp = fopen(path, mode);
+    int err = errno;
     if (fp) {
       if (pathp)
 	*pathp = path;
-      else
+      else {
 	free(path);
+	errno = err;
+      }
       return fp;
     }
-    int err = errno;
     free(path);
+    errno = err;
     if (err != ENOENT)
-    {
-      errno = err;
       return 0;
-    }
     if (*end == '\0')
       break;
     p = end + 1;
@@ -204,3 +207,9 @@ FILE *search_path::open_file_cautious(const char *name, char **pathp,
   errno = ENOENT;
   return 0;
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

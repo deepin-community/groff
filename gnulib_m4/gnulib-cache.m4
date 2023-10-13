@@ -1,8 +1,8 @@
-# Copyright (C) 2002-2018 Free Software Foundation, Inc.
+# Copyright (C) 2002-2023 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # This file is distributed in the hope that it will be useful,
@@ -35,14 +35,16 @@
 #  --tests-base=tests \
 #  --aux-dir=build-aux \
 #  --makefile-name=gnulib.mk \
+#  --automake-subdir \
 #  --no-conditional-dependencies \
 #  --no-libtool \
 #  --macro-prefix=gl \
 #  fprintf-posix \
 #  git-version-gen \
 #  havelib \
-#  non-recursive-gnulib-prefix-hack \
 #  snprintf \
+#  stdbool-c99 \
+#  stdint \
 #  vsnprintf \
 #  wcwidth
 
@@ -52,8 +54,9 @@ gl_MODULES([
   fprintf-posix
   git-version-gen
   havelib
-  non-recursive-gnulib-prefix-hack
   snprintf
+  stdbool-c99
+  stdint
   vsnprintf
   wcwidth
 ])
@@ -65,6 +68,7 @@ gl_DOC_BASE([doc])
 gl_TESTS_BASE([tests])
 gl_LIB([libgnu])
 gl_MAKEFILE_NAME([gnulib.mk])
+gl_AUTOMAKE_SUBDIR
 gl_MACRO_PREFIX([gl])
 gl_PO_DOMAIN([])
 gl_WITNESS_C_MACRO([])

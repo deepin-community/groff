@@ -2,7 +2,7 @@
 <!--
 This file is part of groff, the GNU roff type-setting system.
 
-Copyright (C) 2004-2018 Free Software Foundation, Inc.
+Copyright (C) 2004-2020 Free Software Foundation, Inc.
 Written by Peter Schaffter (peter@schaffter.ca).
 
 Permission is granted to copy, distribute and/or modify this document
@@ -162,19 +162,7 @@ control.
 
 <p>
 The page setup macros establish the physical dimensions of your page
-and the margins you want it to have. Groff has defaults for these,
-but I recommend setting them at the top of your files anyway.
-</p>
-
-<p>
-If you&#8217;re using mom&#8217;s
-<a href="docprocessing.html#docprocessing">document processing macros</a>,
-these macros must come after
-<a href="docprocessing.html#printstyle">PRINTSTYLE</a>.
-</p>
-
-<p>
-The
+and the margins you want it to have.  The
 <a href="#paper">PAPER</a>
 macro provides a shortcut for setting the page to the correct
 dimensions for a number of common paper sizes.  The
@@ -191,8 +179,8 @@ When mom files are processed with
 <a href="using.html#pdfmom" style="font-weight: bold">pdfmom</a>,
 which is recommended (see
 <a href="http://www.schaffter.ca/mom/pdf/mom-pdf.pdf"><span class="book-title">Producing PDFs with groff and mom</span></a>),
-page dimensions are automatically passed to groff, and you don't
-have to worry about them.
+page dimensions are automatically passed to groff, and you
+don&#8217;t have to worry about them.
 </p>
 
 <p>
@@ -236,7 +224,7 @@ or
 or
 <a href="#page">PAGE</a>),
 you must include <kbd>-P-p&lt;papersize&gt;</kbd> on whichever
-command line you use, e.g.,
+command line you use, e.g.
 <br/>
 <span class="pre-in-pp">
   pdfmom -Tps -mom -P-plegal
@@ -295,16 +283,8 @@ allowed.  Hence, to tell mom that the width of your printer sheet is
 </span>
 Please read the
 <a href="#page-setup-note">Important note on page dimensions and papersize</a>
-for information on ensuring groff respects your
-PAGEWIDTH.
+for information on ensuring groff respects your PAGEWIDTH.
 </p>
-
-<div class="box-important">
-<p class="tip">
-<span class="important">Important:</span> <kbd>PAGEWIDTH</kbd>,
-when you need it, should be placed at the top of your files.
-</p>
-</div>
 
 <!-- -PAGELENGTH- -->
 
@@ -331,13 +311,6 @@ Please read the
 <a href="#page-setup-note">Important note on page dimensions and papersize</a>
 for information on ensuring groff respects your PAGELENGTH.
 </p>
-
-<div class="box-important">
-<p class="tip">
-<span class="important">Important:</span> <kbd>PAGELENGTH</kbd>,
-when you need it, should be placed at the top of your files.
-</p>
-</div>
 
 <!-- -PAPER- -->
 
@@ -377,6 +350,8 @@ than to remember the correct dimensions and enter
 </span>
 If you&#8217;d like landscape orientation for your paper type,
 pass PAPER the <kbd>LANDSCAPE</kbd> argument.
+</p>
+
 <p>
 Please read the
 <a href="#page-setup-note">Important note on page dimensions and papersize</a>
@@ -385,8 +360,8 @@ for information on ensuring groff respects your PAPER size.
 
 <div class="box-important">
 <p class="tip">
-<span class="important">Important:</span> <kbd>PAPER</kbd> when you
-need it, should be placed at the top of your files.
+<span class="important">Important:</span> If you need PAPER,
+it should always be placed at the very top of your file.
 </p>
 </div>
 
@@ -405,19 +380,23 @@ Macro: <b>L_MARGIN</b> <kbd class="macro-args">&lt;left margin&gt;</kbd>
 
 <p>
 L_MARGIN establishes the distance from the left edge of the printer
-sheet at which you want your type to start.  It may be used any
-time, and remains in effect until you enter a new value.
-</p>
-
-<p>
+sheet at which you want your type to start.
 <a href="#il">Left indents</a>
 and
 <a href="#tabs">tabs</a>
-are calculated from the value you pass to L_MARGIN, hence it&#8217;s
-always a good idea to invoke it before starting any serious
-typesetting.  A unit of measure is required.  Decimal fractions are
-allowed.  Therefore, to set the left margin at 3 picas (1/2 inch),
-you&#8217;d enter either
+are calculated from the value you pass to L_MARGIN.
+If you use the macros
+<a href="#pagewidth">PAGEWIDTH</a>
+or
+<a href="#paper">PAPER</a>
+without setting L_MARGIN, mom automatically sets the left margin to
+1 inch.
+</p>
+
+<p>
+A unit of measure is required and decimal fractions are allowed.
+Therefore, to set the left margin at 3 picas (1/2 inch), you&#8217;d
+enter either
 <br/>
 <span class="pre-in-pp">
   .L_MARGIN 3P
@@ -426,13 +405,6 @@ or
 <span class="pre-in-pp">
   .L_MARGIN .5i
 </span>
-If you use the macros
-<a href="#page">PAGE</a>,
-<a href="#pagewidth">PAGEWIDTH</a>
-or
-<a href="#paper">PAPER</a>
-without invoking L_MARGIN (either before or afterwards), mom
-automatically sets L_MARGIN to 1 inch.
 </p>
 
 <div class="box-tip">
@@ -470,8 +442,8 @@ and/or
 <a href="#page">PAGE</a>
 (if a right margin isn&#8217;t given to PAGE).  The reason is that
 R_MARGIN calculates line length from the overall page dimensions and
-the left margin.  Obviously, it can&#8217;t make the calculation if
-it doesn&#8217;t know the page width and the left margin.
+the left margin.  Mom can&#8217;t make the calculation if
+she doesn&#8217;t know the page width and the left margin.
 </p>
 </div>
 
@@ -504,7 +476,7 @@ and right margin, like this:
 That way, you don&#8217;t have to worry about calculating the line
 length.  On the other hand, if you know the line length for a patch
 of type should be 17 picas and 3 points, entering the line length
-with LL is much easier than calculating the right margin, e.g.,
+with LL is much easier than calculating the right margin, e.g.
 <br/>
 <span class="pre-in-pp">
   .LL 17P+3p
@@ -674,7 +646,7 @@ different than when you&#8217;re using just the typesetting macros
 PAGE lets you establish paper dimensions and page margins with a
 single macro.  The only required argument is page width.  The rest
 are optional, but they must appear in order and you can&#8217;t
-skip over any. <kbd>&lt;lm&gt;, &lt;rm&gt;, &lt;tm&gt;</kbd> and
+skip over any. <kbd>&lt;lm&gt;, &lt;rm&gt;, &lt;tm&gt;</kbd>, and
 <kbd>&lt;bm&gt;</kbd> refer to the left, right, top and bottom
 margins respectively.
 </p>
@@ -717,17 +689,17 @@ This sets up an 8-1/2 by 11 inch page with margins of 45 points
 </p>
 
 <p>
-Additionally, if you invoke <kbd>.PAGE</kbd> with a top margin
-argument, any macros you invoke after <kbd>.PAGE</kbd> will almost
-certainly move the
+Additionally, if you are not using the
+<a href="docprecessing.html">document processing macros</a>
+and invoke PAGE with a top margin argument, any macro you invoke
+after PAGE will likely move the
 <a href="definitions.html#baseline">baseline</a>
 of the first line of text down by one linespace.  To compensate, do
 <br/>
 <span class="pre-in-pp">
   .RLD 1v
 </span>
-immediately before entering any text, or, if it&#8217;s feasible,
-make PAGE the last macro you invoke prior to entering text.
+immediately before entering any text.
 </p>
 
 <p>
@@ -762,8 +734,8 @@ you to the top of a new one (subject to the top margin set with
 
 <p>
 The basic typesetting parameter macros deal with fundamental
-requirements for setting type: family, font, point size, leading and
-line length.
+requirements for setting type: family, font, point size, leading,
+and line length.
 </p>
 
 <p>
@@ -839,6 +811,19 @@ only exists in one style: Italic (<kbd>I</kbd>).  Therefore,
 <kbd>ZCM</kbd>, then setting the font to <kbd>I</kbd>.
 </p>
 
+<p>
+Furthermore, if you need to access a character from groff's Zapf
+Dingbats font directly, use <kbd>.FT&nbsp;ZD</kbd> or the
+<a href="definitions.html#inlines">inline escape</a>
+<kbd>\f[ZD]</kbd>.  Commonly-used dingbats are
+available without changing to the ZD font by using groff's
+pre-defined character escapes, e.g. <kbd>\[rh]</kbd> for a pointing
+right hand; see <kbd>man groff_char</kbd> for a complete list.
+Dingbats that have not been pre-defined must be accessed with the
+<kbd>\N</kbd> escape.  For example, <kbd>\f[ZD]\N'37'</kbd> prints
+the (undefined) telephone dingbat.  
+</p>
+
 <p id="fam-add-note" class="tip-bottom">
 <span class="additional-note">Additional note:</span> 
 If you are running a version of groff lower than 1.19.2, you must
@@ -867,7 +852,7 @@ However, if the font style does not exist in the new family, mom
 will set all subsequent type in the
 <a href="#fallback-font">fallback font</a>
 (by default, Courier Medium Roman) until she encounters a
-<a href="#font">.FT</a>
+<a href="#font">FT</a>
 request that&#8217;s valid for the family.  For example, assuming
 you don&#8217;t have the font &#8220;Medium Condensed Roman&#8221;
 (mom extension &#8220;CD&#8221;) in the Helvetica family:
@@ -961,7 +946,7 @@ though, that you must have the fonts, correctly installed and named,
 in order to use the arguments.  (See
 <a href="appendices.html#fonts">Adding fonts to groff</a>
 for instructions and information.)  Please also read the
-<a href="#fam-add-note">ADDITIONAL NOTE</a>
+<a href="#fam-add-note">Additional note</a>
 found in the description of the FAMILY macro.
 </p>
 
@@ -1009,7 +994,7 @@ Macro: <b>FALLBACK_FONT</b> <kbd class="macro-args">&lt;fallback font&gt; [ ABOR
 <p>
 In the event that you pass an invalid argument to
 <a href="#font">.FAMILY</a>
-(ie a non-existent family), mom, by default, uses the fallback
+(i.e. a non-existent family), mom, by default, uses the fallback
 font, Courier Medium Roman (CR), in order to continue processing
 your file.
 </p>
@@ -1106,7 +1091,7 @@ is measured in points.  Therefore, to change the type size to, say,
 <span class="pre-in-pp">
   .PT_SIZE 11
 </span>
-Point sizes may be fractional (e.g., 10.25 or 12.5).
+Point sizes may be fractional (e.g. 10.25 or 12.5).
 </p>
 
 <p>
@@ -1157,7 +1142,7 @@ would allow you to set point sizes with <kbd>.PS</kbd>.
 <!-- -LS- -->
 
 <div class="macro-id-overline">
-<h3 id="leading" class="macro-id">Line spacing/leading</h3>
+<h3 id="leading" class="macro-id">Line spacing / leading</h3>
 </div>
 
 <div class="box-macro-args">
@@ -1170,7 +1155,7 @@ Macro: <b>LS</b> <kbd class="macro-args">&lt;distance between lines&gt;</kbd>
 <p>
 LS (Line Space) takes one argument: the distance you want, typically
 in points, from baseline to baseline of type.  The argument may be
-fractional (e.g., 12.25 or 14.5).  Like PT_SIZE, LS does not require
+fractional (e.g. 12.25 or 14.5).  Like PT_SIZE, LS does not require
 a unit of measure, since
 <a href="definitions.html#leading">leading</a>
 is most often given in points.  Therefore, to set the linespace to
@@ -1241,7 +1226,7 @@ requests automatically update the linespacing by the autolead amount.
 Used in this way, AUTOLEAD does not require a unit of measure;
 points is assumed.  However, you may use an alternate unit of
 measure by appending it to the argument.  The argument may be a
-decimal fraction (e.g., .5 or 2.75).
+decimal fraction (e.g. .5 or 2.75).
 </p>
 
 <p>
@@ -1544,7 +1529,7 @@ for a definition of the difference between &#8220;fill&#8221; and
 </p>
 
 <p>
-LEFT, RIGHT and CENTER let you enter text on a line for line basis
+LEFT, RIGHT, and CENTER let you enter text on a line for line basis
 without having to use the
 <a href="#br">BR</a>
 macro after each line.  Consider the following:
@@ -1560,7 +1545,7 @@ macro after each line.  Consider the following:
   And with no language but a cry.
   .BR
 </span>
-Because text after <kbd>.QUAD LEFT</kbd> is
+Because text after <kbd>.QUAD&nbsp;LEFT</kbd> is
 <a href="definitions.html#filled">filled</a>,
 you have to use the
 <a href="#br">BR</a>
@@ -1580,7 +1565,7 @@ better to do
 <div class="box-important" style="margin-top: -.5em;">
 <p class="tip">
 <span class="important">IMPORTANT:</span> Because LEFT,
-RIGHT and CENTER are nofill modes, groff does not always respect the
+RIGHT, and CENTER are nofill modes, groff does not always respect the
 current line length.
 <a href="definitions.html#inputline">Input lines</a>
 that run long may exceed it, or get broken in undesirable ways.
@@ -1671,7 +1656,7 @@ with the
 <i>bothersome, you may prefer to use the</i>
 <a href="definitions.html#inlines">inline escape</a>
 <i>alternative to</i> EL,
-<a href="inlines.html#b"><kbd>\*[B]</kbd></a>,
+<a href="inlines.html#b"><kbd><span class="nobr">\*[B]</span></kbd></a>,
 <i>which works consistently regardless of the fill mode.
 </i>EL <i>does not work after the</i>
 <a href="goodies.html#pad">PAD</a>
@@ -1681,7 +1666,7 @@ with the
 </p>
 
 <p id="el-example">
-EL ("<span style="text-decoration: underline;">E</span>nd <span style="text-decoration: underline;">L</span>ine")
+EL (&#8220;<span style="text-decoration: underline;">E</span>nd <span style="text-decoration: underline;">L</span>ine&#8221;)
 is conceptually equivalent to the notion of a carriage return with
 no linefeed.  Its function is simple: it breaks a line without
 advancing on the page.  As an example of where you might use it,
@@ -1729,7 +1714,7 @@ which is covered in the section
 </div>
 
 <div class="box-macro-args">
-Macro: <b>SPACE</b> <kbd class="macro-args">&lt;space to add between lines&gt;</kbd>
+Macro: <b>SPACE</b> <kbd class="macro-args">[&lt;space to add between lines&gt;]</kbd>
 </div>
 <p class="alias">
 <i>Alias:</i> <b>SP</b>
@@ -1739,9 +1724,7 @@ Macro: <b>SPACE</b> <kbd class="macro-args">&lt;space to add between lines&gt;</
 SPACE breaks a line, just like
 <a href="#br">BR</a>,
 then adds space after the line.  With no argument, it adds an extra
-line space of a value equal to the current
-<a href="definitions.html#leading">leading</a>.
-If you pass it a numeric argument without supplying a
+line space.  If you pass it a numeric argument without supplying a
 <a href="definitions.html#unitofmeasure">unit of measure</a>,
 it advances that number of extra line spaces.  For example:
 <br/>
@@ -1757,16 +1740,13 @@ breaks the line and adds two extra linespaces.
 </p>
 
 <p>
-If you supply a unit of measure, SPACE breaks the line then advances
-one linespace (at the current
-<a href="definitions.html#leading">leading</a>)
-PLUS the specified amount of extra space given to SPACE, as in
+If you supply a unit of measure, SPACE breaks the line and advances
+the specified vertical distance, as in
 <br/>
 <span class="pre-in-pp">
   .SPACE 6p
 </span>
-which breaks the line and advances one full linespace plus six
-points.
+which breaks the line and advances six points further.
 </p>
 
 <div class="box-tip">
@@ -1781,10 +1761,21 @@ line space (or multiple thereof), and ALD whenever you want some
 other value of space after a line.
 </p>
 
-<p class="tip-bottom">
+<p>
 <span class="experts">Experts:</span> SPACE is an alias of
 <kbd>.sp</kbd>.  You can use either, or mix &#8217;n&#8217; match
-with impunity.
+with impunity.  Because SPACE aliases <kbd>.sp</kbd>, it may be used
+with groff&#8217;s absolute position modifier
+&#8220;<kbd>|</kbd>&#8221; (the pipe
+character) to move to a specified vertical location on the page.
+Consult
+<span class="pre-in-pp">
+  info&nbsp;groff&nbsp;&#8220;Manipulating Spacing&#8221;
+</span>
+or, more simply,
+<span class="pre-in-pp">
+  info&nbsp;groff&nbsp;sp.
+</span>
 </p>
 </div>
 
@@ -1956,8 +1947,8 @@ to stretch the word spacing.
 <p>
 Word space is relative to point size.  Generally, in/decreasing the
 word space by a value of 1 or 2 produces a difference that in many
-cases is scarcely visible; in/decreasing by a value between 3 and 5
-produces a subtle but noticeable difference; and in/decreasing by a
+cases is scarcely visible.  In/decreasing by a value between 3 and 5
+produces a subtle but noticeable difference.  In/decreasing by a
 value greater than 6 is almost always apparent.  You should preview
 your work to assess the effect of WS.
 </p>
@@ -2025,17 +2016,17 @@ normal word space PLUS the +2 value passed to SS.
 Like
 <a href="#ws">WS</a>,
 increasing the sentence space by a value of 1 or 2 produces a
-difference that in many cases is scarcely visible; increasing by a
-value of 5 or so produces a subtle but noticeable difference (ie
-the space between double-spaced input sentences will be slightly but
-visibly greater than the space between words); and increasing by a
+difference that in many cases is scarcely visible.  Increasing by a
+value of 5 or so produces a subtle but noticeable difference (i.e.,
+the space between double-spaced input sentences will be slightly
+but visibly greater than the space between words).  Increasing by a
 value greater than 10 is always apparent.  You should preview your
 work to assess the effect of SS.
 </p>
 
 <p>
 There&#8217;s an additional argument you can pass SS: the number
-zero (without the + sign).  It&#8217;s the argument you&#8217;ll
+zero (without the plus sign).  It&#8217;s the argument you&#8217;ll
 use most often.  Typeset copy should never have two spaces between
 sentences, and the "zero" argument tells groff to give the extra
 spaces no space at all (effectively removing them).  Therefore, if
@@ -2052,7 +2043,7 @@ at the top of your files.
 If you do use SS for something other than ensuring that you
 don&#8217;t get unwanted sentence spaces in output copy, you can set
 or reset the sentence space to the groff default (the same width
-as a word space, ie double-spaced input sentences will appear
+as a word space, i.e., double-spaced input sentences will appear
 double-spaced on output as well) with
 <br/>
 <span class="pre-in-pp">
@@ -2109,8 +2100,8 @@ to HY, I&#8217;ve broken them down into separate sections.
 <h3 class="docs">1.&nbsp;&nbsp;HY</h3>
 
 <p>
-HY by itself (ie with no argument) simply turns automatic
-hyphenation on.  Any argument other than LINES, MARGIN, SPACE or
+HY by itself (i.e. with no argument) simply turns automatic
+hyphenation on.  Any argument other than LINES, MARGIN, SPACE, or
 DEFAULT, turns automatic hyphenation off.  For example, as explained
 in
 <a href="intro.html#macro-args">How to read macro arguments</a>,
@@ -2135,7 +2126,7 @@ LINES, MARGIN, or SPACE that were formerly in effect (see below).
 HY observes the following default hyphenation rules:
 </p>
 <ul style="margin-top: -.5em; margin-left: 18px;">
-  <li>Last lines (ie ones that will spring a trap&mdash;typically
+  <li>Last lines (i.e. ones that will spring a trap&mdash;typically
       the last line on a page) will not be hyphenated.
   </li>
   <li>The first and last two characters of a word are never
@@ -2162,7 +2153,7 @@ limit to the number of consecutive hyphenated lines.
 <span class="note">Note:</span>
 <a href="definitions.html#discretionaryhyphen">Discretionary hyphens</a>
 count when groff is figuring out how many lines to hyphenate;
-explicit hyphens (ie the actual hyphen character) do not.
+explicit hyphens (i.e. the actual hyphen character) do not.
 </p>
 </div>
 
@@ -2198,9 +2189,9 @@ MARGIN requires a
 <h3 class="docs numbered">4.&nbsp;&nbsp;HY SPACE</h3>
 
 <p>
-HY SPACE sets an amount of extra interword space that groff will try
-to put between words on a line in order to PREVENT hyphenation.  HY
-SPACE applies only to
+HY SPACE sets an amount of extra interword space that groff will
+try to put between words on a line in order to <i>prevent</i>
+hyphenation.  HY SPACE applies only to
 <a href="definitions.html#just">justified lines</a>.
 Generally speaking, you&#8217;ll want this value to be quite small,
 since too big a value will result in lines with gaping holes between
@@ -2271,10 +2262,10 @@ Macro: <b>HY_SET</b> <kbd class="macro-args">&lt;lines&gt; [ &lt;margin&gt; [ &l
 <p>
 HY_SET lets you set the parameters for hyphenation
 with a single macro. <kbd>&lt;lines&gt;,</kbd>
-<kbd>&lt;margin&gt;</kbd> and
+<kbd>&lt;margin&gt;</kbd>, and
 <kbd>&lt;space&gt;</kbd> correspond to the numeric
 values required by <kbd>LINES</kbd>,
-<kbd>MARGIN</kbd> and <kbd>SPACE</kbd> as described
+<kbd>MARGIN</kbd>, and <kbd>SPACE</kbd> as described
 <a href="#hy">above</a>.
 </p>
 
@@ -2353,9 +2344,9 @@ recommend previewing your work to assess the effect of RW.
 <a href="#br">break</a>
 when it&#8217;s invoked if you&#8217;re in one of the
 <a href="definitions.html#fill">fill</a>
-modes (ie
+modes (i.e.
 <a href="#quad">QUAD</a>
-L, R, C, J or
+L, R, C, J, or
 <a href="#justify">JUSTIFY</a>).
 If you want
 RW to break at the ends of the previous
@@ -2369,7 +2360,7 @@ that&#8217;s what you want by invoking
 <div class="box-important">
 <p class="tip">
 <span class="important">IMPORTANT:</span>
-RW (and its complement, EW; see below) only affects the current
+RW (and its complement, EW, see below) only affects the current
 font, and remains in effect for that font every time it&#8217;s
 called, hence it must be reset to zero to cancel its effect
 (<kbd>.RW&nbsp;0</kbd>).
@@ -2416,9 +2407,9 @@ assess the effect of EW.
 <a href="#br">break</a>
 when it&#8217;s invoked if you&#8217;re in one of the
 <a href="definitions.html#fill">fill</a>
-modes (ie
+modes (i.e.
 <a href="#quad">QUAD</a>
-L, R, C, J or
+L, R, C, J, or
 <a href="#justify">JUSTIFY</a>).
 If you want
 EW to break at the ends of the previous
@@ -2433,7 +2424,7 @@ toggle macro.
 <div class="box-important">
 <p class="tip">
 <span class="important">IMPORTANT:</span>
-EW (and its complement, RW; see above) only affects the current
+EW (and its complement, RW, see above) only affects the current
 font, and remains in effect for that font every time it&#8217;s
 called, hence it must be reset to zero to cancel its effect
 (<kbd>.RW&nbsp;0</kbd>).
@@ -2453,9 +2444,9 @@ Macro: <b>BR_AT_LINE_KERN</b> <kbd class="macro-args">toggle</kbd>
 <p>
 By default, in
 <a href="definitions.html#filled">fill</a>
-modes (ie
+modes (i.e.
 <a href="#quad">QUAD</a>
-L, R, C, J or
+L, R, C, J, or
 <a href="#justify">JUSTIFY</a>)
 mom does not break
 <a href="definitions.html#inputline">input lines</a>
@@ -2466,7 +2457,8 @@ or
 If you&#8217;d like her to break input lines prior to RW or EW,
 invoke <kbd>.BR_AT_INPUT_LINE</kbd> without any argument.  To
 disable the breaks, invoke <kbd>.BR_AT_INPUT_LINE</kbd> with any
-argument (OFF, QUIT, Q, X...), like this
+argument (<kbd>OFF</kbd>, <kbd>QUIT</kbd>, <kbd>END</kbd>,
+<kbd>X</kbd>...), like this
 <br/>
 <span class="pre-in-pp">
   .BR_AT_LINE_KERN OFF
@@ -2475,7 +2467,7 @@ or
 <span class="pre-in-pp">
   .BR_AT_LINE_KERN X
 </span>
-With QUAD L, R or C, mom simply breaks the line.  With QUAD J (or
+With QUAD L, R, or C, mom simply breaks the line.  With QUAD J (or
 just JUSTIFY, which is the same thing), she breaks and
 <a href="definitions.html#force">force justifies</a>
 the line prior to <kbd>.EW</kbd> or <kbd>.RW</kbd>.
@@ -2492,17 +2484,18 @@ Macro: <b>KERN</b> <kbd class="macro-args">toggle</kbd>
 </div>
 
 <p>
-By itself (ie with no argument), KERN turns automatic pairwise
+By itself (i.e. with no argument), KERN turns automatic pairwise
 <a href="definitions.html#kern">kerning</a>
-on.  With any argument (e.g., OFF, Q, X), pairwise kerning is turned
-off.
+on.  With any argument (e.g. <kbd>OFF</kbd>, <kbd>Q</kbd>,
+<kbd>X</kbd>), pairwise kerning is turned off.
 </p>
 
 <p>
-Kerning of individual character pairs can be controlled with the
+Kerning of individual character pairs can be controlled with the two
 <a href="definitions.html#inlines">inline escapes</a>
-<kbd>\*[BU &lt;n&gt;]</kbd> and
-<kbd>\*[FU &lt;n&gt;]</kbd>.  See
+<br/>
+<kbd>\*[BU&nbsp;&lt;n&gt;]</kbd> and
+<kbd>\*[FU&nbsp;&lt;n&gt;]</kbd>.  See
 <a href="inlines.html#inline-kerning-mom">Inline Escapes, kerning</a>.
 </p>
 
@@ -2644,9 +2637,9 @@ Inline: <kbd class="macro-args">\*[SLANTX</kbd>]
 </div>
 
 <p>
-<kbd class="macro-args">\*[SLANT]</kbd> begins pseudo-italicizing type.
-<kbd class="macro-args">\*[SLANTX]</kbd> turns the feature off.  Both are
-<a href="definitions.html#inlines">inline escapes</a>,
+<kbd class="macro-args">\*[SLANT]</kbd> begins pseudo-italicizing. <kbd class="macro-args"><span class="nobr">\*[SLANTX]</span></kbd> turns
+the feature off.  Both are <a href="definitions.html#inlines">inline
+escapes</a>,
 therefore they should not appear as separate lines, but rather be
 embedded in text lines, like this:
 <br/>
@@ -2659,8 +2652,8 @@ you&#8217;d do
 <span class="pre-in-pp">
   \*[SLANT]Not everything is as it seems.\*[SLANTX]
 </span>
-Once <kbd>\*[SLANT]</kbd> is invoked, it remains in effect until
-turned off.
+Once <kbd><span class="nobr">\*[SLANT]</span></kbd> is invoked, it remains in
+effect until turned off.
 </p>
 
 <div class="box-tip" style="margin-top: .5em;">
@@ -2712,7 +2705,7 @@ to the mom default, do
 emboldening type; it merely tells mom what you want the emboldening
 offset to be.  To start emboldening, use the
 <a href="definitions.html#inlines">inline escape</a>
-<kbd>\*[BOLDER]</kbd>.
+<kbd><span class="nobr">\*[BOLDER]</span></kbd>.
 </p>
 </div>
 
@@ -2730,7 +2723,8 @@ Inline: <kbd class="macro-args">\*[BOLDERX]</kbd>
 
 <p>
 <kbd class="macro-args">\*[BOLDER]</kbd> begins emboldening type.
-<kbd class="macro-args">\*[BOLDERX]</kbd> turns the feature off.  Both are
+<kbd class="macro-args"><span class="nobr">\*[BOLDERX]</span></kbd> turns the
+feature off.  Both are
 <a href="definitions.html#inlines">inline escapes</a>,
 therefore they should not appear as separate lines, but rather be
 embedded in text lines, like this:
@@ -2744,8 +2738,8 @@ you&#8217;d do
 <span class="pre-in-pp">
   \*[BOLDER]Not everything is as it seems.\*[BOLDERX]
 </span>
-Once <kbd>\*[BOLDER]</kbd> is invoked, it remains in effect
-until turned off.
+Once <kbd><span class="nobr">\*[BOLDER]</span></kbd> is invoked, it remains in
+effect until turned off.
 </p>
 
 <div class="box-tip">
@@ -2780,7 +2774,7 @@ want the characters to be condensed.
 Mom has no default value for CONDENSE, therefore you must set it
 before using the
 <a href="definitions.html#inlines">inline escape</a>
-<kbd><a href="#cond-inline">\*[COND]</a></kbd>.
+<kbd><a href="#cond-inline"><span class="nobr">\*[COND]</span></a></kbd>.
 80 percent of the normal character width is a good value, and
 you&#8217;d set it like this:
 <br/>
@@ -2796,14 +2790,14 @@ pseudo-condensing type; it merely tells mom what percentage of the
 normal character width you want characters to be condensed.  To
 start pseudo-condensing, use the
 <a href="definitions.html#inlines">inline escape</a>
-<kbd>\*[COND]</kbd>.
+<kbd><span class="nobr">\*[COND]</span></kbd>.
 </p>
 
 <p class="tip-bottom">
 <span class="additional-note">Additional note:</span> Make sure that
 pseudo-condensing is off (with
-<kbd><a href="#cond-inline">\*[CONDX]</a></kbd>)
-before before making any changes to the pseudo-condense percentage
+<kbd><a href="#cond-inline"><span class="nobr">\*[CONDX]</span></a></kbd>)
+before making any changes to the pseudo-condense percentage
 with CONDENSE.
 </p>
 </div>
@@ -2822,7 +2816,7 @@ Inline: <kbd class="macro-args">\*[CONDX]</kbd>
 
 <p>
 <kbd>\*[COND]</kbd> begins pseudo-condensing type.
-<kbd>\*[CONDX]</kbd> turns the feature off.  Both are
+<kbd><span class="nobr">\*[CONDX]</span></kbd> turns the feature off.  Both are
 <a href="definitions.html#inlines">inline escapes</a>,
 therefore they should not appear as separate lines, but rather be
 embedded in text lines, like this:
@@ -2830,21 +2824,21 @@ embedded in text lines, like this:
 <span class="pre-in-pp">
   \*[COND]Not everything is as it seems.\*[CONDX]
 </span>
-<kbd>\*[COND]</kbd> remains in effect until you turn it
-off with <kbd>\*[CONDX]</kbd>.
+<kbd><span class="nobr">\*[COND]</span></kbd> remains in effect until you turn it
+off with <kbd><span class="nobr">\*[CONDX]</span></kbd>.
 </p>
 
 <div class="box-important">
 <p class="tip">
 <span class="important">IMPORTANT:</span> You must turn
-<kbd>\*[COND]</kbd>
-off before making any changes to the point size of your type, either
-via the
+<kbd><span class="nobr">\*[COND]</span></kbd> off before making any changes to
+the point size of your type, either via the
 <a href="#ps">PT_SIZE</a>
 macro or with the <kbd>\s</kbd> inline escape.  If you wish
-the new point size to be pseudo-condensed, simply reinvoke
-<kbd>\*[COND]</kbd> afterwards.  Equally, <kbd>\*[COND]</kbd> must
-be turned off before changing the condense percentage with
+the new point size to be pseudo-condensed, simply re-invoke
+<kbd><span class="nobr">\*[COND]</span></kbd> afterwards.  Equally,
+<kbd><span class="nobr">\*[COND]</span></kbd> must be turned off before changing
+the condense percentage with
 <kbd><a href="#condense">.CONDENSE</a></kbd>.
 </p>
 </div>
@@ -2881,9 +2875,9 @@ characters to be extended.
 Mom has no default value for EXTEND, therefore you must set it
 before using the
 <a href="definitions.html#inlines">inline escape</a>
-<kbd><a href="#ext-inline">\*[EXT]</a></kbd>.
-120% of the normal character width is a good value, and you&#8217;d
-set it like this:
+<kbd><a href="#ext-inline"><span class="nobr">\*[EXT]</span></a></kbd>.  120% of
+the normal character width is a good value, and you&#8217;d set it
+like this:
 <br/>
 <span class="pre-in-pp">
   .EXTEND 120
@@ -2897,14 +2891,14 @@ pseudo-extending type; it merely tells mom what percentage of the
 normal character width you want characters to be extended.  To start
 pseudo-extending, use the
 <a href="definitions.html#inlines">inline escape</a>
-<kbd>\*[EXT]</kbd>.
+<kbd><span class="nobr">\*[EXT]</span></kbd>.
 </p>
 
 <p class="tip-bottom">
 <span class="additional-note">Additional note:</span> Make sure that
 pseudo-extending is off (with
 <a href="#ext-inline"><kbd>\*[EXTX]</kbd></a>)
-before before making any changes to the pseudo-extend percentage
+before making any changes to the pseudo-extend percentage
 with EXTEND.
 </p>
 </div>
@@ -2923,7 +2917,7 @@ Inline: <kbd class="macro-args">\*[EXTX]</kbd>
 
 <p>
 <kbd>\*[EXT]</kbd> begins pseudo-extending type.
-<kbd>\*[EXTX]</kbd> turns the feature off.  Both are
+<kbd><span class="nobr">\*[EXTX]</span></kbd> turns the feature off.  Both are
 <a href="definitions.html#inlines">inline escapes</a>,
 therefore they should not appear as separate lines, but rather be
 embedded in text lines, like this:
@@ -2932,16 +2926,17 @@ embedded in text lines, like this:
   \*[EXT]Not everything is as it seems.\*[EXTX]
 </span>
 <kbd>\*[EXT]</kbd> remains in effect until you turn it off with
-<kbd>\*[EXTX]</kbd>.
+<kbd><span class="nobr">\*[EXTX]</span></kbd>.
 </p> <div class="box-important"> <p class="tip">
 <span class="important">IMPORTANT:</span> You must turn
-<kbd>\*[EXT]</kbd> off before making any changes to the point size
-of your type, either via the
+<kbd><span class="nobr">\*[EXT]</span></kbd> off before making any changes to the
+point size of your type, either via the
 <a href="#ps">PT_SIZE</a>
-macro or with the <kbd>\s</kbd> inline escape.  If you wish the new
-point size to be pseudo-extended, simply reinvoke <kbd>\*[EXT]</kbd>
-afterwards.  Equally, <kbd>\*[EXT]</kbd> must be turned off before
-changing the extend percentage with
+macro or with the <kbd>\s</kbd> inline escape.  If you wish
+the new point size to be pseudo-extended, simply re-invoke
+<kbd><span class="nobr">\*[EXT]</span></kbd> afterwards.  Equally,
+<kbd><span class="nobr">\*[EXT]</span></kbd> must be turned off before changing
+the extend percentage with
 <a href="#extend">EXTEND</a>.
 </p>
 </div>
@@ -2951,7 +2946,7 @@ changing the extend percentage with
 <a href="docprocessing.html#docprocessing">document processing macros</a>
 with
 <a href="docprocessing.html#printstyle">PRINTSTYLE TYPEWRITE</a>,
-mom ignores <kbd>\*[EXT]</kbd> requests.
+mom ignores <kbd><span class="nobr">\*[EXT]</span></kbd> requests.
 </p>
 </div>
 
@@ -2971,7 +2966,11 @@ To begin setting type in pseudo-smallcaps, simply invoke
 <kbd>SMALLCAPS&nbsp;OFF</kbd> (or <kbd>END</kbd>, <kbd>STOP</kbd>,
 <kbd>DONE</kbd>, etc).  If you are currently in a
 <a href="definitions.html#filled">no-fill mode</a>,
-(i.e. <kbd>.LEFT</kbd>, <kbd>.CENTER</kbd>, or <kbd>.RIGHT</kbd>)
+(i.e.
+<a href="#lrc">LEFT</a>,
+<a href="#lrc">CENTER</a>,
+or
+<a href="#lrc">RIGHT</a>)
 and you want the smallcaps to continue on the same line,
 append a <kbd>\c</kbd> to the line, like this
 <br/>
@@ -2981,7 +2980,7 @@ append a <kbd>\c</kbd> to the line, like this
   with a few words in smallcaps.
   .SMALLCAPS OFF
 </span>
-The line preceding <kbd>.SMALLCAPS OFF</kbd> should also have a
+The line preceding <kbd>.SMALLCAPS&nbsp;OFF</kbd> should also have a
 <kbd>\c</kbd> appended to it if you wish it to continue unbroken.
 </p>
 
@@ -2989,7 +2988,9 @@ The line preceding <kbd>.SMALLCAPS OFF</kbd> should also have a
 <p class="tip-top">
 <span class="note">Note:</span>
 SMALLCAPS does not have an inline equivalent to
-<a href="inlines.html#uc-lc"><kbd>\*[UC]</kbd> / <kbd>\*[LC]</kbd></a>.
+<a href="inlines.html#uc-lc">
+<span class="nobr"><kbd>\*[UC]</kbd> / <kbd>\*[LC]</kbd></span>
+</a>.
 Furthermore, if you&#8217;re using the
 <a href="docprocessing.html#docprocessing">document processing macros</a>
 with
@@ -3016,7 +3017,7 @@ Macro: <b>SMALLCAPS_STYLE</b> <kbd class="macro-args">SIZE &lt;percentage&gt; WE
 True smallcaps are not a font effect, but, like designer cuts of
 bold, condensed, and extended, actual fonts provided with some
 families.  It is highly recommended that you acquire real smallcaps
-fonts rather than relying on mom's pseudo version.
+fonts rather than relying on mom&#8217;s pseudo version.
 </p>
 
 <p>
@@ -3072,6 +3073,7 @@ page relative to the current
 <ul class="macro-list">
   <li><a href="#ald">ALD</a> &ndash; Advance Lead</li>
   <li><a href="#rld">RLD</a> &ndash; Reverse Lead</li>
+  <li>(see also <a href="#space">SPACE</a>)</li>
 </ul>
 </div>
 
@@ -3094,12 +3096,30 @@ relative to the current vertical position.
 </p>
 
 <p>
-Used by itself, or preceded by
-<a href="#br">BR</a>,
-ALD will advance by one line space plus the distance you specify.
-Preceded by
-<a href="#el">EL</a>,
-it will advance by exactly the distance you specify.
+ALD causes a line break, which means the argument is added to the
+current
+<a href="definitions.html#leading">leading</a>.
+For example, if your current leading is 12 points, a line of type
+after <kbd>.ALD 6p</kbd> will be 18 points distant from the previous
+line.
+</p>
+
+<p>
+If you wish to advance the argument's distance <i>from the
+current baseline,</i> it should be preceded by
+<a href="#el">EL</a>.
+For example,
+<br/>
+<span class="pre-in-pp">
+  .LEFT
+  .LS 12
+  First line.
+  Second line.\c
+  .EL
+  .ALD 15p
+  Third line.
+</span>
+would place the third line exactly 15 points beneath the second.
 </p>
 
 <p>
@@ -3125,7 +3145,7 @@ of lead.
 <div class="box-tip">
 <p class="tip">
 <span class="note">Note:</span> if you want to use ALD at the top
-of a page (ie to advance to the starting position of type on a
+of a page (i.e. to advance to the starting position of type on a
 page), combine the value you want with <kbd>-1v</kbd> (minus one
 line space), like this:
 <br/>
@@ -3157,12 +3177,33 @@ relative to the current vertical position.
 </p>
 
 <p>
-Used by itself, or preceded by
-<a href="#br">BR</a>,
-RLD will advance by one line space, then reverse by the distance you
-specify.  Preceded by
-<a href="#el">EL</a>,
-it will reverse by exactly the distance you specify.
+RLD causes a line break, which means the argument is subtracted from
+the current
+<a href="definitions.html#leading">leading</a>.
+For example, if your current leading is 12 points, a line of type
+after <kbd>.RLD 6p</kbd> will be 6 points distant from the previous
+line.
+</p>
+
+<p>
+If you wish to move upward <i>from the current baseline</i> by the
+argument's distance, RLD should be preceded by
+<a href="#el">EL</a>.
+For example,
+<br/>
+<span class="pre-in-pp">
+  .LEFT
+  .LS 18
+  First line.
+  Second line.\c
+  .EL
+  .RLD 3p
+  Third line.
+</span>
+would raise the third line by 3 points relative to the baseline of
+the second line.  Put another way, if the <kbd>.RLD</kbd> in the
+example were 18p, the third line would fall on the same baseline as
+the second.
 </p>
 
 <p>
@@ -3257,7 +3298,7 @@ Team spirit     Needs work     Persistently gives higher priority
 You want the first tab, CRITERION,
 </p>
 <ul style="margin-top: -.5em; margin-bottom: -.5em;">
-<li>to begin at the left margin of the page &ndash; ie no indent</li>
+<li>to begin at the left margin of the page &ndash; i.e. no indent</li>
 <li>to have a line length of 5 picas</li>
 <li>to be set flush left</li>
 </ul>
@@ -3320,7 +3361,7 @@ Once the tabs are set up, you can call them in one of two ways:
     advances one linespace and calls the tab.</li>
 <li>with <kbd><a href="#tn">.TN</a></kbd> (Tab Next), which keeps
     you on the current line and moves over to the next
-    tab in sequence (ie from 1 to 2, 2 to 3, etc.), or, more
+    tab in sequence (i.e. from 1 to 2, 2 to 3, etc.), or, more
     conveniently, with the
     <kbd><a href="#tn">\*[TB+]</a></kbd>
     <a href="definitions.html#inlines">inline escape</a></li>
@@ -3378,7 +3419,7 @@ than respecting organizational hierarchy.
 </div>
 
 <p>
-Try setting this up and processing it it with
+Try setting this up and processing it with
 <br/>
 <span class="pre-in-pp">
   pdfmom filename.mom &gt; filename.pdf
@@ -3435,7 +3476,7 @@ In combination with the
 macro and the groff inline escape
 <kbd><a href="inlines.html#inline-horizontal-groff">\h</a></kbd>
 (move horizontally across the page) or mom&#8217;s
-<kbd><a href="inlines.html#inline-horizontal-mom">\*[FWD &lt;distance&gt;]</a></kbd>
+<kbd><a href="inlines.html#inline-horizontal-mom">\*[FWD&nbsp;&lt;distance&gt;]</a></kbd>
 (move forward) inline, string tabs provide tremendous flexibility in
 setting up complex tab structures.
 </p>
@@ -3467,9 +3508,9 @@ The first thing you need for string tabs is an
 <a href="definitions.html#inputline">input line</a>
 with tab positions marked on it.  Tabs are marked with the
 <a href="definitions.html#inlines">inline escapes</a>
-<kbd><a href="#inline-st">\*[ST&lt;n&gt;]</a></kbd>
+<a href="#inline-st"><kbd><span class="nobr">\*[ST&lt;n&gt;]</span></kbd></a>
 and
-<kbd><a href="#inline-st">\*[ST&lt;n&gt;X]</a></kbd>,
+<a href="#inline-st"><kbd><span class="nobr">\*[ST&lt;n&gt;X]</span></kbd></a>,
 where <kbd>&lt;n&gt;</kbd>
 is the number you want the tab to have.  (In this example, we
 enclose the input line with the
@@ -3508,7 +3549,7 @@ into its component parts:
 </span>
 </li>
 <li>We want a 1 pica (12 points) gutter between tab 1 and 2,
-    so we insert 12 points of space with \*[FWD 12p]:
+    so we insert 12 points of space with <span class="nobr">\*[FWD&nbsp;12p]:</span>
 <br/>
 <span class="pre-in-pp" style="margin-bottom: -.25em;">
   \*[FWD 12p]
@@ -3560,7 +3601,7 @@ From here on in, you call the tabs with
 <kbd><a href="#tab">.TAB</a></kbd>,
 <kbd><a href="#tn">.TN</a></kbd>,
 or
-<kbd><a href="#tn">\*[TB+]</a></kbd>
+<a href="#tn"><kbd><span class="nobr">\*[TB+]</span></kbd></a>
 just like typesetting tabs (see
 <a href="#typesetting-tabs-tut">typesetting tabs tutorial</a>).
 </p>
@@ -3631,9 +3672,11 @@ of the tabs have altered because of the new point size.
 
 <p>
 Now try increasing the gutters to 2 picas
-(<kbd>\*[FWD&nbsp;24p]</kbd> or <kbd>\*[FWD&nbsp;2P]</kbd> instead
-of <kbd>\*[FWD&nbsp;12p]</kbd>).  Preview the file again, and notice
-how the tab structure remains the same, but the gutters are wider.
+(<kbd><span class="nobr">\*[FWD&nbsp;24p]</span></kbd> or
+<kbd><span class="nobr">\*[FWD&nbsp;2P]</span></kbd> instead of
+<kbd><span class="nobr">\*[FWD&nbsp;12p]</span></kbd>).  Preview the file again,
+and notice how the tab structure remains the same, but the gutters
+are wider.
 </p>
 </div>
 
@@ -3714,7 +3757,7 @@ this:
   .TAB 1 9p 6P J
 </span>
 Once tabs are set, they can be called at any time with the
-<a href="#tab">TAB &lt;n&gt;</a>
+<a href="#tab">TAB&nbsp;&lt;n&gt;</a>
 macro, where &lt;n&gt; is the number of the desired tab.
 </p>
 
@@ -3722,10 +3765,11 @@ macro, where &lt;n&gt; is the number of the desired tab.
 You can set up any number of typesetting tabs.  However, be aware
 that
 <a href="#string-tabs">string tabs</a>
-are also called with TAB &lt;n&gt;, so be careful that you
+are also called with TAB&nbsp;&lt;n&gt;, so be careful that you
 don&#8217;t set up a typesetting tab numbered, say, 4, when you
 already have a string tab numbered 4.  Every tab, typesetting or
-string, must have a unique numeric identifier. </p>
+string, must have a unique numeric identifier.
+</p>
 
 <div class="box-tip">
 <p class="tip">
@@ -3772,7 +3816,7 @@ or the
 set to
 <a href="#lrc"><span style="font-style: normal">LEFT</span></a>
 in order for these inlines to function properly.  Please see
-<a href="#important"><span style="font-style: normal">IMPORTANT</span></a>,
+<a href="#important1"><span style="font-style: normal">IMPORTANT</span></a>,
 below.
 </p>
 
@@ -3791,7 +3835,7 @@ string tab markers.
 </span>
 String tab 1 begins at the start of the line and ends after the word
 &#8220;time&#8221;.  String tab 2 starts at &#8220;good&#8221; and
-ends after &#8220;men&#8221;.  Inline escapes (e.g., font or point
+ends after &#8220;men&#8221;.  Inline escapes (e.g. font or point
 size changes, or horizontal movements, including
 <a href="goodies.html#pad">padding</a>)
 are taken into account when mom determines the position and length
@@ -3814,7 +3858,7 @@ after which they may be called, by number, with
 <div class="box-tip">
 <p class="tip">
 <span class="note">Note:</span> Lines with string tabs marked off
-in them are normal input lines, ie they get printed, just like
+in them are normal input lines, i.e., they get printed, just like
 any input line.  If you want to set up string tabs without the line
 printing, use the
 <a href="goodies.html#silent">SILENT</a>
@@ -3824,7 +3868,7 @@ macro.
 
 <div class="box-important">
 <p class="tip-top">
-<span id="important" class="important">IMPORTANT:</span>
+<span id="important1" class="important">IMPORTANT:</span>
 Owing to the way groff processes
 <a href="definitions.html#inputline">input lines</a>
 and turns them into
@@ -3844,7 +3888,7 @@ justified and broken with
 In other words, in order to use string tabs,
 <a href="#lrc">LEFT</a>
 must be active, or, if
-<a href="#quad">QUAD LEFT</a>
+<a href="#quad">QUAD&nbsp;LEFT</a>
 or
 <a href="#justify">JUSTIFY</a>
 are active, the line on which the string tabs are marked must be
@@ -3902,15 +3946,15 @@ Macro: <b>ST</b> <kbd class="macro-args">&lt;tab number&gt;  L | R | C | J [ QUA
 
 <p>
 After string tabs have been marked off on an input line (see
-<a href="#inline-st"><kbd>\*[ST]...\*[STX]</kbd></a>),
+<a href="#inline-st"><kbd><span class="nobr">\*[ST]...\*[STX]</span></kbd></a>),
 you need to &#8220;set&#8221; them by giving them a direction and,
 optionally, the <kbd>QUAD</kbd> argument.  In this respect, ST is
 like
 <a href="#tab-set">TAB_SET</a>
 except that you don&#8217;t have to give ST an indent or a
 line length (that&#8217;s already taken care of, inline, by
-<kbd>\*[ST]...\*[STX]</kbd>).  If you want string tab 1 to be left,
-enter
+<kbd><span class="nobr">\*[ST]...\*[STX]</span></kbd>).  If you want string tab 1
+to be left, enter
 <br/>
 <span class="pre-in-pp">
   .ST 1 L
@@ -3979,7 +4023,7 @@ If you want the tabs to line up, use
 <a href="#tn">TN</a>
 (Tab Next)
 or, more conveniently, the inline escape
-<a href="#tn">\*[TB+]</a>:
+<a href="#tn"><span class="nobr">\*[TB+]</span></a>:
 <br/>
 <span class="pre-in-pp">
   .TAB 1
@@ -4027,7 +4071,7 @@ in the description of the TAB macro for an example of how TN works.
 <p>
 In tabs that aren&#8217;t given the <kbd class="normal">QUAD</kbd>
 argument when they&#8217;re set up with
-<a href="#tab-set" class="normal">TAB_SET</a>
+<a href="#tab-set" class="normal">TAB&nbsp;SET</a>
 or
 <a href="#st" class="normal">ST</a>,
 you must terminate the line preceding <kbd class="normal">.TN</kbd>
@@ -4042,7 +4086,7 @@ If you find remembering whether to put in the
 <a href="definitions.html#inlines" class="normal">inline escape</a>
 alternative to
 <kbd class="normal">.TN</kbd>,
-<kbd class="normal"><a href="inlines.html#tb-plus-mom">\*[TB+]</a></kbd>,
+<a href="inlines.html#tb-plus-mom"><kbd class="normal"><span class="nobr">\*[TB+]</span></kbd></a>,
 which works consistently regardless of the fill mode.
 </p>
 
@@ -4070,12 +4114,12 @@ The above example, assuming tabs numbered from 1 to 4, should be entered
   .TN
   Some more text\c
   .TN
-  \&\c
+  \&amp;\c
   .TN
   Yet more text
 </span>
 
-<kbd>\&</kbd> is a zero-width, non-printing character that groff
+<kbd>\&amp;</kbd> is a zero-width, non-printing character that groff
 recognizes as valid input, hence meets the requirement for input
 text following <kbd>.TN</kbd>.
 </p>
@@ -4186,13 +4230,13 @@ macro in the
 <p class="tip">
 <span class="note">Additional Note:</span>
 Do not use multi-columns with
-<a href="docprocessing.html#slide">DOCTYPE SLIDES</a>
+<a href="docprocessing.html#slide">DOCTYPE&nbsp;SLIDES</a>
 because MCX uses the lowest line on the page to determine column
 depth.  Owing to the fact that both headers and footers are printed
 prior to slides receiving text, MCX will always go to the
 footer position.  If you need functionality similar to MCO/MCX, use
 the groff requests <kbd>.mk</kbd> and <kbd>.rt</kbd>.  See
-<kbd>info groff --index-search=mk</kbd>.
+<kbd>info groff mk</kbd>.
 </p>
 </div>
 
@@ -4324,7 +4368,7 @@ of the longest column.
 <p>
 With mom&#8217;s indents, you can indent from the left, the right,
 or both margins.  In addition, mom provides temporary left indents
-(ie only one line is indented, as at the start of a paragraph)
+(i.e., only one line is indented, as at the start of a paragraph)
 and &#8220;hanging&#8221; left indents (the reverse of a temporary
 indent; the first line isn&#8217;t indented, subsequent lines are).
 </p>
@@ -4355,7 +4399,7 @@ indents:
 </ul>
 
 <p>
-This section deals exclusively with IL, IR and IB.  For an
+This section deals exclusively with IL, IR, and IB.  For an
 explanation of hanging and temporary indents&mdash;how they work and
 how to use them&mdash;see
 <a href="#hi">Hanging indents</a>
@@ -4393,7 +4437,7 @@ As you can see, once you&#8217;ve supplied a measure to an indent
 macro, mom stores the value, obviating the need to repeat it on
 subsequent invocations.  And mom doesn&#8217;t just store the
 measure&mdash;she hangs on to it tenaciously.  Arguments passed to
-IL, IR and IB are additive.  Consider the following:
+IL, IR, and IB are additive.  Consider the following:
 <br/>
 <span class="pre-in-pp">
   .LL 20P
@@ -4405,17 +4449,17 @@ IL, IR and IB are additive.  Consider the following:
   A second block of text...
   ...
   ...
-  .IR 2P    \"Indent right by an additional 2 picas (ie 4 picas)
+  .IR 2P    \"Indent right by an additional 2 picas (i.e. 4 picas)
   A third block of text...
   ...
   ...
 </span>
-The first block of text is right indented by 2 picas (ie the line
+The first block of text is right indented by 2 picas (i.e. the line
 length is shortened by 2 picas to 18 picas).  The second block of
 text, after IQ, is, as you&#8217;d expect, set to the full measure.
 The third block of text&mdash;the one to pay attention to&mdash;is
 not right indented by 2 picas, but rather by 4 picas.  Mom adds
-the value of arguments to IL, IR and IB to whatever value is already
+the value of arguments to IL, IR, and IB to whatever value is already
 in effect.
 </p>
 
@@ -4551,7 +4595,7 @@ for more details.
 <div class="box-tip">
 <p class="tip-top">
 <span class="note">Note:</span> Calling a tab (with
-<kbd><a href="#tab">.TAB &lt;n&gt;</a></kbd>)
+<kbd><a href="#tab">.TAB&nbsp;&lt;n&gt;</a></kbd>)
 automatically cancels any active indents.
 </p>
 
@@ -4603,7 +4647,7 @@ for more details.
 <div class="box-tip">
 <p class="tip-top">
 <span class="note">Note:</span> Calling a tab (with
-<kbd><a href="#tab">.TAB &lt;n&gt;</a></kbd>)
+<kbd><a href="#tab">.TAB&nbsp;&lt;n&gt;</a></kbd>)
 automatically cancels any active indents.
 </p>
 
@@ -4673,7 +4717,7 @@ for more details.
 <div class="box-tip">
 <p class="tip-top">
 <span class="note">Note:</span> Calling a tab (with
-<kbd><a href="#tab">.TAB &lt;n&gt;</a></kbd>)
+<a href="#tab"><kbd>.TAB&nbsp;&lt;n&gt;</kbd></a>)
 automatically cancels any active indents.
 </p>
 
@@ -4725,9 +4769,9 @@ turn them off.
 
 <div class="box-important">
 <p class="tip">
-<span class="important">IMPORTANT:</span> Unlike IL, IR and IB,
-measures given to TI are NOT additive.  In the following example,
-the second <kbd>.TI&nbsp;2P</kbd> is exactly 2 picas.
+<span class="important">IMPORTANT:</span> Unlike IL, IR, and IB,
+measures given to TI are <i>not</i> additive.  In the following
+example, the second <kbd>.TI&nbsp;2P</kbd> is exactly 2 picas.
 <br/>
 <span class="pre-in-pp" style="margin-bottom: -18px;">
   .TI 1P
@@ -4790,7 +4834,7 @@ mom keeps track of the last measure you gave it.
 
 <p>
 Generally speaking, you should invoke HI immediately prior to the
-line you want hung (ie without any intervening
+line you want hung (i.e. without any intervening
 <a href="definitions.html#controllines">control lines</a>).
 And because hanging indents affect only one line, there&#8217;s no
 need to turn them off.
@@ -4798,7 +4842,7 @@ need to turn them off.
 
 <div class="box-important">
 <p class="tip">
-<span class="important">IMPORTANT:</span> Unlike IL, IR and IB,
+<span class="important">IMPORTANT:</span> Unlike IL, IR, and IB,
 measures given to HI are NOT additive.  Each time you pass a measure
 to HI, the measure is treated literally.
 </p>

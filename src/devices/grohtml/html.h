@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* Copyright (C) 2000-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #if !defined(HTML_H)
 #  define HTML_H
+
+const int INT_HEXDIGITS = 16; // enough for 64-bit ints
 
 /*
  *  class and structure needed to buffer words

@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 class reg : public object {
 public:
   virtual const char *get_string() = 0;
-  virtual int get_value(units *);
+  virtual bool get_value(units *);
   virtual void increment();
   virtual void decrement();
   virtual void set_increment(units);
@@ -30,10 +30,10 @@ public:
   virtual void set_value(units);
 };
 
-class constant_int_reg : public reg {
+class readonly_register : public reg {
   int *p;
 public:
-  constant_int_reg(int *);
+  readonly_register(int *);
   const char *get_string();
 };
 
@@ -52,7 +52,7 @@ public:
   void add_value(units);
 
   void set_value(units) = 0;
-  int get_value(units *) = 0;
+  bool get_value(units *) = 0;
 };
 
 class variable_reg : public general_reg {
@@ -60,10 +60,10 @@ class variable_reg : public general_reg {
 public:
   variable_reg(int *);
   void set_value(units);
-  int get_value(units *);
+  bool get_value(units *);
 };
 
-extern object_dictionary number_reg_dictionary;
+extern object_dictionary register_dictionary;
 extern void set_number_reg(symbol nm, units n);
 extern void check_output_limits(int x, int y);
 extern void reset_output_registers();

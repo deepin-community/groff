@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -19,12 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /* Unfortunately vendors seem to have problems writing a <signal.h>
 that is correct for C++, so we implement all signal handling in C. */
 
-#include <stdlib.h>
-
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include <signal.h>
 #ifdef HAVE_UNISTD_H

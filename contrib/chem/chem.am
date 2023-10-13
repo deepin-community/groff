@@ -1,12 +1,8 @@
 # Automake rules for 'chem'
 
-# File position: <groff-source>/contrib/chem/chem.am
-
-# Copyright (C) 2006-2018 Free Software Foundation, Inc.
+# Copyright (C) 2006-2020 Free Software Foundation, Inc.
 # Written by Bernd Warken <groff-bernd.warken-72@web.de>.
 # Moved to automake by Bertrand Garrigues
-#
-# Last update: 22 Aug 2015
 #
 # This file is part of 'chem' which is part of 'groff'.
 #
@@ -42,7 +38,6 @@ CHEM_EXAMPLES =  \
   contrib/chem/examples/penicillin.chem \
   contrib/chem/examples/reserpine.chem
 
-if BUILD_EXAMPLES
 # Files installed in $(exampledir)/chem
 chemexampledir = $(exampledir)/chem
 nodist_chemexample_DATA = $(CHEM_GENEXAMPLES)
@@ -52,7 +47,6 @@ dist_chemexample_DATA = $(CHEM_EXAMPLES)
 # lazily installed by the local install target
 chemexample122dir = $(chemexampledir)/122
 nodist_chemexample122_DATA = contrib/chem/examples/122/README
-endif
 EXTRA_DIST += \
   contrib/chem/ChangeLog \
   contrib/chem/chem.1.man \
@@ -66,7 +60,7 @@ man1_MANS += contrib/chem/chem.1
 MOSTLYCLEANFILES += $(CHEM_GENEXAMPLES) $(nodist_chemexample122_DATA) \
   contrib/chem/README
 
-# This is strangly built but not installed
+# This is strangely built but not installed
 all: contrib/chem/README
 
 contrib/chem/README: $(chem_srcdir)/README.txt
@@ -96,23 +90,19 @@ chem: $(chem_srcdir)/chem.pl $(SH_DEPS_SED_SCRIPT)
 
 install-data-local: install_chem_extra
 install_chem_extra:
-if BUILD_EXAMPLES
 	-test -d $(DESTDIR)$(chemexample122dir) \
           || $(mkinstalldirs) $(DESTDIR)$(chemexample122dir);
 	for i in $(chem_srcdir)/examples/122/*.chem; do \
 	  n=`echo $$i | sed 's|$(chem_srcdir)/examples/122/||g'`; \
 	  $(INSTALL_DATA) $$i $(DESTDIR)$(chemexample122dir)/$$n; \
 	done
-endif
 
 uninstall-local: uninstall_chem_extra
 uninstall_chem_extra:
-if BUILD_EXAMPLES
 	$(RM) $(DESTDIR)$(exampledir)/chem/122/*
 	-rmdir $(DESTDIR)$(exampledir)/chem/122
 	$(RM) $(DESTDIR)$(exampledir)/chem/*
 	-rmdir $(DESTDIR)$(exampledir)/chem
-endif
 	-rmdir $(DESTDIR)$(datasubdir)/pic
 
 dist-hook: dist_chem
@@ -123,12 +113,8 @@ dist_chem:
 	done
 
 
-########################################################################
-# Editor settings
-########################################################################
-#
 # Local Variables:
 # mode: makefile-automake
 # fill-column: 72
 # End:
-# vim: set filetype=automake textwidth=72:
+# vim: set autoindent filetype=automake textwidth=72:

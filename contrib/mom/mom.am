@@ -1,17 +1,17 @@
-# Copyright (C) 2002-2018 Free Software Foundation, Inc.
-#      Written by Werner Lemberg (wl@gnu.org)
+# Copyright (C) 2002-2020 Free Software Foundation, Inc.
+#      Written by Werner Lemberg <wl@gnu.org>
 #      Automake migration by Bertrand Garrigues
-#
+#        <bertrand.garrigues@laposte.net>
 #
 # This file is part of groff.
 #
 # groff is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free
-# Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# groff is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# groff is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
@@ -20,14 +20,14 @@
 
 mom_srcdir = $(top_srcdir)/contrib/mom
 
-# pdfmom command used to generated .pdf
-MOM_TFLAG = -M$(mom_srcdir)
-MOM_KFLAG = -k -p -e -t
+# pdfmom command used to generate .pdf
+#
+# Use '-K utf8', not '-k', in case 'configure' didn't find uchardet.
 MOMPDFMOM = \
   GROFF_COMMAND_PREFIX= \
   GROFF_BIN_PATH="$(GROFF_BIN_PATH)" \
   PDFMOM_BIN_PATH="$(top_builddir)" \
-  $(PDFMOMBIN) $(FFLAG) $(TFLAG) $(MOM_TFLAG) $(MOM_KFLAG)
+  $(PDFMOMBIN) $(FFLAG) $(MFLAG) -M$(mom_srcdir) -K utf8 -p -e -t
 
 man7_MANS += contrib/mom/groff_mom.7
 
@@ -40,7 +40,6 @@ momtmacdir = $(tmacdir)
 dist_momtmac_DATA = $(MOMNORMALFILES)
 
 # Files installed in htmldocdir/mom
-if INSTALL_SHIPPED_HTML
 MOMHTMLDOCFILES=\
   contrib/mom/momdoc/stylesheet.css \
   contrib/mom/momdoc/appendices.html \
@@ -67,7 +66,6 @@ MOMHTMLDOCFILES=\
   contrib/mom/momdoc/version-2.html
 momhtmldir = $(htmldocdir)/mom
 momhtml_DATA = $(MOMHTMLDOCFILES)
-endif
 
 # Files installed in $(examplesdir)/mom.  MOMEXAMPLEFILES are located
 # in the source tree, while MOMPROCESSEDEXAMPLEFILES are generated in
@@ -85,39 +83,44 @@ MOMEXAMPLEFILES=\
   contrib/mom/examples/penguin.ps \
   contrib/mom/examples/penguin.pdf \
   contrib/mom/examples/mom.vim \
-  contrib/mom/examples/slide-demo.mom
-if BUILD_EXAMPLES
+  contrib/mom/examples/slide-demo.mom \
+  contrib/mom/examples/copyright-default.mom \
+  contrib/mom/examples/copyright-chapter.mom
 momexampledir = $(exampledir)/mom
 dist_momexample_DATA = $(MOMEXAMPLEFILES)
-else
-EXTRA_DIST += $(MOMEXAMPLEFILES)
-endif
 
-if BUILD_PDFEXAMPLES
+if USE_GROPDF
 MOMPROCESSEDEXAMPLEFILES = \
   contrib/mom/examples/letter.pdf \
   contrib/mom/examples/mom-pdf.pdf \
   contrib/mom/examples/mon_premier_doc.pdf \
   contrib/mom/examples/sample_docs.pdf \
-  contrib/mom/examples/typesetting.pdf \
-  contrib/mom/examples/slide-demo.pdf
+  contrib/mom/examples/slide-demo.pdf \
+  contrib/mom/examples/copyright-default.pdf \
+  contrib/mom/examples/copyright-chapter.pdf
+if HAVE_URW_FONTS
+MOMPROCESSEDEXAMPLEFILES += contrib/mom/examples/typesetting.pdf
+endif
 momprocessedexampledir = $(exampledir)/mom
 nodist_momprocessedexample_DATA = $(MOMPROCESSEDEXAMPLEFILES)
+endif
 
-if HAVE_PDFTOOLS
+mom_test_template = contrib/mom/examples/test-mom.sh.in
+
 # Small test suite on mom examples
 mom_TESTS = contrib/mom/examples/tests-mom.sh
 TESTS += $(mom_TESTS)
-contrib/mom/examples/tests-mom.sh: $(top_builddir)/config.status \
-	$(MOMPROCESSEDEXAMPLEFILES)  $(top_srcdir)/contrib/mom/examples/test-mom.sh.in
-	sed -e "s|[@]abs_top_builddir[@]|$(abs_top_builddir)|g" \
-            -e "s|[@]groff_have_urw_fonts[@]|$(groff_have_urw_fonts)|g" \
-	    	$(top_srcdir)/contrib/mom/examples/test-mom.sh.in > $@
-	chmod +x $@
+contrib/mom/examples/tests-mom.sh: \
+  $(top_builddir)/config.status \
+  $(MOMPROCESSEDEXAMPLEFILES) \
+  $(top_srcdir)/$(mom_test_template)
+	$(AM_V_GEN)sed \
+	  -e "s|[@]abs_top_builddir[@]|$(abs_top_builddir)|g" \
+	  -e "s|[@]groff_have_urw_fonts[@]|$(groff_have_urw_fonts)|g" \
+	  $(top_srcdir)/$(mom_test_template) > $@ \
+	&& chmod +x $@
 MOSTLYCLEANFILES += $(mom_TESTS)
-endif
-endif
-EXTRA_DIST += contrib/mom/examples/test-mom.sh.in
+EXTRA_DIST += $(mom_test_template)
 
 # For this list of files we add a symlink from $(exampledir)/mom to $(pdfdocdir)
 PDFDOCFILE = mom-pdf.pdf
@@ -135,24 +138,23 @@ MOSTLYCLEANFILES += \
   penguin.ps \
   penguin.pdf
 
-# Rule to generated .pdf files from .mom files
+# rule to generate .pdf files from .mom files
 SUFFIXES += .mom .pdf
 .mom.pdf:
 	$(GROFF_V)$(MKDIR_P) `dirname $@` \
 	&& LC_ALL=C $(MOMPDFMOM) $< >$@
 
 $(MOMPROCESSEDEXAMPLEFILES): $(MOMNORMALFILES) \
-  groff troff gropdf pdfmom penguin.ps penguin.pdf \
-  gnu.eps font/devpdf/build_font_files
+  groff troff gropdf pdfmom penguin.ps penguin.pdf font/devpdf/stamp
 
 penguin.ps:
-	cp $(mom_srcdir)/examples/penguin.ps $@
+	$(AM_V_at)cp $(mom_srcdir)/examples/penguin.ps $@
 penguin.pdf:
-	cp $(mom_srcdir)/examples/penguin.pdf $@
+	$(AM_V_at)cp $(mom_srcdir)/examples/penguin.pdf $@
 
 install-data-hook: install_mom
 install_mom:
-if BUILD_PDFEXAMPLES
+if USE_GROPDF
 	for f in $(PDFDOCFILE); do \
 	  $(RM) $(DESTDIR)$(pdfdocdir)/$$f; \
 	  ln -s $(exampledir)/mom/$$f $(DESTDIR)$(pdfdocdir)/$$f; \
@@ -164,6 +166,7 @@ uninstall_mom:
 	for f in $(PDFDOCFILE); do \
 	  $(RM) $(DESTDIR)$(pdfdocdir)/$$f; \
 	done
+	-rmdir $(DESTDIR)$(pdfdocdir)
 	if test -d $(DESTDIR)$(exampledir)/mom; then \
 	  rmdir $(DESTDIR)$(exampledir)/mom; \
 	fi
@@ -172,9 +175,8 @@ uninstall_mom:
 	fi
 
 
-########################################################################
-### Emacs settings
 # Local Variables:
+# fill-column: 72
 # mode: makefile-automake
 # End:
-# vim: set filetype=automake:
+# vim: set autoindent filetype=automake textwidth=72:

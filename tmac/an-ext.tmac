@@ -1,9 +1,10 @@
-.\" an-ext.tmac
+.\" groff extension macros for man(7) package
 .\"
-.\" Copyright (C) 2007-2018 Free Software Foundation, Inc.
+.\" Copyright (C) 2007-2022 Free Software Foundation, Inc.
 .\"
 .\" Written by Eric S. Raymond <esr@thyrsus.com>
 .\"            Werner Lemberg <wl@gnu.org>
+.\"            G. Branden Robinson <g.branden.robinson@gmail.com>
 .\"
 .\" You may freely use, modify and/or distribute this file.
 .\"
@@ -20,44 +21,42 @@
 .\" Convention: Auxiliary macros and registers start with 'm' followed
 .\"             by an uppercase letter or digit.
 .
+.\" Setting the `mG` register to a positive value (e.g., on the command
+.\" line) enables usage of macros defined here that have alternative
+.\" definitions in the main groff man macro file.  This is for testing.
+.\" The logic uses subtraction due to frustrating, AT&T troff-compatible
+.\" limitations on the '!' operator.
+.
 .
 .\" Protect against being sourced twice.
-.nr mX +1
-.if \n(mX>1 \
+.nr mZ +1
+.if \n(mZ>1 \
 .  nx
 .
-.\" Check whether we are using grohtml.
-.nr mH 0
-.if \n(.g \
-.  if '\*(.T'html' \
-.    nr mH 1
+.\" Define this to your implementation's constant-width typeface.
+.ds mC CW
+.if n .ds mC R
 .
+.\" Save the automatic hyphenation mode.
+.\"
+.\" In AT&T troff, there was no register exposing the hyphenation mode,
+.\" and no way to save and restore it.  Set `mH` to a reasonable value
+.\" for your implementation and preference.
+.de mY
+.  ie !\\n(.g \
+.    nr mH 14
+.  el \
+.    do nr mH \\n[.hy] \" groff extension register
+..
 .
-.\" Map mono-width fonts to standard fonts for groff's TTY device.
-.if n \{\
-.  do ftr CR R
-.  do ftr CI I
-.  do ftr CB B
-.\}
-.
-.\" groff has glyph entities for angle brackets.
-.ie \n(.g \{\
-.  ds la \(la\"
-.  ds ra \(ra\"
-.\}
-.el \{\
-.  ds la <\"
-.  ds ra >\"
-.  \" groff's man macros control hyphenation with this register.
-.  nr HY 1
-.\}
-.
-.nr mS 0
+.nr mS 0 \" in a synopsis (SY/YS)?
+.nr mE 0 \" in an example (EX/EE)?
 .
 .
 .\" Declare start of command synopsis.  Sets up hanging indentation.
 .de SY
 .  ie !\\n(mS \{\
+.    mY
 .    nh
 .    nr mS 1
 .    nr mA \\n(.j
@@ -71,6 +70,7 @@
 .
 .  nr mT \w'\fB\\$1\fP\ '
 .  HP \\n(mTu
+.  rr mT
 .  B "\\$1"
 ..
 .
@@ -79,96 +79,74 @@
 .de YS
 .  in \\n(mIu
 .  ad \\n(mA
-.  hy \\n(HY
+.  hy \\n(mH
+.  rr mA
+.  rr mI
 .  nr mS 0
 ..
 .
 .
-.\" Declare optional option.
-.de OP
-.  ie \\n(.$-1 \
-.    RI "[\fB\\$1\fP" "\ \\$2" "]"
-.  el \
-.    RB "[" "\\$1" "]"
+.\" Prepare link text for mail/web hyperlinks.  `MT` and `UR` call this.
+.de mV
+.  ds m1 \\$1\"
+..
+.
+.
+.\" Emit hyperlink.  The optional argument supplies trailing punctuation
+.\" after link text.  `ME` and `UE` call this.
+.de mQ
+.  mY
+.  nh
+<\\*(m1>\\$1
+.  hy \\n(mH
 ..
 .
 .
 .\" Start URL.
+.if \n(.g-\n(mG \{\
 .de UR
-.  ds m1 \\$1\"
-.  nh
-.  if \\n(mH \{\
-.    \" Start diversion in a new environment.
-.    do ev URL-div
-.    do di URL-div
-.  \}
+.  mV \\$1
 ..
+.\}
 .
 .
 .\" End URL.
+.if \n(.g-\n(mG \{\
 .de UE
-.  ie \\n(mH \{\
-.    br
-.    di
-.    ev
-.
-.    \" Has there been one or more input lines for the link text?
-.    ie \\n(dn \{\
-.      do HTML-NS "<a href=""\\*(m1"">"
-.      \" Yes, strip off final newline of diversion and emit it.
-.      do chop URL-div
-.      do URL-div
-\c
-.      do HTML-NS </a>
-.    \}
-.    el \
-.      do HTML-NS "<a href=""\\*(m1"">\\*(m1</a>"
-\&\\$*\"
-.  \}
-.  el \
-\\*(la\\*(m1\\*(ra\\$*\"
-.
-.  hy \\n(HY
+.  mQ \\$1
 ..
+.\}
 .
 .
 .\" Start email address.
+.if \n(.g-\n(mG \{\
 .de MT
-.  ds m1 \\$1\"
-.  nh
-.  if \\n(mH \{\
-.    \" Start diversion in a new environment.
-.    do ev URL-div
-.    do di URL-div
-.  \}
+.  mV \\$1
 ..
+.\}
 .
 .
 .\" End email address.
+.if \n(.g-\n(mG \{\
 .de ME
-.  ie \\n(mH \{\
-.    br
-.    di
-.    ev
-.
-.    \" Has there been one or more input lines for the link text?
-.    ie \\n(dn \{\
-.      do HTML-NS "<a href=""mailto:\\*(m1"">"
-.      \" Yes, strip off final newline of diversion and emit it.
-.      do chop URL-div
-.      do URL-div
-\c
-.      do HTML-NS </a>
-.    \}
-.    el \
-.      do HTML-NS "<a href=""mailto:\\*(m1"">\\*(m1</a>"
-\&\\$*\"
-.  \}
-.  el \
-\\*(la\\*(m1\\*(ra\\$*\"
-.
-.  hy \\n(HY
+.  mQ \\$1
 ..
+.\}
+.
+.
+.\" Set a man page cross reference.
+.\" .MR page-topic page-section [trailing-text]
+.if \n(.g-\n(mG \{\
+.de MR
+.  mY
+.  nh
+.  ie \\n(.$=1 \
+.    I \\$1
+.  el \
+.    IR \\$1 (\\$2)\\$3
+.  hy \\n(mH
+..
+.\}
 .
 .
 .\" Continuation line for .TP header.
@@ -180,23 +158,33 @@
 .
 .
 .\" Start example.
+.if \n(.g-\n(mG \{\
 .de EX
-.  do ds mF \\n[.fam]
-.  nr mE \\n(.f
-.  nf
-.  nh
-.  do fam C
-.  ft CW
+.  br
+.  if !\\n(mE \{\
+.    nr mF \\n(.f
+.    nr mP \\n(PD
+.    nr PD 1v
+.    nf
+.    ft \\*(mC
+.    nr mE 1
+.  \}
 ..
+.\}
 .
 .
 .\" End example.
+.if \n(.g-\n(mG \{\
 .de EE
-.  do fam \\*(mF
-.  ft \\n(mE
-.  fi
-.  hy \\n(HY
+.  br
+.  if \\n(mE \{\
+.    ft \\n(mF
+.    nr PD \\n(mP
+.    fi
+.    nr mE 0
+.  \}
 ..
+.\}
 .
 .
 .\" Start display.
@@ -209,10 +197,6 @@
 .de DE
 .  \" XXX to be written
 ..
-.
-.\" ====================================================================
-.\" Editor settings
-.\" ====================================================================
 .
 .\" Local Variables:
 .\" mode: nroff

@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -19,9 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lib.h"
 
+#include <assert.h>
+#include <errno.h>
 #include <math.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #ifdef NEED_DECLARATION_RAND
 #undef rand
@@ -47,7 +47,6 @@ extern "C" {
 }
 #endif
 
-#include "assert.h"
 #include "cset.h"
 #include "stringclass.h"
 #include "lf.h"
@@ -111,7 +110,8 @@ void lex_warning(const char *message,
 
 void lex_cleanup();
 
-extern int flyback_flag;
+extern bool want_flyback;
+extern bool want_alternate_flyback;
 extern int command_char;
 // zero_length_line_flag is non-zero if zero-length lines are drawn 
 // as dots by the output device

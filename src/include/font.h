@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -24,8 +24,8 @@ typedef void (*FONT_COMMAND_HANDLER)(const char *,	// command
 				     const char *,	// file
 				     int);		// lineno
 
-// A glyph is represented by a font-independent 'glyph *' pointer.
-// The functions name_to_glyph and number_to_glyph return such a pointer.
+// A glyph is represented by a font-independent 'glyph *' pointer.  The
+// functions name_to_glyph and number_to_glyph return such a pointer.
 //
 // There are two types of glyphs:
 //
@@ -38,9 +38,10 @@ typedef void (*FONT_COMMAND_HANDLER)(const char *,	// command
 
 // The statically allocated information about a glyph.
 //
-// This is an abstract class; only its subclass 'charinfo' is instantiated.
-// 'charinfo' exists in two versions: one in roff/troff/input.cpp for troff,
-// and one in libs/libgroff/nametoindex.cpp for the preprocessors and the
+// This is an abstract class; only its subclass 'charinfo' is
+// instantiated.  'charinfo' exists in two versions: one in
+// roff/troff/input.cpp for troff, and one in
+// libs/libgroff/nametoindex.cpp for the preprocessors and the
 // postprocessors.
 struct glyph {
   int index;			// A font-independent integer value.
@@ -48,7 +49,7 @@ struct glyph {
   friend class character_indexer;
 };
 
-#define UNDEFINED_GLYPH ((glyph *) NULL)
+#define UNDEFINED_GLYPH ((glyph *) 0)
 
 // The next three functions exist in two versions: one in
 // roff/troff/input.cpp for troff, and one in
@@ -64,9 +65,9 @@ extern glyph *number_to_glyph(int);	// Convert the font-dependent glyph
 			// object.  This has the same semantics as the groff
 			// escape sequence \N'number'.  If such a 'glyph'
 			// object does not yet exist, a new one is allocated.
-extern const char *glyph_to_name(glyph *);	// Convert the given glyph
-			// back to its name.  Return NULL if the glyph
-			// doesn't have a name.
+extern const char *glyph_to_name(glyph *);	// Convert the given
+			// glyph back to its name.  Return null pointer
+			// if the glyph doesn't have a name.
 inline int glyph_to_number(glyph *);	// Convert the given glyph back to
 			// its number.  Return -1 if it does not designate
 			// a numbered character.
@@ -105,11 +106,11 @@ public:
   };
 
   virtual ~font();	// Destructor.
-  int contains(glyph *);	// Return 1 if this font contains the given
-			// glyph, 0 otherwise.
-  int is_special();	// Return 1 if this font is special, 0 otherwise.
-			// See section 'Special Fonts' in the info file of
-			// groff.  Used by make_glyph_node().
+  bool contains(glyph *);	// This font contains the given glyph.
+  bool is_special();	// This font is searched for glyphs not defined
+			// in the current font.  See section 'Special
+			// Fonts' in the groff Texinfo manual.  Used by
+			// make_glyph_node().
   int get_width(glyph *, int);	// A rectangle represents the shape of the
 			// given glyph (arg1) at the given point size
 			// (arg2).  Return the horizontal dimension of this
@@ -119,14 +120,14 @@ public:
 			// (arg2).  Return the distance between the base
 			// line and the top of this rectangle.
 			// This is often also called the 'ascent' of the
-			// glyph.  If the top is above the base line, this
+			// glyph.  If the top is above the baseline, this
 			// value is positive.
   int get_depth(glyph *, int);	// A rectangle represents the shape of the
 			// given glyph (arg1) at the given point size
 			// (arg2).  Return the distance between the base
 			// line and the bottom of this rectangle.
 			// This is often also called the 'descent' of the
-			// glyph.  If the bottom is below the base line,
+			// glyph.  If the bottom is below the baseline,
 			// this value is positive.
   int get_space_width(int);	// Return the normal width of a space at the
 			// given point size.
@@ -158,9 +159,8 @@ public:
 			// natural and artificial slant.  It basically means
 			// how much an accent must be shifted horizontally
 			// to put it on the optical axis of the glyph.
-  int has_ligature(int);	// Return a non-zero value if this font has
-			// the given ligature type (one of LIG_ff, LIG_fi,
-			// etc.), 0 otherwise.
+  bool has_ligature(int);	// This font has the given ligature type
+			// (one of LIG_ff, LIG_fi, ...).
   int get_italic_correction(glyph *, int);	// If the given glyph (arg1)
 			// at the given point size (arg2) is followed by an
 			// unslanted glyph, some horizontal white space may
@@ -184,46 +184,46 @@ public:
   int get_zoom();	// Return the font's zoom factor * 1000.
   int get_code(glyph *);	// Return the code point in the physical
 			// font of the given glyph.
-  const char *get_special_device_encoding(glyph *);	// Return special
-			// device dependent information about the given
-			// glyph.  Return NULL if there is no special
-			// information.
+  const char *get_special_device_encoding(glyph *);	// Return
+			// special device-dependent information about
+			// the given glyph.  Return null pointer if
+			// there is no special information.
   const char *get_name();	// Return the name of this font.
   const char *get_internal_name();	// Return the 'internalname'
-			// attribute of this font.  Return NULL if it has
-			// none.
+			// attribute of this font or null pointer if it
+			// has none.
   const char *get_image_generator();	// Return the 'image_generator'
-			// attribute of this font.  Return NULL if it has
-			// none.
-  static int scan_papersize(const char *, const char **,
-			    double *, double *);	// Parse the
-			// 'papersize' attribute in a DESC file (given in
-			// arg1).  Return the name of the size (in arg2),
-			// and the length and width (in arg3 and arg4).
-			// Return 1 in case of success, 0 otherwise.
-  static font *load_font(const char *, int * = 0, int = 0);	// Load the
-			// font description file with the given name (arg1)
-			// and return it as a 'font' class.  If arg2 points
-			// to an integer variable, set it to 1 if the file
-			// is not found, without emitting an error message.
-			// If arg2 is NULL, print an error message if the
-			// file is not found.  If arg3 is nonzero, only the
-			// part of the font description file before the
-			// 'charset' and 'kernpairs' sections is loaded.
-			// Return NULL in case of failure.
+			// attribute of this font or null pointer if it
+			// has none.
+  static bool scan_papersize(const char *, const char **,
+			     double *, double *); // Parse the
+			// 'papersize' directive in the DESC file name
+			// given in arg1.  Update arg2 with the name
+			// of the paper format and arg3 and arg4 with
+			// its length and width, respectively.  Return
+			// whether paper size was successfully set.
+  static font *load_font(const char *, bool = false); // Load the font
+			// description file with the given name (arg1)
+			// and return a pointer to a 'font' object.  If
+			// arg2 is true, only the part of the font
+			// description file before the 'charset' and
+			// 'kernpairs' sections is loaded.  Return null
+			// pointer in case of failure.
   static void command_line_font_dir(const char *);	// Prepend given
 			// path (arg1) to the list of directories in which
 			// to look up fonts.
-  static FILE *open_file(const char *, char **);	// Open a font file
-			// with the given name (arg1), searching along the
-			// current font path.  If arg2 points to a string
-			// pointer, set it to the found file name (this
-			// depends on the device also).  Return the opened
-			// file.  If not found, arg2 is unchanged, and NULL
-			// is returned.
-  static int load_desc();	// Open the DESC file (depending on the
-			// device) and initialize some static variables with
-			// info from there.
+  static FILE *open_file(const char *, char **);	// Open
+			// a font file with the given name (arg1),
+			// searching along the current font path.  If
+			// arg2 points to a string pointer, set it to
+			// the found file name (this depends on the
+			// device also).  Return the opened file.  If
+			// not found, arg2 is unchanged, and a null
+			// pointer is returned.
+
+  // Open the DESC file (depending on the device) and initialize some
+  // static variables with info from there.
+  static const char *load_desc();
   static FONT_COMMAND_HANDLER
     set_unknown_desc_command_handler(FONT_COMMAND_HANDLER);	// Register
 			// a function which defines the semantics of
@@ -244,24 +244,22 @@ public:
 			// DESC file.
   static int spare2;
   static int sizescale;	// The 'sizescale' attribute given in the DESC file.
-  static int tcommand;  // Nonzero if the DESC file has the 'tcommand'
-			// attribute.
-  static int unscaled_charwidths;	// Nonzero if the DESC file has the
-			// 'unscaled_charwidths' attribute.
-  static int pass_filenames;	// Nonzero if the DESC file has the
-			// 'pass_filenames' attribute.
-  static int use_charnames_in_special;	// Nonzero if the DESC file has the
-			// 'use_charnames_in_special' attribute.
-  static int is_unicode; // Nonzero if the DESC file has the 'unicode'
-			// attribute.
+  static bool has_tcommand;	// DESC file has 'tcommand' directive.
+  static bool use_unscaled_charwidths;	// DESC file has
+			// 'unscaled_charwidths' directive.
+  static bool pass_filenames;	// DESC file has 'pass_filenames'
+			// directive.
+  static bool use_charnames_in_special;	// DESC file has
+			// 'use_charnames_in_special' directive.
+  static bool is_unicode; // DESC file has the 'unicode' directive.
   static const char *image_generator;	// The 'image_generator' attribute
 			// given in the DESC file.
-  static const char **font_name_table;	// The 'fonts' attribute given in
-			// the DESC file, as a NULL-terminated array of
-			// strings.
-  static const char **style_table;	// The 'styles' attribute given in
-			// the DESC file, as a NULL-terminated array of
-			// strings.
+  static const char **font_name_table;	// The 'fonts' attribute given
+			// in the DESC file, as a null
+			// pointer-terminated array of strings.
+  static const char **style_table;	// The 'styles' attribute given
+			// in the DESC file, as a null
+			// pointer-terminated array of strings.
   static const char *family;	// The 'family' attribute given in the DESC
 			// file.
   static int *sizes;	// The 'sizes' attribute given in the DESC file, as
@@ -275,11 +273,10 @@ private:
 			// Used by get_kern().
   int space_width;	// The normal width of a space.  Used by
 			// get_space_width().
-  int special;		// 1 if this font is special, 0 otherwise.  Used by
-			// is_special().
+  bool special;		// See public is_special() above.
   char *name;		// The name of this font.  Used by get_name().
   char *internalname;	// The 'internalname' attribute of this font, or
-			// NULL.  Used by get_internal_name().
+			// a null pointer.  Used by get_internal_name().
   double slant;		// The natural slant angle (in degrees) of this font.
   int zoom;		// The font's magnification, multiplied by 1000.
 			// Used by scale().  A zero value means 'no zoom'.
@@ -318,12 +315,12 @@ private:
 
   /* Returns w * pointsize / unitwidth, rounded to the nearest integer.  */
   int scale(int w, int pointsize);
-  static int unit_scale(double *, char); // Convert value in arg1 from the
-			// given unit (arg2; possible values are 'i', 'c',
-			// 'p', and 'P' as documented in the info file of
-			// groff, section 'Measurements') to inches.  Store
-			// the result in arg1 and return 1.  If the unit is
-			// invalid, return 0.
+  static bool unit_scale(double *, char); // Convert value in arg1 from
+			// the given unit (arg2; possible values are
+			// 'i', 'c', 'p', and 'P' as documented in the
+			// info file of groff, section 'Measurements')
+			// to inches.  Store result in arg1 and return
+			// whether conversion was successful.
   virtual void handle_unknown_font_command(const char *,	// command
 					   const char *,	// arg
 					   const char *,	// file
@@ -332,16 +329,15 @@ private:
 protected:
   font(const char *);	// Initialize a font with the given name.
 
-  int load(int * = 0, int = 0);	// Load the font description file with the
-			// given name (in member variable NAME) into this
-			// object.  If arg1 points to an integer variable,
-			// set it to 1 if the file is not found, without
-			// emitting an error message.  If arg1 is NULL,
-			// print an error message if the file is not found.
-			// If arg2 is nonzero, only the part of the font
-			// description file before the 'charset' and
-			// 'kernpairs' sections is loaded.  Return NULL in
-			// case of failure.
+  // Load the font description file with the name in member variable
+  // `name` into this object.  If arg1 is true, only the part of the
+  // font description file before the 'charset' and 'kernpairs' sections
+  // is loaded.  Return success/failure status of load.
+  bool load(bool = false);
 };
 
-// end of font.h
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -64,22 +64,22 @@ temp_init::temp_init()
   const char *tem;
   // using the first match for any of the environment specs in listed order.
   if (
-      (tem = getenv(GROFF_TMPDIR_ENVVAR)) == NULL
-      && (tem = getenv(TMPDIR_ENVVAR)) == NULL
+      (tem = getenv(GROFF_TMPDIR_ENVVAR)) == 0
+      && (tem = getenv(TMPDIR_ENVVAR)) == 0
 #if defined(__MSDOS__) || defined(_WIN32)
       // If we didn't find a match for either of the above
       // (which are preferred, regardless of the host operating system),
       // and we are hosted on either MS-Windows or MS-DOS,
       // then try the Microsoft conventions.
-      && (tem = getenv(WIN32_TMPDIR_ENVVAR)) == NULL
-      && (tem = getenv(MSDOS_TMPDIR_ENVVAR)) == NULL
+      && (tem = getenv(WIN32_TMPDIR_ENVVAR)) == 0
+      && (tem = getenv(MSDOS_TMPDIR_ENVVAR)) == 0
 #endif
      )
     // If we didn't find an environment spec fall back to this default.
     tem = DEFAULT_TMPDIR;
   size_t tem_len = strlen(tem);
   const char *tem_end = tem + tem_len - 1;
-  int need_slash = strchr(DIR_SEPS, *tem_end) == NULL ? 1 : 0;
+  int need_slash = (strchr(DIR_SEPS, *tem_end) == 0) ? 1 : 0;
   char *tem2 = new char[tem_len + need_slash + 1];
   strcpy(tem2, tem);
   if (need_slash)
@@ -93,12 +93,12 @@ temp_init::temp_init()
   tmpfile_prefix = new char[tmpfile_prefix_len + 1];
   strcpy(tmpfile_prefix, tem2);
   strcat(tmpfile_prefix, tem3);
-  a_delete tem2;
+  delete[] tem2;
 }
 
 temp_init::~temp_init()
 {
-  a_delete tmpfile_prefix;
+  delete[] tmpfile_prefix;
 }
 
 /*
@@ -149,7 +149,7 @@ xtmpfile_list_init::~xtmpfile_list_init()
       error("cannot unlink '%1': %2", x->fname, strerror(errno));
     xtmpfile_list *tmp = x;
     x = x->next;
-    a_delete tmp->fname;
+    delete[] tmp->fname;
     delete tmp;
   }
 }
@@ -183,6 +183,6 @@ FILE *xtmpfile(char **namep,
   if (namep)
     *namep = templ;
   else
-    a_delete templ;
+    delete[] templ;
   return fp;
 }

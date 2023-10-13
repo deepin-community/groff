@@ -1,6 +1,5 @@
-#! /usr/bin/perl -w
-# -*- Perl -*-
-# Copyright (C) 1989-2018 Free Software Foundation, Inc.
+#!@PERL@
+# Copyright (C) 1989-2020 Free Software Foundation, Inc.
 #      Written by James Clark (jjc@jclark.com)
 #
 # This file is part of groff.
@@ -10,43 +9,79 @@
 # Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# groff is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# groff is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use warnings;
 use strict;
 
 @afmtodit.tables@
 
 my $prog = $0;
-$prog =~ s@.*/@@;
-
 my $groff_sys_fontdir = "@FONTDIR@";
-
-use Getopt::Std;
-getopts('a:cd:e:f:i:kmno:svx');
+my $want_help;
+my $space_width = 0;
 
 our ($opt_a, $opt_c, $opt_d, $opt_e, $opt_f, $opt_i, $opt_k,
      $opt_m, $opt_n, $opt_o, $opt_s, $opt_v, $opt_x);
 
+use Getopt::Long qw(:config gnu_getopt);
+GetOptions( "a=s", "c", "d=s", "e=s", "f=s", "i=s", "k", "m", "n",
+  "o=s", "s", "v", "w=i" => \$space_width, "x", "version" => \$opt_v,
+  "help" => \$want_help
+);
+
+my $afmtodit_version = "GNU afmtodit (groff) version @VERSION@";
+
 if ($opt_v) {
-    print "GNU afmtodit (groff) version @VERSION@\n";
+    print "$afmtodit_version\n";
     exit 0;
 }
 
+sub croak {
+  my $msg = shift;
+  print STDERR "$prog: error: $msg";
+  exit(1);
+}
+
+sub usage {
+    my $stream = *STDOUT;
+    my $had_error = shift;
+    $stream = *STDERR if $had_error;
+    print $stream "usage: $prog [-ckmnsx] [-a slant]" .
+	" [-d device-description-file] [-e encoding-file]" .
+	" [-f internal-name] [-i italic-correction-factor]" .
+	" [-o output-file] [-w space-width] afm-file map-file" .
+	" font-description-file\n" .
+	"usage: $prog {-v | --version}\n" .
+	"usage: $prog --help\n";
+    unless ($had_error) {
+	print $stream "\n" .
+"Adapt an Adobe Font Metric file, afm-file, for use with the 'ps'\n" .
+"and 'pdf' output devices of groff(1).  See the afmtodit(1) manual " .
+"page.\n";
+    }
+    my $status = 0;
+    $status = 2 if ($had_error);
+    exit($status);
+}
+
+&usage(0) if ($want_help);
+
 if ($#ARGV != 2) {
-    die "usage: $prog [-ckmnsvx] [-a angle] [-d DESC] [-e encoding]\n" .
-	"       [-f name] [-i n] [-o outfile] afmfile mapfile font\n";
+    print STDERR "$prog: usage error: insufficient arguments\n";
+    &usage(1);
 }
 
 my $afm = $ARGV[0];
 my $map = $ARGV[1];
-my $font = $ARGV[2];
-my $outfile = $opt_o || $font;
+my $fontfile = $ARGV[2];
+my $outfile = $opt_o || $fontfile;
 my $desc = $opt_d || "DESC";
 my $sys_map = $groff_sys_fontdir . "/devps/generate/" . $map;
 my $sys_desc = $groff_sys_fontdir . "/devps/" . $desc;
@@ -65,7 +100,7 @@ my (@encoding, %in_encoding);
 my (%width, %height, %depth);
 my (%left_side_bearing, %right_side_bearing);
 
-open(AFM, $afm) || die "$prog: can't open '$ARGV[0]': $!\n";
+open(AFM, $afm) || croak("unable to open '$ARGV[0]': $!\n");
 
 while (<AFM>) {
     chomp;
@@ -164,8 +199,8 @@ while (<AFM>) {
 		$depth{$n} = -$lly;
 		$left_side_bearing{$n} = -$llx;
 		$right_side_bearing{$n} = $urx - $w;
-#		while ((my $lig, my $glyph2) = each %ligs) {
-#		    $ligatures{$lig} = $n . " " . $glyph2;
+#		foreach my $lig (sort keys %ligs) {
+#		    $ligatures{$lig} = $n . " " . $ligs{$lig};
 #		}
 	    }
 	}
@@ -179,7 +214,7 @@ my ($sizescale, $resolution, $unitwidth);
 $sizescale = 1;
 
 open(DESC, $desc) || open(DESC, $sys_desc) ||
-    die "$prog: can't open '$desc' or '$sys_desc': $!\n";
+    croak("unable to open '$desc' or '$sys_desc': $!\n");
 while (<DESC>) {
     next if /^#/;
     chop;
@@ -203,7 +238,7 @@ if ($opt_e) {
 
     my $sys_opt_e = $groff_sys_fontdir . "/devps/" . $opt_e;
     open(ENCODING, $opt_e) || open(ENCODING, $sys_opt_e) ||
-	die "$prog: can't open '$opt_e' or '$sys_opt_e': $!\n";
+	croak("unable to open '$opt_e' or '$sys_opt_e': $!\n");
     while (<ENCODING>) {
 	next if /^#/;
 	chop;
@@ -224,7 +259,7 @@ if ($opt_e) {
 my (%nmap, %map);
 
 open(MAP, $map) || open(MAP, $sys_map) ||
-    die "$prog: can't open '$map' or '$sys_map': $!\n";
+    croak("unable to open '$map' or '$sys_map': $!\n");
 while (<MAP>) {
     next if /^#/;
     chop;
@@ -234,11 +269,11 @@ while (<MAP>) {
 	if ($field[1] eq "space") {
 	    # The PostScript character "space" is automatically mapped
 	    # to the groff character "space"; this is for grops.
-	    warn "you are not allowed to map to " .
+	    warn "$prog: you are not allowed to map to " .
 		 "the groff character 'space'";
 	}
 	elsif ($field[0] eq "space") {
-	    warn "you are not allowed to map " .
+	    warn "$prog: you are not allowed to map " .
 		 "the PostScript character 'space'";
 	}
 	else {
@@ -267,7 +302,7 @@ $italic_angle = $opt_a if $opt_a;
 if (!$opt_x) {
     my %mapped;
     my $i = ($#encoding > 256) ? ($#encoding + 1) : 256;
-    while (my $ch = each %width) {
+    foreach my $ch (sort keys %width) {
 	# add unencoded characters
 	if (!$in_encoding{$ch}) {
 	    $encoding[$i] = $ch;
@@ -276,8 +311,10 @@ if (!$opt_x) {
 	if ($nmap{$ch}) {
 	    for (my $j = 0; $j < $nmap{$ch}; $j++) {
 		if (defined $mapped{$map{$ch, $j}}) {
-		    warn "both $mapped{$map{$ch, $j}} and $ch " .
-			 "map to $map{$ch, $j}";
+		    print STDERR "$prog: AGL name"
+			 . " '$mapped{$map{$ch, $j}}' already mapped to"
+			 . " groff name '$map{$ch, $j}'; ignoring AGL"
+			 . " name '$ch'\n";
 		}
 		else {
 		    $mapped{$map{$ch, $j}} = $ch;
@@ -384,7 +421,7 @@ if (!$opt_x) {
 	    $u =~ s/^_/u/;
 	    if ($u) {
 		if (defined $mapped{$u}) {
-		    warn "both $mapped{$u} and $ch map to $u";
+		    warn "$prog: both $mapped{$u} and $ch map to $u";
 		}
 		else {
 		    $mapped{$u} = $ch;
@@ -407,19 +444,19 @@ my %default_ligatures = (
   "ffl", "ff l",
 );
 
-while (my ($lig, $components) = each %default_ligatures) {
+foreach my $lig (sort keys %default_ligatures) {
     if (defined $width{$lig} && !defined $ligatures{$lig}) {
-	$ligatures{$lig} = $components;
+	$ligatures{$lig} = $default_ligatures{$lig};
     }
 }
 
 # print it all out
 
-open(FONT, ">$outfile") || die "$prog: can't open '$outfile' for output: $!\n";
+open(FONT, ">$outfile") ||
+  croak("unable to open '$outfile' for writing: $!\n");
 select(FONT);
 
-print("# This file has been generated with " .
-      "GNU afmtodit (groff) version @VERSION@\n");
+print("# This file was generated with $afmtodit_version.\n");
 print("#\n");
 print("#   $fullname\n") if defined $fullname;
 print("#   $version\n") if defined $version;
@@ -442,11 +479,18 @@ if ($opt_c) {
 
 print("\n");
 
-print("name $font\n");
+my $name = $fontfile;
+$name =~ s@.*/@@;
+
+my $sw = 0;
+$sw = conv($width{"space"}) if defined $width{"space"};
+$sw = $space_width if ($space_width);
+
+print("name $name\n");
 print("internalname $psname\n") if $psname;
 print("special\n") if $opt_s;
 printf("slant %g\n", $italic_angle) if $italic_angle != 0;
-printf("spacewidth %d\n", conv($width{"space"})) if defined $width{"space"};
+printf("spacewidth %d\n", $sw) if $sw;
 
 if ($opt_e) {
     my $e = $opt_e;
@@ -456,7 +500,7 @@ if ($opt_e) {
 
 if (!$opt_n && %ligatures) {
     print("ligatures");
-    while (my $lig = each %ligatures) {
+    foreach my $lig (sort keys %ligatures) {
 	print(" $lig");
     }
     print(" 0\n");
@@ -590,7 +634,12 @@ for (my $i = 0; $i <= $#encoding; $i++) {
 }
 
 sub conv {
-    $_[0]*$unitwidth*$resolution/(72*1000*$sizescale) + ($_[0] < 0 ? -.5 : .5);
+    $_[0]*$unitwidth*$resolution/(72*1000*$sizescale) +
+      ($_[0] < 0 ? -.5 : .5);
 }
 
-# eof
+# Local Variables:
+# fill-column: 72
+# mode: CPerl
+# End:
+# vim: set cindent noexpandtab shiftwidth=2 softtabstop=2 textwidth=72:

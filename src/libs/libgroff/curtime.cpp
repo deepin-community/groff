@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
 This file is part of groff.
 
@@ -14,6 +14,10 @@ for more details.
 
 The GNU General Public License version 2 (GPL2) is available in the
 internet at <http://www.gnu.org/licenses/gpl-2.0.txt>. */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <errno.h>
 #include <limits.h>
@@ -42,9 +46,9 @@ current_time()
 	(errno != 0 && epoch == 0))
       fatal("$SOURCE_DATE_EPOCH: strtol: %1", strerror(errno));
     if (endptr == source_date_epoch)
-      fatal("$SOURCE_DATE_EPOCH: no digits found: %1", endptr);
+      fatal("$SOURCE_DATE_EPOCH: no digits found: '%1'", endptr);
     if (*endptr != '\0')
-      fatal("$SOURCE_DATE_EPOCH: trailing garbage: %1", endptr);
+      fatal("$SOURCE_DATE_EPOCH: trailing garbage: '%1'", endptr);
     return epoch;
   } else
     return time(0);

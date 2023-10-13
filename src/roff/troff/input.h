@@ -1,5 +1,4 @@
-// -*- C++ -*-
-/* Copyright (C) 2001-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2022 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -42,6 +41,8 @@ const int ESCAPE_e = 035;
 const int ESCAPE_PERCENT = 036;
 const int ESCAPE_SPACE = 037;
 
+const int INPUT_DELETE = 0177;
+
 const int TITLE_REQUEST = 0200;
 const int COPY_FILE_REQUEST = 0201;
 const int TRANSPARENT_FILE_REQUEST = 0202;
@@ -59,8 +60,12 @@ const int POP_GROFFCOMP_MODE = 0213;
 const int BEGIN_QUOTE = 0214;
 const int END_QUOTE = 0215;
 const int DOUBLE_QUOTE = 0216;
+const int INPUT_NO_BREAK_SPACE = 0240;
+const int INPUT_SOFT_HYPHEN= 0255;
 
 #else /* IS_EBCDIC_HOST */
+
+const int INPUT_DELETE = 007;
 
 const int ESCAPE_QUESTION = 010;
 const int BEGIN_TRAP = 011;
@@ -100,7 +105,16 @@ const int BEGIN_QUOTE = 074;
 const int END_QUOTE = 075;
 const int DOUBLE_QUOTE = 076;
 
+const int INPUT_NO_BREAK_SPACE = 0101;
+const int INPUT_SOFT_HYPHEN= 0312;
+
 #endif /* IS_EBCDIC_HOST */
 
 extern void do_glyph_color(symbol);
 extern void do_fill_color(symbol);
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:

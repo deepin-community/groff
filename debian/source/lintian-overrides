@@ -1,6 +1,5 @@
 # This file is dual-licensed under GPLv3+.  See debian/copyright.
-groff source: license-problem-gfdl-invariants doc/groff.texi invariant part is: with no invariant sections, with the front-cover texts being a gnu manual, and with the back-cover texts as in (a) below
+groff source: license-problem-gfdl-invariants invariant part is: with no invariant sections, with the front-cover texts being a gnu manual, and with the back-cover texts as in (a) below [doc/groff.texi]
 
-groff source: dh-exec-subst-unknown-variable debian/groff-base.dirs UPSTREAM_VERSION
-groff source: dh-exec-subst-unknown-variable debian/groff-base.install UPSTREAM_VERSION
-groff source: dh-exec-subst-unknown-variable debian/groff.install UPSTREAM_VERSION
+# https://bugs.debian.org/1019980
+groff source: source-is-missing [doc/groff.html*]

@@ -1,0 +1,30 @@
+Description: Set doc-default-operating-system to "deepin"
+ Also see doc-default-os-debian.patch
+Author: Tianyu Chen <sweetyfish@deepin.org>
+Origin: vendor
+Forwarded: not-needed
+Last-Update: 2023-10-13
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tmac/mdoc/doc-common
++++ b/tmac/mdoc/doc-common
+@@ -490,7 +490,7 @@
+ .\" NS
+ .\" NS override this in 'mdoc.local', if necessary
+ .
+-.ds doc-default-operating-system Debian\"
++.ds doc-default-operating-system deepin\"
+ .
+ .
+ .\" NS doc-operating-system global string
+--- a/tmac/tests/doc_smoke-test.sh
++++ b/tmac/tests/doc_smoke-test.sh
+@@ -58,7 +58,7 @@
+ echo "$output" | grep -qE 'you can read this' || wail
+ 
+ echo "checking footer for correct content" >&2
+-echo "$output" | grep -qE '^Debian +August 25, 2020 +mdoc-test\(7\)' \
++echo "$output" | grep -qE '^deepin +August 25, 2020 +mdoc-test\(7\)' \
+     || wail
+ 
+ test -z "$fail"

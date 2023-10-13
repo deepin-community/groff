@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -463,8 +463,8 @@ justification_spec::justification_spec(vunits h)
 
 justification_spec::~justification_spec()
 {
-  a_delete type;
-  a_delete amount;
+  delete[] type;
+  delete[] amount;
 }
 
 void justification_spec::append(symbol t, vunits v)
@@ -485,12 +485,12 @@ void justification_spec::append(symbol t, vunits v)
     int i;
     for (i = 0; i < n; i++)
       type[i] = old_type[i];
-    a_delete old_type;
+    delete[] old_type;
     vunits *old_amount = amount;
     amount = new vunits[maxn];
     for (i = 0; i < n; i++)
       amount[i] = old_amount[i];
-    a_delete old_amount;
+    delete[] old_amount;
   }
   assert(n < maxn);
   type[n] = t;
@@ -554,14 +554,14 @@ void column_justify()
     error("can't justify column - column not active");
   else if (get_vunits(&height, 'v')) {
     justification_spec js(height);
-    symbol nm = get_long_name(1);
+    symbol nm = get_long_name(true /* required */);
     if (!nm.is_null()) {
       vunits v;
       if (get_vunits(&v, 'v')) {
 	js.append(nm, v);
 	int err = 0;
 	while (has_arg()) {
-	  nm = get_long_name(1);
+	  nm = get_long_name(true /* required */);
 	  if (nm.is_null()) {
 	    err = 1;
 	    break;
@@ -721,11 +721,11 @@ void init_column_requests()
   init_request("colt", column_trim);
   init_request("nvj", no_vjustify);
   init_request("rvj", restore_vjustify);
-  number_reg_dictionary.define(".colb", new column_bottom_reg);
-  number_reg_dictionary.define(".colx", new column_extra_space_reg);
-  number_reg_dictionary.define(".cola", new column_active_reg);
-  number_reg_dictionary.define(".nvj",
-			       new constant_int_reg(&no_vjustify_mode));
+  register_dictionary.define(".colb", new column_bottom_reg);
+  register_dictionary.define(".colx", new column_extra_space_reg);
+  register_dictionary.define(".cola", new column_active_reg);
+  register_dictionary.define(".nvj",
+			       new readonly_register(&no_vjustify_mode));
 }
 
 #endif /* COLUMN */

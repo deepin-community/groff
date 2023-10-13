@@ -1,4 +1,4 @@
-    Copyright (C) 2013-2018 Free Software Foundation, Inc.
+    Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
     Written by Bernd Warken <groff-bernd.warken-72@web.de>
 
@@ -28,16 +28,16 @@ Add 'AC_DEFUN([GROFF_GROFFERDIR_DEFAULT])'.
 Add 'GROFF_GROFFERDIR_DEFAULT'.
 
 3) <groff_src_dir>/Makefile.in:
-Add several informations of 'glilypond_dir'
+Add several information of 'glilypond_dir'
 
 With that, the program 'autoconf' can be run in order to update the
 configure files and Makefile's.
 
 Now '$glilypond_dir' can be used as libdir.
 
-
-########################################################################
-### Emacs settings
-# Local Variables:
-# mode: text
-# End:
+##### Editor settings
+Local Variables:
+fill-column: 72
+mode: text
+End:
+vim: set textwidth=72:

@@ -1,0 +1,41 @@
+From 9bd0e1f19bb2591b30d628710ab805ca265789bc Mon Sep 17 00:00:00 2001
+From: Colin Watson <cjwatson@debian.org>
+Date: Sun, 9 Jul 2023 12:04:37 +0100
+Subject: Set doc-default-operating-system to "Debian"
+
+Bug-Debian: https://bugs.debian.org/284002
+Forwarded: not-needed
+Last-Update: 2023-07-09
+
+Patch-Name: doc-default-os-debian.patch
+---
+ tmac/mdoc/doc-common         | 2 +-
+ tmac/tests/doc_smoke-test.sh | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/tmac/mdoc/doc-common b/tmac/mdoc/doc-common
+index 53a25659f..769b3700d 100644
+--- a/tmac/mdoc/doc-common
++++ b/tmac/mdoc/doc-common
+@@ -490,7 +490,7 @@
+ .\" NS
+ .\" NS override this in 'mdoc.local', if necessary
+ .
+-.ds doc-default-operating-system GNU\"
++.ds doc-default-operating-system Debian\"
+ .
+ .
+ .\" NS doc-operating-system global string
+diff --git a/tmac/tests/doc_smoke-test.sh b/tmac/tests/doc_smoke-test.sh
+index 09d1ad06b..f63df9e1d 100755
+--- a/tmac/tests/doc_smoke-test.sh
++++ b/tmac/tests/doc_smoke-test.sh
+@@ -58,7 +58,7 @@ echo "checking paragraph body for correct content" >&2
+ echo "$output" | grep -qE 'you can read this' || wail
+ 
+ echo "checking footer for correct content" >&2
+-echo "$output" | grep -qE '^GNU +August 25, 2020 +mdoc-test\(7\)' \
++echo "$output" | grep -qE '^Debian +August 25, 2020 +mdoc-test\(7\)' \
+     || wail
+ 
+ test -z "$fail"

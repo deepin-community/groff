@@ -1,5 +1,3 @@
-.\" -*- nroff -*-
-.\"
 .\" pic.tmac
 .\"
 .de PS
@@ -8,7 +6,19 @@
 .ne 0\\$1+1v+\n(.Vu
 .in \\n(.lu-\\n(.iu-0\\$2/2u>?0
 ..
-.de PE
+.de PF
 .in
+..
+.de PE
+.PF
 .sp .3v+.5m
 ..
+.de PY
+.in
+..
+.
+.\" Local Variables:
+.\" mode: nroff
+.\" fill-column: 72
+.\" End:
+.\" vim: set filetype=nroff textwidth=72:

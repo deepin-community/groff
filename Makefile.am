@@ -1,8 +1,6 @@
-# Copyright (C) 1989-2018 Free Software Foundation, Inc.
+# Copyright (C) 1989-2023 Free Software Foundation, Inc.
 # Original Makefile.in written by James Clark (jjc@jclark.com)
 # Migrated to Automake by Bertrand Garrigues
-#
-# Last update: 2017-11-02
 #
 # This file is part of groff.
 #
@@ -11,8 +9,8 @@
 # Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# groff is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# groff is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
@@ -182,7 +180,7 @@ oldfontdir=$(datasubdir)/oldfont
 # `localfontdir' says where local fonts will be installed (as dev*/*).
 localfontdir=$(dataprogramdir)/site-font
 
-# `legacyfontdir' is for compatibility with non-GNU troff.
+# `legacyfontdir' is for compatibility with AT&T/DWB troff.
 legacyfontdir=/usr/lib/font
 
 # `fontpath' says where to look for dev*/*.
@@ -197,13 +195,11 @@ systemtmacdir=$(libprogramdir)/site-tmac
 # `localtmacdir' says where local files will be installed.
 localtmacdir=$(dataprogramdir)/site-tmac
 
-# appresdir
-# `appresdir' says where to install the application resource file for
+# appdefdir
+# `appdefdir' says where to install the application defaults file for
 # gxditview.
 
-# groffer_dir
 # glilypond_dir
-# grog_dir
 # gpinyin_dir
 
 # `tmacpath' says where to look for macro files.
@@ -280,7 +276,7 @@ tmac_an_prefix=\
   fi`
 
 # Extension to be used for refer index files.  Index files are not
-# sharable between different architectures, so you might want to use
+# shareable between different architectures, so you might want to use
 # different suffixes for different architectures.  Choose an extension
 # that doesn't conflict with refer or any other indexing program.
 indexext=.i
@@ -312,46 +308,17 @@ man5dir=$(manroot)/man$(man5ext)
 man7ext=7
 man7dir=$(manroot)/man$(man7ext)
 
-# doc_dist_target_ok
-# `dist' target is disallowed in some `configure' combinations.
-
-# The configure script checks whether the user wants the info documentation.
-# For the repo version this mechanism also suppresses building via `makeinfo'.
-# make_infodoc
-# make_install_infodoc
-# make_uninstall_infodoc
-
 # The configure script checks whether all necessary utility programs for
-# grohtml are available -- only then we can build the HTML documentation.
+# grohtml are available -- only then can we build the HTML documentation.
 # make_htmldoc
 # make_install_htmldoc
 # make_uninstall_htmldoc
 
-# make_htmlexamples
-# make_install_htmlexamples
-# make_uninstall_htmlexamples
-
 # The configure script also checks whether all necessary utility programs
-# for pdfroff are available -- only then we can build PDF documentation.
+# for pdfroff are available -- only then can we build PDF documentation.
 # make_pdfdoc
 # make_install_pdfdoc
 # make_uninstall_pdfdoc
-
-# make_pdfexamples
-# make_install_pdfexamples
-# make_uninstall_pdfexamples
-
-# `other' documentation, e.g., `meref.me' and `pic.ms', as well as their
-# generated counterparts..
-# make_otherdoc
-# make_install_otherdoc
-# make_uninstall_otherdoc
-
-# `examples' -- a generic switch, but the generated examples are furtherly
-# subdivided to catch HTML and PDF production availability.
-# make_examples
-# make_install_examples
-# make_uninstall_examples
 
 # Windows `.cmd' files
 # make_winscripts
@@ -445,10 +412,6 @@ man7dir=$(manroot)/man$(man7ext)
 # uintmax_t=<value>		define to `unsigned long' or `unsigned long
 #				long' if <inttypes.h> does not exist
 #
-# TRADITIONAL_CPP		if your C++ compiler uses a traditional
-#				(Reiser) preprocessor
-# ARRAY_DELETE_NEEDS_SIZE	if your C++ doesn't understand `delete []'
-#
 # PAGE=A4			if the printer's page size is A4
 # GHOSTSCRIPT=gs		the name (and directory if required) of the
 #				ghostscript program
@@ -486,6 +449,7 @@ CCC=@CXX@
 # LIBS
 # LIBM
 # LIBICONV
+# AR
 # RANLIB
 # INSTALL
 # INSTALL_PROGRAM
@@ -494,7 +458,6 @@ CCC=@CXX@
 # INSTALL_INFO
 # LN_S
 
-AR=ar
 ETAGS=etags
 ETAGSFLAGS=
 # Flag that tells etags to assume C++.
@@ -537,14 +500,15 @@ GROFF_V = $(GROFF_V_@AM_V@)
 GROFF_V_ = $(GROFF_V_@AM_DEFAULT_V@)
 GROFF_V_0 = @echo "  GROFF   " $@;
 
-# The following Automake variables will be overloaded by the various
-# .am files
+# The following Automake variables will be supplemented by the various
+# .am files.
 bin_PROGRAMS =
 nobase_bin_PROGRAMS =
 bin_SCRIPTS =
 dist_bin_SCRIPTS =
+# stuff that should be in distribution archives but not in source repo
+MAINTAINERCLEANFILES =
 MOSTLYCLEANFILES =
-MOSTLYCLEANADD =
 noinst_LIBRARIES =
 BUILT_SOURCES =
 CLEANFILES =
@@ -565,6 +529,7 @@ SUFFIXES =
 check_SCRIPTS =
 check_PROGRAMS =
 TESTS =
+XFAIL_TESTS =
 AM_TESTS_ENVIRONMENT = \
   abs_top_srcdir=$(abs_top_srcdir) \
   abs_top_builddir=$(abs_top_builddir) \
@@ -578,7 +543,7 @@ AM_TESTS_ENVIRONMENT = \
 # This is done by the m4 macro GROFF_G that checks for the presence of
 # GNU Troff built-in \n[.g] macro. If a Unix Troff binary was
 # detected, the following programs and scripts names will have a 'g'
-# prefix: chem, tbl, eqn, neqn, pic, soleimm grn, refer, lookbib,
+# prefix: chem, tbl, eqn, neqn, pic, soelim, grn, refer, lookbib,
 # troff, nroff. Also, PROG_PREFIX will be set to 'g' in the generated
 # header defs.h so that these programs could be called correctly.
 #
@@ -589,9 +554,9 @@ NAMEPREFIX=$(g)
 prefixexecbin_PROGRAMS =
 prefixexecbin_SCRIPTS =
 if USEPROGRAMPREFIX
-# We use datadir because the uninstall rule for the PROGRAMS attempt
+# We use datadir because the uninstall rule for the PROGRAMS attempts
 # to cd into prefixexecbindir, and thus if prefixexecbindir is removed
-# two consecutive uninstall would fail
+# two consecutive uninstalls would fail
 prefixexecbindir = $(datadir)
 else
 prefixexecbindir = $(bindir)
@@ -602,13 +567,13 @@ endif
 GROFFBIN = $(abs_top_builddir)/groff
 GROFF_BIN_PATH = $(abs_top_builddir)
 PDFMOMBIN = $(abs_top_builddir)/pdfmom
-# The second directories are needed for the case "cd build; ../configure".
+# Search for macro files and device/font description directories in
+# source _and_ build trees; some of each are generated.
 FFLAG=-F$(abs_top_builddir)/font -F$(abs_top_srcdir)/font
-TFLAG=-M$(abs_top_builddir)/tmac -M$(abs_top_srcdir)/tmac
+MFLAG=-M$(abs_top_builddir)/tmac -M$(abs_top_srcdir)/tmac
 
-# make builtin variable RM
-if MAKE_DONT_HAVE_RM
-RM = rm -f
+if !MAKE_DEFINES_RM
+RM=rm -f
 endif
 
 # 'VERSION' is generated by gnulib script git-version-gen, using the
@@ -654,13 +619,13 @@ include $(top_srcdir)/contrib/glilypond/glilypond.am
 include $(top_srcdir)/contrib/gperl/gperl.am
 include $(top_srcdir)/contrib/gpinyin/gpinyin.am
 include $(top_srcdir)/contrib/grap2graph/grap2graph.am
-include $(top_srcdir)/contrib/groff_filenames/groff_filenames.am
-include $(top_srcdir)/contrib/groffer/groffer.am
 include $(top_srcdir)/contrib/hdtbl/hdtbl.am
 include $(top_srcdir)/contrib/mm/mm.am
 include $(top_srcdir)/contrib/mom/mom.am
 include $(top_srcdir)/contrib/pdfmark/pdfmark.am
 include $(top_srcdir)/contrib/pic2graph/pic2graph.am
+include $(top_srcdir)/contrib/rfc1345/rfc1345.am
+include $(top_srcdir)/contrib/sboxes/sboxes.am
 include $(top_srcdir)/doc/doc.am
 include $(top_srcdir)/font/devX100/devX100.am
 include $(top_srcdir)/font/devX100-12/devX100-12.am
@@ -700,11 +665,11 @@ include $(top_srcdir)/src/preproc/refer/refer.am
 include $(top_srcdir)/src/preproc/soelim/soelim.am
 include $(top_srcdir)/src/preproc/tbl/tbl.am
 include $(top_srcdir)/src/roff/groff/groff.am
-include $(top_srcdir)/src/roff/grog/grog.am
 include $(top_srcdir)/src/roff/nroff/nroff.am
 include $(top_srcdir)/src/roff/troff/troff.am
 include $(top_srcdir)/src/utils/addftinfo/addftinfo.am
 include $(top_srcdir)/src/utils/afmtodit/afmtodit.am
+include $(top_srcdir)/src/utils/grog/grog.am
 include $(top_srcdir)/src/utils/hpftodit/hpftodit.am
 include $(top_srcdir)/src/utils/indxbib/indxbib.am
 include $(top_srcdir)/src/utils/lkbib/lkbib.am
@@ -718,13 +683,13 @@ include $(top_srcdir)/tmac/tmac.am
 # make all or make check before all other targets. However, if another
 # target is built from a clean build tree, (for example make groff)
 # the files in BUILT_SOURCES will not be built first. That is why
-# additional dependencies where added in the .am files that lists
-# objects that use defs (for exmaple in groff.am:
+# additional dependencies were added in the .am files that list
+# objects that use defs (for example in groff.am:
 # src/roff/groff/groff.$(OBJEXT): defs.h)
 BUILT_SOURCES += defs.h
 
-# Force generation of test-groff even though we don't ship it.
-BUILT_SOURCES += test-groff
+.DELETE_ON_ERROR:
+.PRECIOUS: $(TEST_SUITE_LOG)
 
 # if there is a name prefix we install the man pages by hand
 all: generate_man_files
@@ -797,9 +762,6 @@ uninstall_groffdirs:
 	  fi; \
 	  rmdir $(DESTDIR)$(dataprogramdir); \
 	fi
-	if test -d $(DESTDIR)$(grog_dir); then \
-	  rmdir $(DESTDIR)$(grog_dir); \
-	fi
 	if test -d $(DESTDIR)$(libprogramdir); then \
 	  if test -d $(DESTDIR)$(systemtmacdir); then \
 	    rm -f $(DESTDIR)$(systemtmacdir)/*; \
@@ -812,6 +774,12 @@ uninstall_groffdirs:
 	    rmdir $(DESTDIR)$(exampledir); \
 	  fi; \
 	  if test -d $(DESTDIR)$(htmldocdir); then \
+	    if test -d $(DESTDIR)$(htmldocdir)/groff.html.mono; then \
+	      rmdir $(DESTDIR)$(htmldocdir)/groff.html.mono; \
+	    fi; \
+	    if test -d $(DESTDIR)$(htmldocdir)/groff.html.node; then \
+	      rmdir $(DESTDIR)$(htmldocdir)/groff.html.node; \
+	    fi; \
 	    rmdir $(DESTDIR)$(htmldocdir); \
 	  fi; \
 	  rmdir $(DESTDIR)$(docdir); \
@@ -838,9 +806,11 @@ EXTRA_DIST += \
   ChangeLog.119 \
   ChangeLog.120 \
   ChangeLog.121 \
+  ChangeLog.122 \
   FDL \
   FOR-RELEASE \
   gendef.sh \
+  HACKING \
   INSTALL.REPO \
   INSTALL.extra \
   LICENSES \
@@ -856,8 +826,7 @@ EXTRA_DIST += \
 
 MOSTLYCLEANFILES += $(prefixexecbin_SCRIPTS) $(bin_SCRIPTS) \
   $(man1_MANS) $(man5_MANS) $(man7_MANS) \
-  $(PREFIXMAN1) \
-  test-groff
+  $(PREFIXMAN1)
 
 # Suffix rule to build .1, .5 and .7 files from .1.man, .5.man and
 # .7.man files.  The brackets around the @ are used to prevent the
@@ -883,30 +852,33 @@ MOSTLYCLEANFILES += $(prefixexecbin_SCRIPTS) $(bin_SCRIPTS) \
 # because a command substitution is being nested inside yet another
 # invocation of sed.
 #
-# * For this target; no assurances about the good behavior of unusual
+# * For this target, no assurances about the good behavior of unusual
 #   characters in Makefile variables in other aspects of the groff build
 #   are offered.
+#
+# COMPATIBILITY_WRAPPERS is intended only for use in conditional
+# expressions in man pages (to see if the legacy macro package wrappers
+# feature is enabled) and not for expansion as formatted text.
 makevarescape=$(top_srcdir)/makevarescape.sed
 
 SUFFIXES += .man
 .man:
-	$(AM_V_GEN)rm -f $@ \
-	&& $(MKDIR_P) `dirname $@` \
+	$(AM_V_GEN)$(MKDIR_P) `dirname $@` \
 	&& LC_ALL=C \
-	 sed -e "s|[@]APPRESDIR[@]|`echo $(appresdir) | sed -f $(makevarescape)`|g" \
+	 sed -e "s|[@]APPDEFDIR[@]|`echo $(appdefdir) | sed -f $(makevarescape)`|g" \
 	     -e "s|[@]BINDIR[@]|`echo $(bindir) | sed -f $(makevarescape)`|g" \
 	     -e "s|[@]COMMON_WORDS_FILE[@]|`echo $(common_words_file) | sed -f $(makevarescape)`|g" \
+	     -e "s|[@]COMPATIBILITY_WRAPPERS[@]|$(compatibility_wrappers)|g" \
 	     -e "s|[@]DATASUBDIR[@]|`echo $(datasubdir) | sed -f $(makevarescape)`|g" \
 	     -e "s|[@]DEFAULT_INDEX[@]|`echo $(indexdir)/$(indexname) | sed -f $(makevarescape)`|g" \
 	     -e "s|[@]DEFAULT_INDEX_NAME[@]|`echo $(indexname) | sed -f $(makevarescape)`|g" \
-	     -e "s|[@]DEVICE[@]|$(DEVICE)|g" \
+	     -e "s|[@]DEVICE[@]|\\\\%$(DEVICE)|g" \
 	     -e "s|[@]DOCDIR[@]|`echo $(docdir) | sed -f $(makevarescape)`|g" \
 	     -e "s|[@]EXAMPLEDIR[@]|`echo $(exampledir) | sed -f $(makevarescape)`|g" \
 	     -e "s|[@]FONTDIR[@]|`echo $(fontdir) | sed -f $(makevarescape)`|g" \
-	     -e "s|[@]g[@]|$(g)|g" \
-	     -e "s![@]G[@]!`echo $(g) | tr '[a-z]' '[A-Z]'`!g" \
+	     -e "s|[@]g[@]|\\\\%$(g)|g" \
 	     -e "s|[@]HTMLDOCDIR[@]|`echo $(htmldocdir) | sed -f $(makevarescape)`|g" \
-	     -e "s|[@]INDEX_SUFFIX[@]|$(indexext)|g" \
+	     -e "s|[@]INDEX_SUFFIX[@]|\\\\%$(indexext)|g" \
 	     -e "s|[@]LEGACYFONTDIR[@]|`echo $(legacyfontdir) | sed -f $(makevarescape)`|g" \
 	     -e "s|[@]LOCALFONTDIR[@]|`echo $(localfontdir) | sed -f $(makevarescape)`|g" \
 	     -e "s|[@]LOCALMACRODIR[@]|`echo $(localtmacdir) | sed -f $(makevarescape)`|g" \
@@ -916,17 +888,19 @@ SUFFIXES += .man
 	     -e "s|[@]MAN7EXT[@]|$(man7ext)|g" \
 	     -e "s|[@]MDATE[@]|`$(PERL) $(top_srcdir)/mdate.pl $<`|g" \
 	     -e "s|[@]OLDFONTDIR[@]|`echo $(oldfontdir) | sed -f $(makevarescape)`|g" \
+	     -e "s|[@]PAGE[@]|\\\\%$(PAGE)|g" \
 	     -e "s|[@]PDFDOCDIR[@]|`echo $(pdfdocdir) | sed -f $(makevarescape)`|g" \
+	     -e "s|[@]PSPRINT[@]|`echo $(PSPRINT) | sed -f $(makevarescape)`|g" \
 	     -e "s|[@]SYSTEMMACRODIR[@]|`echo $(systemtmacdir) | sed -f $(makevarescape)`|g" \
-	     -e "s|[@]TMAC_AN_PREFIX[@]|$(tmac_an_prefix)|g" \
-	     -e "s|[@]TMAC_M_PREFIX[@]|$(tmac_m_prefix)|g" \
-	     -e "s|[@]TMAC_MDIR[@]|$(tmacdir)/mm|g" \
-	     -e "s|[@]TMAC_S_PREFIX[@]|$(tmac_s_prefix)|g" \
+	     -e "s|[@]TMAC_AN_PREFIX[@]|\\\\%$(tmac_an_prefix)|g" \
+	     -e "s|[@]TMAC_M_PREFIX[@]|\\\\%$(tmac_m_prefix)|g" \
+	     -e "s|[@]TMAC_MDIR[@]|`echo $(tmacdir) | sed -f $(makevarescape)`/mm|g" \
+	     -e "s|[@]TMAC_S_PREFIX[@]|\\\\%$(tmac_s_prefix)|g" \
 	     -e "s|[@]VERSION[@]|$(VERSION)|g" \
 	     $< \
 	     >$@
 
-# Version files - see script 'build-aux/git-gen-version'
+# Version files - see script 'build-aux/git-version-gen'
 EXTRA_DIST += $(top_srcdir)/.version
 BUILT_SOURCES += $(top_srcdir)/.version
 $(top_srcdir)/.version:
@@ -934,8 +908,8 @@ $(top_srcdir)/.version:
 dist-hook:
 	echo $(VERSION) > $(distdir)/.tarball-version
 
-########################################################################
-### Emacs settings
 # Local Variables:
+# fill-column: 72
 # mode: makefile-automake
 # End:
+# vim: set autoindent filetype=automake textwidth=72:

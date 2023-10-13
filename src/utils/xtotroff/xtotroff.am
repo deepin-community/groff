@@ -1,6 +1,4 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
-#
-# Latest update: 22 Aug 2015
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # This file is part of groff.
 #
@@ -17,9 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if !WITHOUT_X11
+if WITHOUT_X11
+XTOTROFF_MAN1 =
+else
+XTOTROFF_MAN1 = src/utils/xtotroff/xtotroff.1
 bin_PROGRAMS += xtotroff
-man1_MANS += src/utils/xtotroff/xtotroff.1
+man1_MANS += $(XTOTROFF_MAN1)
 xtotroff_SOURCES = src/utils/xtotroff/xtotroff.c
 XLIBS=$(LIBXUTIL) $(LIBGROFF)
 xtotroff_LDADD = libxutil.a libgroff.a $(X_LIBS) $(X_PRE_LIBS) \
@@ -28,9 +29,13 @@ xtotroff_CPPFLAGS = $(AM_CPPFLAGS) $(X_CFLAGS)
 endif
 EXTRA_DIST += src/utils/xtotroff/xtotroff.1.man
 
+# Define variable needed only for the targets that regenerate
+# descriptions of X11 core fonts (used in "maintainer mode").
+xtotroff=$(top_builddir)/xtotroff
 
-########################################################################
-### Emacs settings
+
 # Local Variables:
+# fill-column: 72
 # mode: makefile-automake
 # End:
+# vim: set autoindent filetype=automake textwidth=72:

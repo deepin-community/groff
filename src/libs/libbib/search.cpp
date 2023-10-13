@@ -1,5 +1,4 @@
-// -*- C++ -*- 
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -19,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "lib.h"
 
-#include <stdlib.h>
 #include <assert.h>
+#include <stdlib.h>
 #include <errno.h>
 
 #include "posix.h"
@@ -88,7 +87,7 @@ search_list_iterator::search_list_iterator(search_list *p, const char *q)
 search_list_iterator::~search_list_iterator()
 {
   list->niterators -= 1;
-  a_delete query;
+  delete[] query;
   delete iter;
 }
 
@@ -113,7 +112,7 @@ search_item::search_item(const char *nm, int fid)
 
 search_item::~search_item()
 {
-  a_delete name;
+  delete[] name;
 }
 
 int search_item::is_named(const char *nm) const
@@ -129,3 +128,9 @@ int search_item::next_filename_id() const
 search_item_iterator::~search_item_iterator()
 {
 }
+
+// Local Variables:
+// fill-column: 72
+// mode: C++
+// End:
+// vim: set cindent noexpandtab shiftwidth=2 textwidth=72:
