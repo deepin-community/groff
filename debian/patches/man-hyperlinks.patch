@@ -1,4 +1,4 @@
-From 43f8bc8009a33929db3f3bafadf17f606c1b850a Mon Sep 17 00:00:00 2001
+From a1f87d74b9521bda316dbab92b1e8fdc9d3c71ea Mon Sep 17 00:00:00 2001
 From: Colin Watson <cjwatson@debian.org>
 Date: Tue, 11 Jul 2023 17:33:14 +0100
 Subject: Enable OSC 8 hyperlinks for man pages

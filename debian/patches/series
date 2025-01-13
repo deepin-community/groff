@@ -10,4 +10,6 @@ source-date-epoch-utc.patch
 doc-default-os-debian.patch
 man-hyperlinks.patch
 nroff-map-CW-to-R.patch
-doc-default-os-deepin.patch
+check-fp.patch
+ms-pic.patch
+hdtbl-grn-dependency.patch

@@ -3,34 +3,38 @@ Section: text
 Priority: important
 Maintainer: Colin Watson <cjwatson@debian.org>
 Standards-Version: 3.9.8
-Build-Depends: bison,
-               debhelper-compat (= 13),
-               ghostscript,
-               gsfonts,
-               libuchardet-dev,
-               libx11-dev,
-               libxaw7-dev,
-               libxmu-dev,
-               libxt-dev,
-               m4,
-               netpbm,
-               pkg-config,
-               poppler-utils <!nocheck>,
-               psutils,
-               texinfo,
-               texlive-base,
-               texlive-latex-base,
-               x11proto-core-dev,
+Build-Depends:
+ bison,
+ debhelper-compat (= 13),
+ fonts-urw-base35,
+ ghostscript,
+ libuchardet-dev,
+ libx11-dev,
+ libxaw7-dev,
+ libxmu-dev,
+ libxt-dev,
+ m4,
+ netpbm,
+ pkgconf,
+ poppler-utils <!nocheck>,
+ psutils,
+ texinfo,
+ texlive-base,
+ texlive-latex-base,
+ x11proto-core-dev,
 Homepage: https://www.gnu.org/software/groff/
 Vcs-Git: https://salsa.debian.org/debian/groff.git
 Vcs-Browser: https://salsa.debian.org/debian/groff
 Rules-Requires-Root: no
+X-Style: black
 
 Package: groff-base
 Architecture: any
-Depends: ${misc:Depends},
-         ${shlibs:Depends},
-Suggests: groff,
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Suggests:
+ groff,
 Multi-Arch: foreign
 Description: GNU troff text-formatting system (base system components)
  This package contains the traditional UN*X text formatting tools
@@ -46,17 +50,19 @@ Description: GNU troff text-formatting system (base system components)
 Package: groff
 Priority: optional
 Architecture: any
-Depends: groff-base (= ${binary:Version}),
-         ${misc:Depends},
-         ${shlibs:Depends},
-Recommends: ghostscript,
-            imagemagick,
-            libpaper1,
-            netpbm,
-            perl,
-            psutils,
-Provides: groff-x11,
-          jgroff,
+Depends:
+ groff-base (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Recommends:
+ ghostscript,
+ imagemagick,
+ netpbm,
+ perl,
+ psutils,
+Provides:
+ groff-x11,
+ jgroff,
 Multi-Arch: foreign
 Description: GNU troff text-formatting system
  This package contains optional components of the GNU troff text-formatting
@@ -99,6 +105,4 @@ Description: GNU troff text-formatting system
  .
   - ghostscript, netpbm, psutils: required for HTML output;
   - imagemagick: required for the pic2graph and eqn2graph programs;
-  - libpaper1: paper size detection in dvi, lbp, lj4, and ps devices (falls
-    back to a4 if not installed);
   - perl: required for PDF output and for the chem preprocessor.

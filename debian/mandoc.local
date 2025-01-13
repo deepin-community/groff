@@ -1,17 +1,17 @@
 .
 .if n \{\
-.  \" Debian: Strictly, "-" is a hyphen while "\-" is a minus sign, and the
-.  \" former may not always be rendered in the form expected for things like
-.  \" command-line options.  Uncomment this if you want to make sure that
-.  \" manual pages you're writing are clear of this problem.
-.  \" if '\*[.T]'utf8' \
-.  \"   char - \[hy]
-.
-.  \" Debian: groff 1.23.0 changed the "utf8" device to render "^" and "~"
-.  \" as U+02C6 and U+02DC respectively.  This is likely to cause
-.  \" considerable disruption in manual pages, so preserve the old
-.  \" behaviour, at least for now.
+.  \" Debian: As of groff 1.23.0, the "-", "'", "`", "^", and "~" input
+.  \" characters are mapped to non-Basic Latin code points in output from
+.  \" the "utf8" device, for consistency with other output devices such as
+.  \" PDF.  Unfortunately in practice this still causes far too much
+.  \" disruption for innocent users of manual pages who just want to be able
+.  \" to search for characters normally, so preserve the old behaviour.
+.  \" Comment this out if you want to make sure that manual pages you're
+.  \" writing are clear of these problems.
 .  if '\*[.T]'utf8' \{\
+.    char - \-
+.    char ' \[aq]
+.    char ` \[ga]
 .    char ^ \[ha]
 .    char ~ \[ti]
 .  \}

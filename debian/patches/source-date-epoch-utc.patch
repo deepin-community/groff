@@ -1,4 +1,4 @@
-From 56d2f35b18a8e6502c6aa842c07b3d27fe9f6f7f Mon Sep 17 00:00:00 2001
+From 91dee0fbd709ec191800fbb1d12446215c7d0380 Mon Sep 17 00:00:00 2001
 From: Colin Watson <cjwatson@debian.org>
 Date: Sun, 9 Jul 2023 13:23:21 +0100
 Subject: Display time from SOURCE_DATE_EPOCH in UTC.
@@ -46,7 +46,8 @@ from UTC is not a whole number of hours.
 * src/roff/troff/troff.1.man (Environment): Update.
 
 Origin: upstream, https://git.savannah.gnu.org/cgit/groff.git/commit/?id=d7bbfb04ea25a82a8597cdef6ebb391cb78ab47c
-Last-Update: 2023-07-11
+Origin: upstream, https://git.savannah.gnu.org/cgit/groff.git/commit/?id=0815e503dba8d5c05921d68c6c718fe8f8440ee8
+Last-Update: 2024-04-30
 
 Patch-Name: source-date-epoch-utc.patch
 ---
@@ -54,7 +55,7 @@ Patch-Name: source-date-epoch-utc.patch
  src/devices/grohtml/grohtml.1.man | 12 +++++++-----
  src/devices/grohtml/post-html.cpp | 16 ++++------------
  src/devices/gropdf/gropdf.1.man   | 10 +++++-----
- src/devices/gropdf/gropdf.pl      | 16 ++++++++++++++--
+ src/devices/gropdf/gropdf.pl      | 19 +++++++++++++++----
  src/devices/grops/grops.1.man     | 12 +++++++-----
  src/devices/grops/ps.cpp          |  9 ++-------
  src/include/curtime.h             | 19 +++++++++++--------
@@ -62,7 +63,7 @@ Patch-Name: source-date-epoch-utc.patch
  src/roff/groff/groff.1.man        | 12 +++++++-----
  src/roff/troff/input.cpp          | 24 +++++++++---------------
  src/roff/troff/troff.1.man        | 12 +++++++-----
- 12 files changed, 93 insertions(+), 85 deletions(-)
+ 12 files changed, 94 insertions(+), 87 deletions(-)
 
 diff --git a/doc/groff.texi b/doc/groff.texi
 index 2a6635e9d..bcea4f3e7 100644
@@ -198,7 +199,7 @@ index d1d39bbe0..20a957e68 100644
  .
  .\" ====================================================================
 diff --git a/src/devices/gropdf/gropdf.pl b/src/devices/gropdf/gropdf.pl
-index c65a1051f..0e1b612a5 100644
+index c65a1051f..4ba5a48df 100644
 --- a/src/devices/gropdf/gropdf.pl
 +++ b/src/devices/gropdf/gropdf.pl
 @@ -23,6 +23,7 @@
@@ -209,32 +210,35 @@ index c65a1051f..0e1b612a5 100644
  
  use constant
  {
-@@ -343,7 +344,12 @@ for $papersz ( split(" ", lc($possiblesizes).' #duff#') )
+@@ -343,8 +344,7 @@ for $papersz ( split(" ", lc($possiblesizes).' #duff#') )
      # If we get here, $papersz was invalid, so try the next one.
  }
  
 -my (@dt)=localtime($ENV{SOURCE_DATE_EPOCH} || time);
-+my @dt;
-+if ($ENV{SOURCE_DATE_EPOCH}) {
-+    @dt=gmtime($ENV{SOURCE_DATE_EPOCH});
-+} else {
-+    @dt=localtime;
-+}
- my $dt=PDFDate(\@dt);
+-my $dt=PDFDate(\@dt);
++my $dt=PDFDate(time);
  
  my %info=('Creator' => "(groff version $cfg{GROFF_VERSION})",
-@@ -628,7 +634,13 @@ sub GetObj
+ 				'Producer' => "(gropdf version $cfg{GROFF_VERSION})",
+@@ -627,8 +627,19 @@ sub GetObj
+ 
  sub PDFDate
  {
-     my $dt=shift;
+-    my $dt=shift;
 -    return(sprintf("D:%04d%02d%02d%02d%02d%02d%+03d'00'",$dt->[5]+1900,$dt->[4]+1,$dt->[3],$dt->[2],$dt->[1],$dt->[0],( localtime time() + 3600*( 12 - (gmtime)[2] ) )[2] - 12));
++    my $ts=shift;
++    my @dt;
 +    my $offset;
++    my $rel;
 +    if ($ENV{SOURCE_DATE_EPOCH}) {
 +	$offset=0;
++	@dt=gmtime($ENV{SOURCE_DATE_EPOCH});
 +    } else {
-+	$offset=mktime((localtime $dt)[0..5]) - mktime((gmtime $dt)[0..5]);
++	@dt=localtime($ts);
++	$offset=mktime(@dt[0..5]) - mktime((gmtime $ts)[0..5]);
 +    }
-+    return(sprintf("D:%04d%02d%02d%02d%02d%02d%+03d'%+03d'",$dt->[5]+1900,$dt->[4]+1,$dt->[3],$dt->[2],$dt->[1],$dt->[0],int($offset/3600),int(($offset%3600)/60)));
++    $rel=($offset==0)?'Z':($offset>0)?'+':'-';
++    return(sprintf("D:%04d%02d%02d%02d%02d%02d%s%02d'%02d'",$dt[5]+1900,$dt[4]+1,$dt[3],$dt[2],$dt[1],$dt[0],$rel,int(abs($offset)/3600),int((abs($offset)%3600)/60)));
  }
  
  sub ToPoints

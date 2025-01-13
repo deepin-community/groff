@@ -1,0 +1,119 @@
+From a1cdb1543604cf00db89b31cffd4797b50760a9a Mon Sep 17 00:00:00 2001
+From: "G. Branden Robinson" <g.branden.robinson@gmail.com>
+Date: Thu, 7 Mar 2024 10:20:17 -0600
+Subject: [troff]: Fix Savannah #65427 (check fp==nullptr).
+
+* src/roff/troff/node.cpp (ascii_output_file::outc)
+  (ascii_output_file::outs, put_string, troff_output_file::put)
+  (ascii_output_file::really_transparent_char)
+  (ascii_output_file::really_print_line): Guard uses of standard C
+  library `putc()` and `fputc()` functions with a null pointer check.
+  They could fail if the output stream has been invalidated.  Problem
+  present from groff's birth and apparently exposed by man-db man's use
+  of AppArmor.  See
+  <https://bugs.launchpad.net/ubuntu/+source/lintian/+bug/2055402> and
+  follow-up discussion there.
+
+Fixes <https://savannah.gnu.org/bugs/?65427>.  Thanks to an anonymous
+submitter for the report.
+
+No apparent performance degradation, even _without_ optimization, on
+20 rebuilds of automake.pdf, contrib/mom/examples/*.pdf, and
+groff-man-pages.pdf.
+
+CFLAGS="-O0 -Og -ggdb"
+
+Before:
++ awk /Elapsed/ {time = $NF; sub("0:", "", time); print time}
++ datamash range 1 mean 1 sstdev 1
+3.35    11.0475 1.0103510333178
+
+After:
++ awk /Elapsed/ {time = $NF; sub("0:", "", time); print time}
++ datamash range 1 mean 1 sstdev 1
+2.49    10.81380952381  0.62027797148114
+
+Origin: upstream, https://git.savannah.gnu.org/cgit/groff.git/commit/?id=5c923303a9ef44bb4bc4f44d09799f93193fc079
+Bug: https://savannah.gnu.org/bugs/?65427
+Last-Update: 2024-07-04
+
+Patch-Name: check-fp.patch
+---
+ src/roff/troff/node.cpp | 31 ++++++++++++++++++++-----------
+ 1 file changed, 20 insertions(+), 11 deletions(-)
+
+diff --git a/src/roff/troff/node.cpp b/src/roff/troff/node.cpp
+index d17198db8..f3395413e 100644
+--- a/src/roff/troff/node.cpp
++++ b/src/roff/troff/node.cpp
+@@ -770,15 +770,18 @@ public:
+ 
+ void ascii_output_file::outc(unsigned char c)
+ {
+-  fputc(c, fp);
++  if (fp != 0 /* nullptr */)
++    fputc(c, fp);
+ }
+ 
+ void ascii_output_file::outs(const char *s)
+ {
+-  fputc('<', fp);
+-  if (s)
+-    fputs(s, fp);
+-  fputc('>', fp);
++  if (fp != 0 /* nullptr */) {
++    fputc('<', fp);
++    if (s)
++      fputs(s, fp);
++    fputc('>', fp);
++  }
+ }
+ 
+ struct hvpair;
+@@ -848,18 +851,22 @@ public:
+ 
+ static void put_string(const char *s, FILE *fp)
+ {
+-  for (; *s != '\0'; ++s)
+-    putc(*s, fp);
++  if (fp != 0 /* nullptr */) {
++    for (; *s != '\0'; ++s)
++      putc(*s, fp);
++  }
+ }
+ 
+ inline void troff_output_file::put(char c)
+ {
+-  putc(c, fp);
++  if (fp != 0 /* nullptr */)
++    putc(c, fp);
+ }
+ 
+ inline void troff_output_file::put(unsigned char c)
+ {
+-  putc(c, fp);
++  if (fp != 0 /* nullptr */)
++    putc(c, fp);
+ }
+ 
+ inline void troff_output_file::put(const char *s)
+@@ -1790,7 +1797,8 @@ void real_output_file::really_off()
+ 
+ void ascii_output_file::really_transparent_char(unsigned char c)
+ {
+-  putc(c, fp);
++  if (fp != 0 /* nullptr */)
++    putc(c, fp);
+ }
+ 
+ void ascii_output_file::really_print_line(hunits, vunits, node *n,
+@@ -1800,7 +1808,8 @@ void ascii_output_file::really_print_line(hunits, vunits, node *n,
+     n->ascii_print(this);
+     n = n->next;
+   }
+-  fputc('\n', fp);
++  if (fp != 0 /* nullptr */)
++    fputc('\n', fp);
+ }
+ 
+ void ascii_output_file::really_begin_page(int /*pageno*/, vunits /*page_length*/)
