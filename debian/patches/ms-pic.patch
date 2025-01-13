@@ -1,0 +1,35 @@
+From 88535e1c959be4ef2a719ad07e16e8bf9233cd60 Mon Sep 17 00:00:00 2001
+From: "G. Branden Robinson" <g.branden.robinson@gmail.com>
+Date: Mon, 17 Jul 2023 19:16:56 -0500
+Subject: [ms]: Fix Savannah #64438.
+
+* tmac/s.tmac (@PS): Stop treating excess arguments as erroneous,
+  foregoing preparation for pic(1) output.  Fixes regression from groff
+  1.22.4.
+
+Fixes <https://savannah.gnu.org/bugs/?64438>.  Thanks to Doug McIlroy
+for the report, Dave Kemper for root-cause analysis, and Deri James for
+usability feedback.
+
+Origin: upstream, https://git.savannah.gnu.org/cgit/groff.git/commit/?id=a3deb17968d8a04cf5d2c1df34d59c198d60c4ae
+Bug: https://savannah.gnu.org/bugs/?64438
+Last-Update: 2024-07-04
+
+Patch-Name: ms-pic.patch
+---
+ tmac/s.tmac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tmac/s.tmac b/tmac/s.tmac
+index bdf36b885..5e3223b56 100644
+--- a/tmac/s.tmac
++++ b/tmac/s.tmac
+@@ -2065,7 +2065,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ .de @PS
+ .br
+ .sp \\n[DD]u
+-.ie !\\n[.$]=2 \{\
++.ie \\n[.$]<2 \{\
+ .	ds pic*msg .PS: expected 2 arguments, got \\n[.$]\"
+ .	as pic*msg ; not preprocessed with pic?\"
+ .	@error \\*[pic*msg]

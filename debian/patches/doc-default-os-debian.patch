@@ -1,4 +1,4 @@
-From 9bd0e1f19bb2591b30d628710ab805ca265789bc Mon Sep 17 00:00:00 2001
+From 8f84439183c7c0940b13ef4459e5e1312f309e9e Mon Sep 17 00:00:00 2001
 From: Colin Watson <cjwatson@debian.org>
 Date: Sun, 9 Jul 2023 12:04:37 +0100
 Subject: Set doc-default-operating-system to "Debian"
