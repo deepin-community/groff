@@ -13,3 +13,4 @@ nroff-map-CW-to-R.patch
 check-fp.patch
 ms-pic.patch
 hdtbl-grn-dependency.patch
+doc-default-os-deepin.patch

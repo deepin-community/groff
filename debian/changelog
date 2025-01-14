@@ -1,3 +1,9 @@
+groff (1.23.0-7deepin1) unstable; urgency=medium
+
+  * Set doc-default-operating-system to "deepin".
+
+ -- Tianyu Chen <sweetyfish@deepin.org>  Tue, 14 Jan 2025 10:49:15 +0800
+
 groff (1.23.0-7) unstable; urgency=medium
 
   * Drop Recommends: libpaper1 for the moment (closes: #1091375, 1091376).
