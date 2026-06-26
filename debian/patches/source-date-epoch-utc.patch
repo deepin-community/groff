@@ -59,11 +59,11 @@ Patch-Name: source-date-epoch-utc.patch
  src/devices/grops/grops.1.man     | 12 +++++++-----
  src/devices/grops/ps.cpp          |  9 ++-------
  src/include/curtime.h             | 19 +++++++++++--------
- src/libs/libgroff/curtime.cpp     | 23 +++++++++++++----------
+ src/libs/libgroff/curtime.cpp     | 27 +++++++++++++++------------
  src/roff/groff/groff.1.man        | 12 +++++++-----
  src/roff/troff/input.cpp          | 24 +++++++++---------------
  src/roff/troff/troff.1.man        | 12 +++++++-----
- 12 files changed, 94 insertions(+), 87 deletions(-)
+ 12 files changed, 96 insertions(+), 89 deletions(-)
 
 diff --git a/doc/groff.texi b/doc/groff.texi
 index 2a6635e9d..bcea4f3e7 100644
@@ -344,17 +344,19 @@ index 34dbc5ca9..277755cab 100644
  #include "errarg.h"
  #include "error.h"
  
-+struct tm *current_time()
-+{
- #ifdef LONG_FOR_TIME_T
+-#ifdef LONG_FOR_TIME_T
 -long
-+  long
- #else
+-#else
 -time_t
-+  time_t
- #endif
+-#endif
 -current_time()
--{
++struct tm *current_time()
+ {
++#ifdef LONG_FOR_TIME_T
++  long
++#else
++  time_t
++#endif
 +    t;
    char *source_date_epoch = getenv("SOURCE_DATE_EPOCH");
  

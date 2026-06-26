@@ -1,0 +1,35 @@
+From a1f6f9bfac4def0fb7656dbd68475fc27c880f05 Mon Sep 17 00:00:00 2001
+From: "G. Branden Robinson" <g.branden.robinson@gmail.com>
+Date: Sun, 1 Jun 2025 01:56:06 +0100
+Subject: [man]: Fix Savannah #64572 (missing text on PDF).
+
+* tmac/an.tmac: Stop setting `an*can-hyperlink` if formatting for PDF;
+  we don't yet have support for this implemented, leading to vanishing
+  text when the `U` register is true and, for instance, `UR`/`UE` are
+  called with no link text.
+
+Fixes <https://savannah.gnu.org/bugs/?64572>.
+
+Origin: upstream, https://cgit.git.savannah.gnu.org/cgit/groff.git/commit/?id=d9e90209725a716dff23807ffffda403c58020c9
+Bug: https://savannah.gnu.org/bugs/?64572
+Bug: https://savannah.gnu.org/bugs/?67169
+Bug-Debian: https://bugs.debian.org/1107068
+Last-Update: 2025-06-01
+
+Patch-Name: man-pdf-disable-hyperlink.patch
+---
+ tmac/an.tmac | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/tmac/an.tmac b/tmac/an.tmac
+index 9e38ba569..2915078d3 100644
+--- a/tmac/an.tmac
++++ b/tmac/an.tmac
+@@ -1290,7 +1290,6 @@ contains unsupported escape sequence
+ .
+ .nr an*can-hyperlink 0
+ .if (  \n[an*is-output-html] \
+-     : \n[an*is-output-pdf] \
+      : \n[an*is-output-terminal]) \
+ .  nr an*can-hyperlink 1
+ .
