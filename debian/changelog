@@ -1,8 +1,16 @@
-groff (1.23.0-7deepin1) unstable; urgency=medium
+groff (1.23.0-9) unstable; urgency=medium
 
-  * Set doc-default-operating-system to "deepin".
+  * man: Stop enabling hyperlink support for PDF when it isn't yet
+    implemented (closes: #1107068).
 
- -- Tianyu Chen <sweetyfish@deepin.org>  Tue, 14 Jan 2025 10:49:15 +0800
+ -- Colin Watson <cjwatson@debian.org>  Tue, 03 Jun 2025 20:07:13 +0100
+
+groff (1.23.0-8) unstable; urgency=medium
+
+  * mdoc: Reset `Nm` value between pages when formatting PDF/PS (closes:
+    #1104609).
+
+ -- Colin Watson <cjwatson@debian.org>  Sun, 04 May 2025 12:15:22 +0100
 
 groff (1.23.0-7) unstable; urgency=medium
 

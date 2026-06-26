@@ -1,0 +1,132 @@
+From dbd979eb30579f8163a359aac11affe036eaf9fc Mon Sep 17 00:00:00 2001
+From: "G. Branden Robinson" <g.branden.robinson@gmail.com>
+Date: Mon, 18 Mar 2024 12:15:50 -0500
+Subject: [mdoc]: Regression-test Savannah #65480.
+
+* tmac/tests/doc_reset-data-between-documents.sh: Do it.
+* tmac/tmac.am (tmac_TESTS): Run test.
+
+Test fails at this commit.
+
+Origin: upstream, https://git.savannah.gnu.org/cgit/groff.git/commit/?id=621d1c0d0b6bce37bed704f19717f68db2fe8ad0
+Bug: https://savannah.gnu.org/bugs/?65480
+Bug-Debian: https://bugs.debian.org/1104609
+Last-Update: 2025-05-04
+
+Patch-Name: mdoc-nm-reset-test.patch
+---
+ .../tests/doc_reset-data-between-documents.sh | 92 +++++++++++++++++++
+ tmac/tmac.am                                  |  1 +
+ 2 files changed, 93 insertions(+)
+ create mode 100755 tmac/tests/doc_reset-data-between-documents.sh
+
+diff --git a/tmac/tests/doc_reset-data-between-documents.sh b/tmac/tests/doc_reset-data-between-documents.sh
+new file mode 100755
+index 000000000..049c15aa2
+--- /dev/null
++++ b/tmac/tests/doc_reset-data-between-documents.sh
+@@ -0,0 +1,92 @@
++#!/bin/sh
++#
++# Copyright (C) 2024 Free Software Foundation, Inc.
++#
++# This file is part of groff.
++#
++# groff is free software; you can redistribute it and/or modify it under
++# the terms of the GNU General Public License as published by the Free
++# Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++#
++# groff is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++# for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program. If not, see <http://www.gnu.org/licenses/>.
++#
++
++groff="${abs_top_builddir:-.}/test-groff"
++
++fail=
++
++wail () {
++    echo "...FAILED" >&2
++    fail=yes
++}
++
++# Regression-test Savannah #65480.
++#
++# _Any_ document transition should wipe the page header/footer data,
++# reset interpolation behavior of the `Nm` macro, and so forth.
++
++input='.Dd 2024-03-18
++.Dt foo 1
++.Os
++.Sh Name
++.Nm foo
++.Nd frobnicate a bar
++.Sh Description
++.Nm
++is a program.
++.Dd 2024-03-18
++.Dt bar 1
++.Os
++.Sh Name
++.Nm bar
++.Nd format documents rebarbatively
++.Sh Description
++.Nm
++is also a program.'
++
++# Expected (with -rLL=70n argument added and repeated blank lines elided
++# with "cat -s"):
++#
++# foo(1)                  General Commands Manual                 foo(1)
++#
++# Name
++#      foo -- frobnicate a bar
++#
++# Description
++#      foo is a program.
++#
++# GNU                           2024-03-18                             1
++#
++# bar(1)                  General Commands Manual                 bar(1)
++#
++# Name
++#      bar -- format documents rebarbatively
++#
++# Description
++#      bar is also a program.
++#
++# GNU                           2024-03-18                             1
++#
++
++echo "checking text interpolated by Nm macro with continuous" \
++    "rendering" >&2
++output=$(printf "%s\n" "$input" | "$groff" -rcR=1 -mdoc -Tascii -P-cbou)
++echo "$output"
++echo "$output" | grep -q 'bar is also a program\.' || wail
++
++echo "checking text interpolated by Nm macro without continuous" \
++    "rendering" >&2
++output=$(printf "%s\n" "$input" | "$groff" -rcR=0 -mdoc -Tascii -P-cbou)
++echo "$output"
++echo "$output" | grep -q 'bar is also a program\.' || wail
++
++test -z "$fail"
++
++# vim:set ai et sw=4 ts=4 tw=72:
+diff --git a/tmac/tmac.am b/tmac/tmac.am
+index 437297acb..905d01b16 100644
+--- a/tmac/tmac.am
++++ b/tmac/tmac.am
+@@ -205,6 +205,7 @@ tmac_TESTS = \
+   tmac/tests/doc_heading-font-remapping-works.sh \
+   tmac/tests/doc_indents-correctly.sh \
+   tmac/tests/doc_output-footer-when-continuously-rendering.sh \
++  tmac/tests/doc_reset-data-between-documents.sh \
+   tmac/tests/doc_smoke-test.sh \
+   tmac/tests/e_chapter-titles-work.sh \
+   tmac/tests/e_columns-work-on-long-pages.sh \
