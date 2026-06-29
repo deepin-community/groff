@@ -1,0 +1,39 @@
+From: Tianyu Chen <sweetyfish@deepin.org>
+Date: Mon, 29 Jun 2026 15:05:34 +0800
+Subject: Set doc-default-operating-system to "deepin"
+
+Also see doc-default-os-debian.patch
+Origin: vendor
+Forwarded: not-needed
+Last-Update: 2026-06-29
+---
+ tmac/mdoc/doc-common         | 2 +-
+ tmac/tests/doc_smoke-test.sh | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/tmac/mdoc/doc-common b/tmac/mdoc/doc-common
+index 3ca1c10..bdf70e9 100644
+--- a/tmac/mdoc/doc-common
++++ b/tmac/mdoc/doc-common
+@@ -492,7 +492,7 @@
+ .\" NS
+ .\" NS override this in 'mdoc.local', if necessary
+ .
+-.ds doc-default-operating-system Debian\"
++.ds doc-default-operating-system deepin\"
+ .
+ .
+ .\" NS doc-operating-system global string
+diff --git a/tmac/tests/doc_smoke-test.sh b/tmac/tests/doc_smoke-test.sh
+index f63df9e..2be4063 100755
+--- a/tmac/tests/doc_smoke-test.sh
++++ b/tmac/tests/doc_smoke-test.sh
+@@ -58,7 +58,7 @@ echo "checking paragraph body for correct content" >&2
+ echo "$output" | grep -qE 'you can read this' || wail
+ 
+ echo "checking footer for correct content" >&2
+-echo "$output" | grep -qE '^Debian +August 25, 2020 +mdoc-test\(7\)' \
++echo "$output" | grep -qE '^deepin +August 25, 2020 +mdoc-test\(7\)' \
+     || wail
+ 
+ test -z "$fail"
