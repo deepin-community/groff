@@ -1,3 +1,9 @@
+groff (1.23.0-9deepin1) unstable; urgency=medium
+
+  * Set doc-default-operating-system to "deepin"
+
+ -- Tianyu Chen <sweetyfish@deepin.org>  Mon, 29 Jun 2026 15:16:45 +0800
+
 groff (1.23.0-9) unstable; urgency=medium
 
   * man: Stop enabling hyperlink support for PDF when it isn't yet
