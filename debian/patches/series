@@ -16,3 +16,4 @@ hdtbl-grn-dependency.patch
 mdoc-nm-reset-test.patch
 mdoc-nm-reset.patch
 man-pdf-disable-hyperlink.patch
+doc-default-os-deepin.patch
